@@ -36,11 +36,15 @@ cast_logi <- function(api) {
 }
 
 char_date <- function(datetime) {
-  datetime <- lubridate::as_date(datetime)
+  if (is.character(datetime) && datetime != "") {
+    datetime <- lubridate::as_date(datetime)
+  }
   as.character(datetime, format = tus.globals$date_fmt)
 }
 
 char_time <- function(datetime) {
-  datetime <- lubridate::as_datetime(datetime)
+  if (is.character(datetime) && datetime != "") {
+    datetime <- lubridate::as_datetime(datetime)
+  }
   as.character(datetime, format = tus.globals$time_fmt)
 }
