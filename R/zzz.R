@@ -14,19 +14,21 @@ utils::globalVariables(c(
   "high",
   "low",
   "close",
-  #get_intraday
-  "trade_date",
-  "trade_time",
-  "pe_ttm",
+  #dapdv
+  "roe",
   "pb",
+  "pe_ttm",
+  #adjust_ohlc
+  "..col",
+  #intraday
+  "td_posix",
+  "trade_date",
+  "pe_p",
+  "pb_p",
+  "ps_p",
   "ps_ttm",
   "pe",
+  "i.close",
   "ps",
-  #get_assets
-  "rinc",
-  "rroe",
-  "n_income",
-  "total_assets",
-  "total_liab",
-  "total_equity"
+  "trade_time"
 ))

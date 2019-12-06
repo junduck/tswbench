@@ -7,13 +7,13 @@
 dapdv(
   api,
   ts_code,
-  div_yield,
-  risk_free,
+  div_rate,
+  discount_rate,
   N = 3,
-  mode = c("auto", "roe", "roa"),
   start_date = "",
   intraday_freq = 15,
-  intraday_bar = 4000
+  intraday_bar = 4000,
+  arb_end = ""
 )
 }
 \arguments{
@@ -21,42 +21,40 @@ dapdv(
 
 \item{ts_code}{Tushare code}
 
-\item{div_yield}{estimated dividen yield}
+\item{div_rate}{estimated dividen rate}
 
-\item{risk_free}{risk-free rate}
+\item{discount_rate}{discount rate}
 
-\item{N}{year to maturity}
+\item{N}{year of stable growth}
 
-\item{mode}{growth estimate mode (auto, roe or roa)}
-
-\item{start_date}{start date of historic data}
+\item{start_date}{start date of historic growth}
 
 \item{intraday_freq}{intraday data frequency}
 
 \item{intraday_bar}{bars of intraday data used}
+
+\item{arb_end}{an arbitrary end date for testing only}
 }
 \value{
-a list
+a data.table
 }
 \description{
 Discounted Assets on Probability Distribution is an experimental valuation
 method to estimate the value of an investment based on its future assets.
-DAPD is determined by estimated growth from historic ROA (or ROE if high
-leverage ratio) and distribution of market preference from recent intraday
-data.
+DAPD is determined by estimated growth from historic ROE and market valuation
+preference from distribution of recent intraday PB values.
 }
 \details{
-Returned value is a list of estimated market cap / price (low, reasonable, high)
-and estimated market cap / price in N years.
+Returned value is a data.table of current prices (discounted) and target prices
+in N years.
 
 Data is provided by Tushare Pro API.
 }
 \examples{
 \dontrun{
     api <- TushareApi("YOUR TUSHARE API TOKEN")
-    #Valuate 600900.SH base on 3 yr growth. Dividen yield is simply taken from latest data
-    #and risk-free rate is based on 3 yr China Treasury Bond yield.
-    dapdv(api, "600900.SH", div_yield = 0.0379, risk_free = 0.028, N = 3, start_date = "2010-01-01")
-    dapdv(api, "000001.SZ", div_yield = 0.0084, risk_free = 0.026, N = 1, start_date = "2010-01-01")
+    #Valuate 601117.SH base on 3 yr growth. Dividen rate is simply taken from
+    #latest data and discount rate is assumed 10\%
+    dapdv(api, "601117.SH", 0.0191 * 11.08, 0.1, 3, start_date = "2010-01-01")
 }
 }
