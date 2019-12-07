@@ -10,7 +10,7 @@ dapdv(
   div_rate,
   discount_rate,
   N = 3,
-  start_date = "",
+  start_date = "2010-01-01",
   intraday_freq = 15,
   intraday_bar = 4000,
   arb_end = ""

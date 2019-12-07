@@ -5,25 +5,18 @@ gastwirth <- function(x) {
   sum(c(0.3, 0.4, 0.3) * q)
 }
 
-eval_bands <- function(x) {
+eval_bands <- function(x, k) {
 
   #perform k-means
-  cl <- Ckmeans.1d.dp::Ckmeans.1d.dp(x, k = c(1, 120), method = "linear", estimate.k = "BIC")
-  #we only need 3 clusters at max
-  n <- length(cl$centers)
-  if (n <= 3) {
-    ce <- cl$centers
-  } else {
-    ce <- cl$centers[c(1, n %/% 2L, n)]
-  }
+  cl <- Ckmeans.1d.dp::Ckmeans.1d.dp(x, k = k, method = "linear", estimate.k = "BIC")
+  di <- mixtools::normalmixEM(x, mu = cl$centers, maxit = 2000)
 
-  #perform EM
-  di <- mixtools::normalmixEM(x, mu = ce)
+  sigma_order <- order(di$sigma, decreasing = TRUE)
 
   list(
-    mu     = di$mu,
-    sigma  = di$sigma,
-    lambda = di$lambda
+    mu     = di$mu[sigma_order],
+    sigma  = di$sigma[sigma_order],
+    lambda = di$lambda[sigma_order]
   )
 }
 
@@ -64,32 +57,51 @@ sdnorm <- function(x, mu, sigma, lambda) {
 #'     #latest data and discount rate is assumed 10%
 #'     dapdv(api, "601117.SH", 0.0191 * 11.08, 0.1, 3, start_date = "2010-01-01")
 #' }
-dapdv <- function(api, ts_code, div_rate, discount_rate, N = 3, start_date = "", intraday_freq = 15, intraday_bar = 4000, arb_end = "") {
+dapdv <- function(api, ts_code, div_rate, discount_rate, N = 3, start_date = "2010-01-01", intraday_freq = 15, intraday_bar = 4000, arb_end = "") {
 
-  #get recent intraday OHLC data
+  #Query recent intraday OHLC data, which is used to evaluate PB distribution
   ohlci <- intraday(api, ts_code = ts_code, freq = as.character(intraday_freq), end_date = arb_end)
-  #calculate prob distribution of  recently traded PB
-  bars <- seq.int(to = nrow(ohlci), length.out = intraday_bar)
-  pb_band <- eval_bands(ohlci$pb[bars])
-  band_order <- order(pb_band$mu)
-  mu <- pb_band$mu[band_order]
-  sigma <- pb_band$sigma[band_order]
-  lambda <- pb_band$lambda[band_order]
 
-  #get historic OHLC data
+  #Calculate prob distribution of recently traded PB
+  pb_band <- eval_bands(ohlci$pb[seq.int(to = nrow(ohlci), length.out = intraday_bar)], k = 3)
+
+  #Extract expected PB (and corresponding sigma/SD, lambda/scale)
+  est_PB        <- pb_band$mu
+  est_PB_sigma  <- pb_band$sigma
+  est_PB_lambda <- pb_band$lambda
+
+  #Query historic daily OHLC data, which is used to estimate ROE
   ohlcd <- daily(api, ts_code = ts_code, start_date = start_date, end_date = arb_end)
-  #calculate ROE
+  #Calculate ROE
   ohlcd[, roe := pb / pe_ttm]
-  #estimate ROE using Gastwirth estimator
-  est_roe <- gastwirth(ohlcd$roe)
 
-  #Estimate equity growth in N years.
+  #Estimate growth, based on Gastwirth estimator and historic ROE distribution
+  roe_band       <- eval_bands(ohlcd$roe, k = 3)
+  est_roe        <- c(gastwirth(ohlcd$roe), roe_band$mu)
+  est_roe_sigma  <- c(NA,                   roe_band$sigma)
+  est_roe_lambda <- c(NA,                   roe_band$lambda)
+
+  #Estimate equity in N years.
   est_growth <- (1 + est_roe * (1 - div_rate))^N
-  target_price <- sort(mu) * est_growth / ohlcd[.N, pb] * ohlcd[.N, close]
 
+  #Estimate target price for each growth estimation
+  # pricing model is derived from:
+  #   market_cap = equity * PB
+  target_price <- numeric(0)
+  for (i in seq_along(est_growth)) {
+    tmp <- (ohlcd[.N, close] / ohlcd[.N, pb]) * est_growth[i] * est_PB
+    target_price <- c(target_price, tmp)
+  }
   discount_price <- target_price * (1 + discount_rate)^(1 - N)
 
-  data.table::data.table(discounted_price = discount_price, target = target_price, Expected_PB = mu, sigma = sigma, lambda = lambda)
+  data.table::data.table(discounted = discount_price,
+                         target     = target_price,
+                         Est_ROE    = rep(est_roe,        each = length(est_PB)),
+                         ROE_sigma  = rep(est_roe_sigma,  each = length(est_PB)),
+                         ROE_lambda = rep(est_roe_lambda, each = length(est_PB)),
+                         Est_PB     = est_PB,
+                         PB_sigma   = est_PB_sigma,
+                         PB_lambda  = est_PB_lambda)
 }
 
 #' Run dapdv shiny app
