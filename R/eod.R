@@ -39,7 +39,6 @@ intraday <- function(api, ts_code, start_date = "", end_date = "", freq = c("1",
   dt[, close := i.close]
   dt[, trade_time := td_posix]
 
-
   dt[, c("ts_code", "trade_time", "open", "high", "low", "close", "vol", "amount", "pe", "pb", "ps")]
 }
 
