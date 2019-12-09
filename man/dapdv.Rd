@@ -7,8 +7,8 @@
 dapdv(
   api,
   ts_code,
-  div_rate,
   discount_rate,
+  div_rate = NULL,
   N = 3,
   start_date = "2010-01-01",
   intraday_freq = 15,
@@ -21,9 +21,9 @@ dapdv(
 
 \item{ts_code}{Tushare code}
 
-\item{div_rate}{estimated dividen rate}
-
 \item{discount_rate}{discount rate}
+
+\item{div_rate}{estimated dividen rate, default is estimated from historic div rate}
 
 \item{N}{year of stable growth}
 

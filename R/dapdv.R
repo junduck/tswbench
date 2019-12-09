@@ -1,6 +1,6 @@
 #Discounted Assets on Prob Distribution
 
-gastwirth <- function(x) {
+gastwirth <- function(x, na.rm = TRUE) {
   q <- stats::quantile(x, probs = c(1/3, 1/2, 2/3), na.rm = TRUE)
   sum(c(0.3, 0.4, 0.3) * q)
 }
@@ -16,7 +16,8 @@ eval_bands <- function(x, k) {
   list(
     mu     = di$mu[sigma_order],
     sigma  = di$sigma[sigma_order],
-    lambda = di$lambda[sigma_order]
+    lambda = di$lambda[sigma_order],
+    distr  = di
   )
 }
 
@@ -39,8 +40,8 @@ sdnorm <- function(x, mu, sigma, lambda) {
 #'
 #' @param api a tsapi object
 #' @param ts_code Tushare code
-#' @param div_rate estimated dividen rate
 #' @param discount_rate discount rate
+#' @param div_rate estimated dividen rate, default is estimated from historic div rate
 #' @param N year of stable growth
 #' @param start_date start date of historic growth
 #' @param intraday_freq intraday data frequency
@@ -57,7 +58,7 @@ sdnorm <- function(x, mu, sigma, lambda) {
 #'     #latest data and discount rate is assumed 10%
 #'     dapdv(api, "601117.SH", 0.0191 * 11.08, 0.1, 3, start_date = "2010-01-01")
 #' }
-dapdv <- function(api, ts_code, div_rate, discount_rate, N = 3, start_date = "2010-01-01", intraday_freq = 15, intraday_bar = 4000, arb_end = "") {
+dapdv <- function(api, ts_code, discount_rate, div_rate = NULL, N = 3, start_date = "2010-01-01", intraday_freq = 15, intraday_bar = 4000, arb_end = "") {
 
   #Query recent intraday OHLC data, which is used to evaluate PB distribution
   ohlci <- intraday(api, ts_code = ts_code, freq = as.character(intraday_freq), end_date = arb_end)
@@ -74,15 +75,21 @@ dapdv <- function(api, ts_code, div_rate, discount_rate, N = 3, start_date = "20
   ohlcd <- daily(api, ts_code = ts_code, start_date = start_date, end_date = arb_end)
   #Calculate ROE
   ohlcd[, roe := pb / pe_ttm]
+  ohlcd[, div_rate := dv_ttm * pe_ttm / 100.0]
 
   #Estimate growth, based on Gastwirth estimator and historic ROE distribution
   roe_band       <- eval_bands(ohlcd$roe, k = 3)
   est_roe        <- c(gastwirth(ohlcd$roe), roe_band$mu)
   est_roe_sigma  <- c(NA,                   roe_band$sigma)
   est_roe_lambda <- c(NA,                   roe_band$lambda)
+  if (is.null(div_rate)) {
+    est_div <- gastwirth(ohlcd$div_rate)
+  } else {
+    est_div <- div_rate
+  }
 
   #Estimate equity in N years.
-  est_growth <- (1 + est_roe * (1 - div_rate))^N
+  est_growth <- (1 + est_roe * (1 - est_div))^N
 
   #Estimate target price for each growth estimation
   # pricing model is derived from:
@@ -94,14 +101,47 @@ dapdv <- function(api, ts_code, div_rate, discount_rate, N = 3, start_date = "20
   }
   discount_price <- target_price * (1 + discount_rate)^(1 - N)
 
-  data.table::data.table(discounted = discount_price,
-                         target     = target_price,
-                         Est_ROE    = rep(est_roe,        each = length(est_PB)),
-                         ROE_sigma  = rep(est_roe_sigma,  each = length(est_PB)),
-                         ROE_lambda = rep(est_roe_lambda, each = length(est_PB)),
-                         Est_PB     = est_PB,
-                         PB_sigma   = est_PB_sigma,
-                         PB_lambda  = est_PB_lambda)
+  ans <- data.table::data.table(discounted = discount_price,
+                                target     = target_price,
+                                Est_ROE    = rep(est_roe,        each = length(est_PB)),
+                                ROE_sigma  = rep(est_roe_sigma,  each = length(est_PB)),
+                                ROE_lambda = rep(est_roe_lambda, each = length(est_PB)),
+                                Est_PB     = est_PB,
+                                PB_sigma   = est_PB_sigma,
+                                PB_lambda  = est_PB_lambda)
+  attr(ans, "distr_ROE") <- roe_band$distr
+  attr(ans, "distr_PB") <- pb_band$distr
+
+  ans
+}
+
+#' Plot dapdv prob density distribution
+#'
+#' @param dt result from dapdv
+#' @param plot value to plot
+#'
+#' @return a ggplot object
+#' @export
+#'
+dapdv_plot <- function(dt, plot = c("ROE", "PB")) {
+
+  pb <- match.arg(plot)
+  if (pb == "ROE") {
+    EM <- attr(dt, "distr_ROE")
+  } else {
+    EM <- attr(dt, "distr_PB")
+  }
+
+  x       <- with(EM, seq(max(min(x) - max(sigma), 0), max(x) + max(sigma), len = 1000))
+  pars    <- with(EM, data.frame(comp = colnames(posterior), mu, sigma,lambda))
+  em.df   <- data.frame(x = rep(x,each = nrow(pars)), pars)
+  em.df$y <- with(em.df, sdnorm(x, mu = mu, sigma = sigma, lambda = lambda))
+
+  ggplot(data.frame(x = EM$x), aes(x, y = ..density..)) +
+    geom_histogram(fill = NA, color = "black", bins = 50)+
+    geom_polygon(data = em.df,aes(x, y, fill = comp), color = "grey50", alpha = 0.3) +
+    scale_fill_discrete(plot, labels = format(em.df$mu, digits = 3)) +
+    theme_bw()
 }
 
 #' Run dapdv shiny app
