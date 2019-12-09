@@ -7,16 +7,18 @@ gastwirth <- function(x, na.rm = TRUE) {
 
 eval_bands <- function(x, k) {
 
+  x <- x[!is.na(x)]
+
   #perform k-means
   cl <- Ckmeans.1d.dp::Ckmeans.1d.dp(x, k = k, method = "linear", estimate.k = "BIC")
   di <- mixtools::normalmixEM(x, mu = cl$centers, maxit = 2000)
 
-  sigma_order <- order(di$sigma, decreasing = TRUE)
+  mu_order <- order(di$mu, decreasing = TRUE)
 
   list(
-    mu     = di$mu[sigma_order],
-    sigma  = di$sigma[sigma_order],
-    lambda = di$lambda[sigma_order],
+    mu     = di$mu[mu_order],
+    sigma  = di$sigma[mu_order],
+    lambda = di$lambda[mu_order],
     distr  = di
   )
 }
