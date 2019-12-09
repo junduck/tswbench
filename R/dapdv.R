@@ -9,9 +9,15 @@ eval_bands <- function(x, k) {
 
   x <- x[!is.na(x)]
 
+  if (gastwirth(x) < 1) {
+    eps <- 1e-9
+  } else {
+    eps <- 1e-8
+  }
+
   #perform k-means
   cl <- Ckmeans.1d.dp::Ckmeans.1d.dp(x, k = k, method = "linear", estimate.k = "BIC")
-  di <- mixtools::normalmixEM(x, mu = cl$centers, maxit = 2000)
+  di <- mixtools::normalmixEM(x, mu = cl$centers, maxit = 5000, epsilon = eps)
 
   mu_order <- order(di$mu, decreasing = TRUE)
 
@@ -66,7 +72,7 @@ dapdv <- function(api, ts_code, discount_rate, div_rate = NULL, N = 3, start_dat
   ohlci <- intraday(api, ts_code = ts_code, freq = as.character(intraday_freq), end_date = arb_end)
 
   #Calculate prob distribution of recently traded PB
-  pb_band <- eval_bands(ohlci$pb[seq.int(to = nrow(ohlci), length.out = intraday_bar)], k = 3)
+  pb_band <- eval_bands(ohlci$pb[seq.int(to = nrow(ohlci), length.out = intraday_bar)], k = 2)
 
   #Extract expected PB (and corresponding sigma/SD, lambda/scale)
   est_PB        <- pb_band$mu
@@ -80,7 +86,7 @@ dapdv <- function(api, ts_code, discount_rate, div_rate = NULL, N = 3, start_dat
   ohlcd[, div_rate := dv_ttm * pe_ttm / 100.0]
 
   #Estimate growth, based on Gastwirth estimator and historic ROE distribution
-  roe_band       <- eval_bands(ohlcd$roe, k = 3)
+  roe_band       <- eval_bands(ohlcd$roe, k = 2)
   est_roe        <- c(gastwirth(ohlcd$roe), roe_band$mu)
   est_roe_sigma  <- c(NA,                   roe_band$sigma)
   est_roe_lambda <- c(NA,                   roe_band$lambda)
@@ -101,7 +107,7 @@ dapdv <- function(api, ts_code, discount_rate, div_rate = NULL, N = 3, start_dat
     tmp <- (ohlcd[.N, close] / ohlcd[.N, pb]) * est_growth[i] * est_PB
     target_price <- c(target_price, tmp)
   }
-  discount_price <- target_price * (1 + discount_rate)^(1 - N)
+  discount_price <- target_price * (1 + discount_rate)^(0 - N)
 
   ans <- data.table::data.table(discounted = discount_price,
                                 target     = target_price,
@@ -140,7 +146,7 @@ dapdv_plot <- function(dt, plot = c("ROE", "PB")) {
   em.df$y <- with(em.df, sdnorm(x, mu = mu, sigma = sigma, lambda = lambda))
 
   ggplot(data.frame(x = EM$x), aes(x, y = ..density..)) +
-    geom_histogram(fill = NA, color = "black", bins = 50)+
+    geom_histogram(fill = NA, color = "black", bins = 50) +
     geom_polygon(data = em.df,aes(x, y, fill = comp), color = "grey50", alpha = 0.3) +
     scale_fill_discrete(plot, labels = format(em.df$mu, digits = 3)) +
     theme_bw()
