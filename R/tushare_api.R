@@ -14,10 +14,10 @@ SetToken <- function(token) {
 GetToken <- function() {
 
   if (is.null(tus.globals$api_token)) {
-    stop("API token is not set. Please run SetToken('OUR_API_TOKEN') first.")
+    ""
+  } else {
+    tus.globals$api_token
   }
-
-  tus.globals$api_token
 }
 
 #' Simple do.call retry wrapper
