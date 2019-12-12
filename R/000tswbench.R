@@ -6,4 +6,6 @@
 #' @importFrom utils globalVariables
 #' @import shiny
 #' @import ggplot2
+#' @import magrittr
+#' @import stringr
 NULL

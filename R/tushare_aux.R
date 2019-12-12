@@ -1,8 +1,8 @@
 cast_date <- function(api) {
   switch(attr(api, "date_mode"),
-         POSIXct = function(x) as.POSIXct(x,
-                                          tz = attr(api, "tz"),
-                                          format = tus.globals$date_fmt),
+         POSIXct = function(x) lubridate::parse_date_time2(x,
+                                                           orders = tus.globals$date_fmt,
+                                                           tz = attr(api, "tz")),
          Date    = function(x) as.Date(x,
                                        tz = attr(api, "tz"),
                                        format = tus.globals$date_fmt),
@@ -12,9 +12,9 @@ cast_date <- function(api) {
 
 cast_time <- function(api) {
   switch(attr(api, "time_mode"),
-         POSIXct = function(x) as.POSIXct(x,
-                                          tz = attr(api, "tz"),
-                                          format = tus.globals$time_fmt),
+         POSIXct = function(x) lubridate::parse_date_time2(x,
+                                                           orders = tus.globals$time_fmt,
+                                                           tz = attr(api, "tz")),
          char    = as.character
   )
 }
