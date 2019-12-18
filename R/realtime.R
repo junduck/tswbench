@@ -101,9 +101,176 @@ sina_realtime <- function(api = TushareApi(), sina_code) {
   })
 
   ans <- data.table::rbindlist(ans)
-  data.table::setkeyv(ans, cols = "sina_code")
+  data.table::setkeyv(ans, cols = c("sina_code", "trade_time"))
 
   ans
+}
+
+#' A simple timed loop to process Sina realtime quote
+#'
+#' @param api A tsapi object
+#' @param sina_code A vector of Sina codes
+#' @param data_handler A data handler function, that accepts a data.table as input
+#' @param data_writer A data writer function to write recieved Sina quotes
+#' @param result_reporter A function to report results from data_handler
+#' @param incremental Whether to pass incremental data to data_handler. If TRUE, only new recieved data is passed, otherwise accumulated history data is passed.
+#' @param combined Whether to pass all quotes in sina_code combined. If TRUE all quotes are passed to data_handler, otherwise quotes are passed to data_handler grouped by their sina_code.
+#' @param walltime Timeout for each loop. Sina updates level 1 quotes on a 3 seconds basis.
+#'
+#' @return a worker function
+#' @export
+#'
+#' @examples
+#' codes <- c("sz000001", "sh600000")
+#' worker <- sina_realtime_worker(sina_code = codes, data_handler = example_data_handler, result_reporter = example_result_reporter, combined = TRUE, walltime = 3)
+sina_realtime_worker <- function(api = TushareApi(), sina_code, data_handler,
+                                 data_writer = NULL, result_reporter = NULL,
+                                 incremental = TRUE, combined = FALSE, walltime = 3) {
+
+  #fix Sina codes
+  sina_code <- get_sina_code(sina_code)
+
+  #match functions
+  data_handler <- match.fun(data_handler)
+  if (is.null(data_writer)) {
+    data_writer <- function(...) NULL
+  } else {
+    data_writer <- match.fun(data_writer)
+  }
+  if (is.null(result_reporter)) {
+    result_reporter <- function(...) NULL
+  } else {
+    result_reporter <- match.fun(result_reporter)
+  }
+
+  worker <- function() {
+
+    #defer reset time limit to default
+    on.exit({
+      setTimeLimit()
+    })
+
+    #call Sina once to establish connection
+    old_frame <- sina_realtime(api, sina_code)[0, ]
+    uni_frame <- old_frame
+    inc_frame <- old_frame
+
+    while (TRUE) {
+
+      #set time limit for current loop
+      setTimeLimit(elapsed = walltime, transient = TRUE)
+
+      #loop timer
+      t_loop <- Sys.time()
+
+      tryCatch({
+
+        #query data from Sina
+        new_frame <- sina_realtime(api = api, sina_code = sina_code)
+
+        #parse incremental data
+        inc_frame <- data.table::fsetdiff(new_frame, old_frame)
+        old_frame <- new_frame
+
+        if (nrow(inc_frame)) {
+
+          if (incremental) {
+            #only incremental data is passed to data_handler
+            if (combined) {
+              result <- do.call(data.table::data.table, data_handler(inc_frame))
+            } else {
+              result <- inc_frame[, data_handler(.SD), by = name]
+            }
+          } else {
+            #all data since loop is passed to data_handler
+            uni_frame <- data.table::funion(uni_frame, inc_frame)
+            data.table::setkeyv(uni_frame, c("sina_code", "trade_time"))
+            if (combined) {
+              result <- do.call(data.table::data.table, data_handler(uni_frame))
+            } else {
+              result <- uni_frame[, data_handler(.SD), by = name]
+            }
+          }
+
+          #add timestamp to result
+          result[, timestamp := Sys.time()]
+          #report result
+          result_reporter(result)
+          #write data
+          data_writer(inc_frame)
+        }
+
+        #check loop time if walltime is not set to Inf
+        if (!is.infinite(walltime)) {
+          t_delta <- Sys.time() - t_loop
+          t_remain <- walltime - t_delta
+          Sys.sleep(t_remain)
+        }
+
+      }, error = function(err) {
+        msg <- err$message
+        if (msg != "reached elapsed time limit") {
+          stop(err, call. = FALSE)
+        }
+      })
+    }
+  }
+
+  worker
+}
+
+#' Generate a simple csv writer for sina_realtime_worker()
+#'
+#' @param file output csv file path
+#'
+#' @return a data_write function that appends Sina quote data to csv file
+#' @export
+#'
+#' @examples
+#' data_writer <- csv_data_write("records.csv")
+csv_data_writer <- function(file = tempfile(fileext = "csv")) {
+
+  data_writer <- function(frame) {
+    data.table::fwrite(frame, file = file, append = TRUE)
+  }
+
+  data_writer
+}
+
+#' An example result_reporter for sina_realtime_worker()
+#'
+#' @param result result passed by worker
+#'
+#' @return NULL
+#' @export
+#'
+example_result_reporter <- function(result) {
+
+  for (i in seq_len(nrow(result))) {
+    msg <- sprintf("[%s] %sing %s at price %.3f", result$timestamp[i], result$side[i], result$code[i], result$price[i])
+    print(msg)
+  }
+
+  NULL
+}
+
+#' An example data_handler for sina_realtime_worker()
+#'
+#' @param frame a frame of realtime quote data passed by worker
+#'
+#' @return a named list, which is further converted to a data.table then passed to result_reporter
+#' @export
+#'
+example_data_handler <- function(frame) {
+
+  #pick a random side
+  side <- if (runif(1) >= 0.5) "SELL" else "BUY"
+  #pick a random stock to buy/sell
+  idx <- sample(nrow(frame), 1)
+  code <- frame$sina_code[idx]
+  price <- frame$last[idx]
+
+  list(side = side, code = code, price = price)
 }
 
 #' Convert symbols to Sina codes
