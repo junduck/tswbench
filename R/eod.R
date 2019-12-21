@@ -37,9 +37,10 @@ intraday <- function(api, ts_code, start_date = "", end_date = "", freq = c("1",
   dt[, ps := ps_p / i.close]
 
   dt[, close := i.close]
-  dt[, trade_time := td_posix]
 
-  dt[, c("ts_code", "trade_time", "open", "high", "low", "close", "vol", "amount", "pe", "pb", "ps")]
+  data.table::setnames(dt[, c("ts_code", "td_posix", "open", "high", "low", "close", "vol", "amount", "pe", "pb", "ps")],
+                       old = "td_posix",
+                       new = "trade_time")
 }
 
 #' Query daily OHLC data
