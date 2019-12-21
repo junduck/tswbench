@@ -32,3 +32,10 @@ utils::globalVariables(c(
   "ps",
   "trade_time"
 ))
+
+.onUnload <- function(libpath) {
+
+  if (!is.null(tus.globals$sina_handle)) {
+    curl::handle_reset(tus.globals$sina_hanlde)
+  }
+}

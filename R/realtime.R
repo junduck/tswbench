@@ -11,67 +11,15 @@ sina_numeric_columns <- c(#ohlc
                           "bid1_vol", "bid1", "bid2_vol", "bid2", "bid3_vol", "bid3", "bid4_vol", "bid4", "bid5_vol", "bid5",
                           "ask1_vol", "ask1", "ask2_vol", "ask2", "ask3_vol", "ask3", "ask4_vol", "ask4", "ask5_vol", "ask5")
 
-sina_realtime_parse_row <- function(row) {
-  #datetime
-  if (is.na(row[31]) || is.na(row[32])) {
-    row[31] <- NA
-  } else {
-    row[31] <- paste(row[31], row[32])
-  }
-  #everything else
-  list(
-    name       = row[1],
-    today_open = row[2],
-    pre_close  = row[3],
-    last       = row[4],
-    today_high = row[5],
-    today_low  = row[6],
-    bid        = row[7],
-    ask        = row[8],
-    vol        = row[9],
-    amount     = row[10],
-    bid1_vol   = row[11],
-    bid1       = row[12],
-    bid2_vol   = row[13],
-    bid2       = row[14],
-    bid3_vol   = row[15],
-    bid3       = row[16],
-    bid4_vol   = row[17],
-    bid4       = row[18],
-    bid5_vol   = row[19],
-    bid5       = row[20],
-    ask1_vol   = row[21],
-    ask1       = row[22],
-    ask2_vol   = row[23],
-    ask2       = row[24],
-    ask3_vol   = row[25],
-    ask3       = row[26],
-    ask4_vol   = row[27],
-    ask4       = row[28],
-    ask5_vol   = row[29],
-    ask5       = row[30],
-    trade_time = row[31]
-  )
+curl_get_plaintext <- function(url, handle, encoding) {
+
+  req <- curl::curl_fetch_memory(url, handle)
+  if (req$status_code != 200) stop("Failed to fetch data.", call. = FALSE)
+
+  stringr::str_conv(req$content, encoding = encoding)
 }
 
 sina_realtime_parse <- function(data, dt_cast) {
-
-  ans <- data %>%
-    #split by comma
-    strsplit(., ",", fixed = TRUE) %>%
-    #parse by row
-    lapply(., sina_realtime_parse_row) %>%
-    #build data.table
-    data.table::rbindlist(.)
-
-  #convert data type
-  ans[, (sina_numeric_columns) := lapply(.SD, as.numeric), .SDcols = sina_numeric_columns]
-  ans[, trade_time := dt_cast(trade_time)]
-
-  ans
-}
-
-sina_realtime_parse2 <- function(data, dt_cast) {
 
   #columns to work on
   col_idx <- seq_len(32)
@@ -91,7 +39,6 @@ sina_realtime_parse2 <- function(data, dt_cast) {
   dt
 }
 
-
 #' Query Sina realtime quotes
 #'
 #' Jun's note: It takes about 2 secs to query whole market here in Australia and
@@ -105,22 +52,25 @@ sina_realtime_parse2 <- function(data, dt_cast) {
 #'
 sina_realtime <- function(api = TushareApi(), sina_code) {
 
+  if (is.null(tus.globals$sina_hanlde)) {
+    tus.globals$sina_hanlde <- curl::new_handle()
+  }
+  handle <-tus.globals$sina_hanlde
+
   n <- length(sina_code) %/% 800L + 1L
   code_part <- suppressWarnings(split(sina_code, f = seq_len(n)))
 
   dt_cast <- cast_time(api)
   base_url <- "http://hq.sinajs.cn/rn=%0.f&list=%s"
-
   ans <- lapply(code_part, function(codes) {
     #concatenate codes by comma and construct request url
     req_url <- sprintf(base_url, unclass(Sys.time()), paste0(codes, collapse = ","))
-    req_ans <- httr::GET(req_url) %>%
-      httr::content(., as = "text") %>%
+    req_ans <- curl_get_plaintext(req_url, handle, "GB18030") %>%
       #extract in between quotes
       stringr::str_extract_all(., pattern = '(?<=")(.*?)(?=")') %>%
       magrittr::extract2(1L) %>%
       #parse data
-      sina_realtime_parse2(., dt_cast)
+      sina_realtime_parse(., dt_cast)
     #put sina_code in data.table
     req_ans[, sina_code := codes]
 
@@ -178,7 +128,7 @@ sina_realtime_worker <- function(api = TushareApi(), sina_code, data_handler,
     })
 
     #call Sina once to establish connection
-    old_frame <- sina_realtime(api, sina_code)[0, ]
+    old_frame <- sina_realtime(api = api, sina_code = sina_code)[0, ]
     uni_frame <- old_frame
     inc_frame <- old_frame
 
