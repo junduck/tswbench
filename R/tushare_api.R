@@ -176,19 +176,6 @@ TushareApi <- function(api_token = GetToken(),
   invisible(x)
 }
 
-arg_date <- c("start_date", "end_date", "trade_date", "suspend_date", "resume_date",
-              "ann_date", "period", "record_date", "ex_date", "imp_ann_date",
-              "pre_date", "actual_date", "float_date", "enddate","pay_date", "date",
-              "report_date", "list_date", "delist_date", "cal_date", "pretrade_date",
-              "in_date", "out_date", "setup_date", "ipo_date", "issue_date",
-              "first_ann_date", "base_date", "div_listdate", "modify_date",
-              "release_date", "exp_date", "begin_date", "close_date", "found_date",
-              "due_date", "purc_startdate", "redm_startdate", "imp_anndate",
-              "earpay_date", "net_ex_date", "account_date", "last_ddate",
-              "maturity_date", "last_edate")
-
-arg_time <- c("start_time", "end_time", "trade_time", "datetime", "pub_time")
-
 arg_logi <- c("is_open", "is_new", "is_audit", "is_release", "is_buyback",
               "is_ct", "update_flag")
 
@@ -208,23 +195,24 @@ arg_logi <- c("is_open", "is_new", "is_audit", "is_release", "is_buyback",
 
     #fix date/time/logical arguments
     argn <- names(arg)
-    idx <- argn %in% arg_date
+
+    #date
+    idx <- stringr::str_detect(argn, "date$|^period$")
     if (any(idx)) {
-      arg[idx] <- lapply(arg[idx], char_date)
+      arg[idx] <- lapply(arg[idx], cast_datetime_chardate)
     }
-    idx <- argn %in% arg_time
+    #time
+    idx <- stringr::str_detect(argn, "time$")
     if (any(idx)) {
-      arg[idx] <- lapply(arg[idx], char_time)
+      arg[idx] <- lapply(arg[idx], function(val) cast_datetime_chartime(val, tz = attr(x, "tz")))
     }
+    #logical
     for (i in seq_along(arg)) {
       if (is.logical(arg[[i]])) {
-        if (arg[[i]]) {
-          arg[[i]] <- "1"
-        } else {
-          arg[[i]] <- "0"
-        }
+        arg[[i]] <- ifelse(arg[[i]], "1", "0")
       }
     }
+
     #extra arguments passed to TusRequest()
     arg$api_name <- func
     arg$token <- x
@@ -240,19 +228,19 @@ arg_logi <- c("is_open", "is_new", "is_audit", "is_release", "is_buyback",
 
       cols <- colnames(dt)
       #check date
-      cidx <- which(cols %in% arg_date)
-      if (length(cidx)) {
-        data.table::set(dt, j = cidx, value = lapply(dt[, ..cidx], date_col_cast))
+      col_date <- which(stringr::str_detect(cols, "date$|^period$"))
+      if (length(col_date)) {
+        data.table::set(dt, j = col_date, value = lapply(dt[, ..col_date], date_col_cast))
       }
       #check time
-      cidx <- which(cols %in% arg_time)
-      if (length(cidx)) {
-        data.table::set(dt, j = cidx, value = lapply(dt[, ..cidx], time_col_cast))
+      col_time <- which(stringr::str_detect(cols, "time$"))
+      if (length(col_time)) {
+        data.table::set(dt, j = col_time, value = lapply(dt[, ..col_time], time_col_cast))
       }
       #check logi
-      cidx <- which(cols %in% arg_logi)
-      if (length(cidx)) {
-        data.table::set(dt, j = cidx, value = lapply(dt[, ..cidx], logi_col_cast))
+      col_logi <- which(cols %in% arg_logi)
+      if (length(col_logi)) {
+        data.table::set(dt, j = col_logi, value = lapply(dt[, ..col_logi], logi_col_cast))
       }
 
       #try to set keys
@@ -260,13 +248,13 @@ arg_logi <- c("is_open", "is_new", "is_audit", "is_release", "is_buyback",
         if (any(dt$ts_code != dt$ts_code[1])) {
           data.table::setkeyv(dt, "ts_code")
         } else {
-          cidx <- which(cols %in% c(arg_date, arg_time))
+          cidx <- c(col_time, col_date)
           if (length(cidx)) {
             data.table::setkeyv(dt, cols[cidx[1]])
           }
         }
       } else {
-        cidx <- which(cols %in% c(arg_date, arg_time))
+        cidx <- c(col_time, col_date)
         if (length(cidx)) {
           data.table::setkeyv(dt, cols[cidx[1]])
         }

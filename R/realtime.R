@@ -186,7 +186,7 @@ sina_realtime_worker <- function(api = TushareApi(), sina_code, data_handler,
 
       }, error = function(err) {
         msg <- err$message
-        if (msg != "reached elapsed time limit") {
+        if (!startsWith(msg, "reached")) {
           stop(err, call. = FALSE)
         }
       })
