@@ -1,7 +1,5 @@
 tus.globals <- new.env()
 tus.globals$api_token <- NULL
-tus.globals$date_fmt <- "%Y%m%d"
-tus.globals$time_fmt <- "%Y-%m-%d %H:%M:%S"
 
 #fixes for R CMD check
 utils::globalVariables(c(
