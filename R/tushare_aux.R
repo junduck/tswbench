@@ -1,5 +1,6 @@
 chk_number <- function(x) stringr::str_detect(x, "^[0-9]*$")
 chk_number_n <- function(x, n) stringr::str_detect(x, sprintf("^[0-9]{%d}$", n))
+chk_sina <- function(x) stringr::str_detect(x, "(^sh|^sz)[0-9]{6}$")
 
 cast_datetime_POSIXct <- function(x, tz) {
   suppressWarnings({
@@ -15,24 +16,6 @@ cast_datetime_Date <- function(x) {
   suppressWarnings(
     lubridate::as_date(x)
   )
-}
-
-cast_datetime_chartime <- function(x, tz) {
-
-  datetime <- cast_datetime_POSIXct(x, tz)
-  ans <- as.character(datetime, format = tus.globals$time_fmt)
-
-  ans[is.na(ans)] <- ""
-  ans
-}
-
-cast_datetime_chardate <- function(x) {
-
-  datetime <- cast_datetime_Date(x)
-  ans <- as.character(datetime, format = tus.globals$date_fmt)
-
-  ans[is.na(ans)] <- ""
-  ans
 }
 
 cast_logical <- function(x) {
@@ -71,16 +54,20 @@ cast_logi <- function(api) {
          as.character)
 }
 
-char_date <- function(datetime) {
-  if (is.character(datetime) && datetime != "") {
-    datetime <- lubridate::as_date(datetime)
-  }
-  as.character(datetime, format = tus.globals$date_fmt)
-}
+cast_datetime_char <- function(x, tz, func) {
 
-char_time <- function(datetime) {
-  if (is.character(datetime) && datetime != "") {
-    datetime <- lubridate::as_datetime(datetime)
+  dt <- suppressWarnings(lubridate::as_datetime(x, tz = tz))
+  hr <- lubridate::hour(dt)
+
+  if (hr) {
+    fmt <- "%Y-%m-%d %H:%M:%S"
+  } else {
+    fmt <- switch(func,
+                  news = "%Y-%m-%d",
+                  "%Y%m%d")
   }
-  as.character(datetime, format = tus.globals$time_fmt)
+
+  ans <- as.character(dt, format = fmt)
+  ans[is.na(ans)] <- ""
+  ans
 }

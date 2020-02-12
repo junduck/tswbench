@@ -196,15 +196,10 @@ arg_logi <- c("is_open", "is_new", "is_audit", "is_release", "is_buyback",
     #fix date/time/logical arguments
     argn <- names(arg)
 
-    #date
-    idx <- stringr::str_detect(argn, "date$|^period$")
+    #date/time
+    idx <- stringr::str_detect(argn, "date$|time$|^period$")
     if (any(idx)) {
-      arg[idx] <- lapply(arg[idx], cast_datetime_chardate)
-    }
-    #time
-    idx <- stringr::str_detect(argn, "time$")
-    if (any(idx)) {
-      arg[idx] <- lapply(arg[idx], function(val) cast_datetime_chartime(val, tz = attr(x, "tz")))
+      arg[idx] <- lapply(arg[idx], cast_datetime_char, tz = attr(x, "tz"), func = func)
     }
     #logical
     for (i in seq_along(arg)) {
