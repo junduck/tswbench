@@ -256,9 +256,15 @@ arg_logi <- c("is_open", "is_new", "is_audit", "is_release", "is_buyback",
       }
 
       #fix update_flag issue for fundamental data
-      if (("update_flag" %in% cols) && ("end_date" %in% cols)) {
-        upd_date <- dt[(update_flag), (end_date)]
-        dt <- dt[update_flag | (!(end_date %in% upd_date)), ]
+      if (("update_flag" %in% cols) && ("ts_code" %in% cols) && ("end_date" %in% cols)) {
+        n_ts_code <- unique(dt$ts_code)
+        if (length(n_ts_code) > 1L) {
+          data.table::setkeyv(dt, c("ts_code", "update_flag"))
+          dt <- dt[, .SD[.N], by = ts_code]
+        } else {
+          data.table::setkeyv(dt, c("end_date", "update_flag"))
+          dt <- dt[, .SD[.N], by = end_date]
+        }
       }
     }
 
