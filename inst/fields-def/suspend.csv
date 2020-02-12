@@ -1,0 +1,7 @@
+field,dtype,desc
+ts_code,str,股票代码
+suspend_date,str,停牌日期
+resume_date,str,复牌日期
+ann_date,str,公告日期
+suspend_reason,str,停牌原因
+reason_type,str,停牌原因类别

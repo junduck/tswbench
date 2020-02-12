@@ -1,0 +1,6 @@
+field,dtype,default,desc
+ts_code,str,Y,TS代码
+hs_type,str,Y,沪深港通类型SH沪SZ深
+in_date,str,Y,纳入日期
+out_date,str,Y,剔除日期
+is_new,str,Y,是否最新 1是 0否

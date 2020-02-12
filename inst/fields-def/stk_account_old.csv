@@ -1,0 +1,10 @@
+field,dtype,default,desc
+date,str,Y,统计周期
+new_sh,int,Y,本周新增（上海，户）
+new_sz,int,Y,本周新增（深圳，户）
+active_sh,float,Y,期末有效账户（上海，万户）
+active_sz,float,Y,期末有效账户（深圳，万户）
+total_sh,float,Y,期末账户数（上海，万户）
+total_sz,float,Y,期末账户数（深圳，万户）
+trade_sh,float,Y,参与交易账户数（上海，万户）
+trade_sz,float,Y,参与交易账户数（深圳，万户）

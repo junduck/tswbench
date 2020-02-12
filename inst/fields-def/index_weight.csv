@@ -1,0 +1,5 @@
+field,dtype,desc
+index_code,str,指数代码
+con_code,str,成分代码
+trade_date,str,交易日期
+weight,float,权重

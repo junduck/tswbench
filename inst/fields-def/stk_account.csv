@@ -1,0 +1,6 @@
+field,dtype,default,desc
+date,str,Y,统计周期
+weekly_new,float,Y,本周新增（万）
+total,float,Y,期末总账户数（万）
+weekly_hold,float,Y,本周持仓账户数（万）
+weekly_trade,float,Y,本周参与交易账户数（万）

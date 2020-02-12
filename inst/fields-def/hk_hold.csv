@@ -1,0 +1,8 @@
+field,dtype,default,desc
+code,str,Y,原始代码
+trade_date,str,Y,交易日期
+ts_code,str,Y,TS代码
+name,str,Y,股票名称
+vol,int,Y,持股数量(股)
+ratio,float,Y,持股占比（%）
+exchange,str,Y,类型：SH沪股通SZ深港通HK港股通

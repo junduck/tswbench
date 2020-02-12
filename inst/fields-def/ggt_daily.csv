@@ -1,0 +1,6 @@
+field,dtype,default,desc
+trade_date,str,Y,交易日期
+buy_amount,float,Y,买入成交金额（亿元）
+buy_volume,float,Y,买入成交笔数（万笔）
+sell_amount,float,Y,卖出成交金额（亿元）
+sell_volume,float,Y,卖出成交笔数（万笔）

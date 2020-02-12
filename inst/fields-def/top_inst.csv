@@ -1,0 +1,9 @@
+field,dtype,default,desc
+trade_date,str,Y,交易日期
+ts_code,str,Y,TS代码
+exalter,str,Y,营业部名称
+buy,float,Y,买入额（万）
+buy_rate,float,Y,买入占总成交比例
+sell,float,Y,卖出额（万）
+sell_rate,float,Y,卖出占总成交比例
+net_buy,float,Y,净成交额（万）

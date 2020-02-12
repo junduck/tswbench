@@ -1,0 +1,6 @@
+field,dtype,desc
+ts_code,str,TS股票代码
+ann_date,str,公告日期
+end_date,str,报告期
+holder_name,str,股东名称
+hold_amount,float,持有数量（股）

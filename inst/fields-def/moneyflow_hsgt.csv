@@ -1,0 +1,8 @@
+field,dtype,desc
+trade_date,str,交易日期
+ggt_ss,float,港股通（上海）
+ggt_sz,float,港股通（深圳）
+hgt,float,沪股通（百万元）
+sgt,float,深股通（百万元）
+north_money,float,北向资金（百万元）
+south_money,float,南向资金（百万元）

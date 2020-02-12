@@ -1,0 +1,13 @@
+field,dtype,default,desc
+ts_code,str,Y,TS股票代码
+ann_date,str,Y,公告日期
+name,str,Y,姓名
+gender,str,Y,性别
+lev,str,Y,岗位类别
+title,str,Y,岗位
+edu,str,Y,学历
+national,str,Y,国籍
+birthday,str,Y,出生年月
+begin_date,str,Y,上任日期
+end_date,str,Y,离任日期
+resume,str,N,个人简历

@@ -1,0 +1,8 @@
+field,dtype,desc
+ts_code,str,TS股票代码
+ann_date,str,公告日期
+end_date,str,报告期
+audit_result,str,审计结果
+audit_fees,float,审计总费用（元）
+audit_agency,str,会计事务所
+audit_sign,str,签字会计师

@@ -1,0 +1,7 @@
+field,dtype,default,desc
+ts_code,str,Y,TS代码
+ann_date,str,Y,最新披露公告日
+end_date,str,Y,报告期
+pre_date,str,Y,预计披露日期
+actual_date,str,Y,实际披露日期
+modify_date,str,N,披露日期修正记录

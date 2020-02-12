@@ -1,0 +1,9 @@
+field,dtype,desc
+ts_code,str,TS代码
+end_date,str,报告期
+bz_item,str,主营业务来源
+bz_sales,float,主营业务收入(元)
+bz_profit,float,主营业务利润(元)
+bz_cost,float,主营业务成本(元)
+curr_type,str,货币代码
+update_flag,str,是否更新

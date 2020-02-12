@@ -1,0 +1,18 @@
+field,dtype,desc
+trade_date,str,交易日期
+ts_code,str,股票代码
+name,str,股票名称
+close,float,收盘价
+p_change,float,涨跌幅
+rank,str,资金排名
+market_type,str,市场类型 2：港股通（沪） 4：港股通（深）
+amount,float,累计成交金额（元）
+net_amount,float,净买入金额（元）
+sh_amount,float,沪市成交金额（元）
+sh_net_amount,float,沪市净买入金额（元）
+sh_buy,float,沪市买入金额（元）
+sh_sell,float,沪市卖出金额
+sz_amount,float,深市成交金额（元）
+sz_net_amount,float,深市净买入金额（元）
+sz_buy,float,深市买入金额（元）
+sz_sell,float,深市卖出金额（元）

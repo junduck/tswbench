@@ -1,0 +1,5 @@
+field,dtype,default,desc
+exchange,str,Y,交易所 SSE上交所 SZSE深交所
+cal_date,str,Y,日历日期
+is_open,str,Y,是否交易 0休市 1交易
+pretrade_date,str,N,上一个交易日

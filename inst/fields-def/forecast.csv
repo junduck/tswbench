@@ -1,0 +1,13 @@
+field,dtype,desc
+ts_code,str,TS股票代码
+ann_date,str,公告日期
+end_date,str,报告期
+type,str,业绩预告类型(预增/预减/扭亏/首亏/续亏/续盈/略增/略减)
+p_change_min,float,预告净利润变动幅度下限（%）
+p_change_max,float,预告净利润变动幅度上限（%）
+net_profit_min,float,预告净利润下限（万元）
+net_profit_max,float,预告净利润上限（万元）
+last_parent_net,float,上年同期归属母公司净利润
+first_ann_date,str,首次公告日
+summary,str,业绩预告摘要
+change_reason,str,业绩变动原因

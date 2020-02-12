@@ -1,0 +1,13 @@
+field,dtype,default,desc
+ts_code,str,Y,TS股票代码
+sub_code,str,Y,申购代码
+name,str,Y,名称
+ipo_date,str,Y,上网发行日期
+issue_date,str,Y,上市日期
+amount,float,Y,发行总量（万股）
+market_amount,float,Y,上网发行总量（万股）
+price,float,Y,发行价格
+pe,float,Y,市盈率
+limit_amount,float,Y,个人申购上限（万股）
+funds,float,Y,募集资金（亿元）
+ballot,float,Y,中签率
