@@ -30,7 +30,7 @@ market_report <- function(api, type = c("income", "balancesheet", "cashflow", "f
     if (!chk_number_n(y, 4)) {
       stop("A valid year should be provided.")
     }
-    q <- switch(q, "0331", "0630", "0931", "1231")
+    q <- switch(q, "0331", "0630", "0930", "1231")
     if (is.null(q)) {
       stop("A valid quarter should be provided.")
     }
@@ -39,4 +39,15 @@ market_report <- function(api, type = c("income", "balancesheet", "cashflow", "f
 
   qfunc <- `$.tsapi`(api, func)
   qfunc(period = period, ..., fields = fdef$field, timeout = timeout)
+}
+
+quarterly_report <- function(api, type = c("income", "balancesheet", "cashflow", "forecast",
+                                           "express", "fina_indicator", "fina_mainbz"),
+                             ts_code, ..., timeout = 60) {
+
+  type <- match.arg(type)
+  fdef <- get_fields_def(type)
+
+  qfunc <- `$.tsapi`(api, type)
+  qfunc(ts_code = ts_code, ..., fields = fdef$field, timeout = timeout)
 }
