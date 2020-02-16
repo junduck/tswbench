@@ -63,12 +63,12 @@ cast_datetime_char <- function(x, tz, func) {
   }
   hr <- lubridate::hour(dt)
 
-  if (hr) {
-    fmt <- "%Y-%m-%d %H:%M:%S"
-  } else {
+  if (is.na(hr) || !hr) {
     fmt <- switch(func,
                   news = "%Y-%m-%d",
                   "%Y%m%d")
+  } else {
+    fmt <- "%Y-%m-%d %H:%M:%S"
   }
 
   ans <- as.character(dt, format = fmt)
