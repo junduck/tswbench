@@ -41,6 +41,17 @@ market_report <- function(api, type = c("income", "balancesheet", "cashflow", "f
   qfunc(period = period, ..., fields = fdef$field, timeout = timeout)
 }
 
+#' Query quarterly reports
+#'
+#' @param api a tsapi object
+#' @param type type of report to query
+#' @param ts_code Tushare code
+#' @param ... additional arguments passed. Please refer to Tushare manual
+#' @param timeout timeout of the query
+#'
+#' @return a data.table
+#' @export
+#'
 quarterly_report <- function(api, type = c("income", "balancesheet", "cashflow", "forecast",
                                            "express", "fina_indicator", "fina_mainbz"),
                              ts_code, ..., timeout = 60) {
