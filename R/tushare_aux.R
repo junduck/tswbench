@@ -56,7 +56,11 @@ cast_logi <- function(api) {
 
 cast_datetime_char <- function(x, tz, func) {
 
-  dt <- suppressWarnings(lubridate::as_datetime(x, tz = tz))
+  if (lubridate::is.Date(x)) {
+    dt <- lubridate::as_datetime(x)
+  } else {
+    dt <- lubridate::as_datetime(x, tz = tz)
+  }
   hr <- lubridate::hour(dt)
 
   if (hr) {
