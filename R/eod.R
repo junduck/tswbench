@@ -134,3 +134,106 @@ adjust_ohlc <- function(api, ohlc, adjust = c("forward", "qfq", "backward", "hfq
 
   dt
 }
+
+#' Query whole-market end-of-day data by date
+#'
+#' @param api a tsapi object
+#' @param func Tushare function to call, with special function intraday for intraday OHLC
+#' @param date date to query
+#' @param freq only used when func == "intraday", intraday data frequency
+#' @param ... other arguments passed to the query
+#'
+#' @return a data.table object, keyed by ts_code (and trade_time if the query is intraday)
+#' @export
+#'
+market_eod <- function(api, func, date, freq = c("60", "15", "5", "1"), ...) {
+
+  #deal with special case
+  if (func == "index_daily") {
+    q_index <- c("000001.SH", "000005.SH", "000006.SH", "000016.SH", "000300.SH", "000905.SH",
+                 "399001.SZ", "399005.SZ", "399006.SZ", "399016.SZ", "399300.SZ", "399905.SZ")
+    #to maintain consistentcy with index_dailybasic
+    tmp <- api$index_dailybasic(trade_date = date, fields = "ts_code")
+    q_index <- tmp$ts_code
+    dt <- list()
+    for (i in seq_along(q_index)) {
+      dt[[i]] <- api$index_daily(ts_code = q_index[i], trade_date = date)
+    }
+
+    dt <- data.table::rbindlist(dt)
+    data.table::setkeyv(dt, "ts_code")
+
+  } else if (func == "intraday") {
+
+    #intraday is tricky
+    freq <- as.character(freq)
+    freq <- match.arg(freq)
+    freq_min <- as.integer(freq)
+    freq <- paste0(freq, "min")
+
+    #workaround for tzone issue of Date object when converting to POSIXct
+    if (lubridate::is.Date(date)) {
+      date <- as.character(date)
+    }
+    t_date <- lubridate::as_datetime(date, tz = attr(api, "tz"))
+    break_noon <- t_date + lubridate::hours(11L) + lubridate::minutes(30L)
+    break_day <- t_date + lubridate::hours(15L)
+
+    i <- 0
+    dt <- list()
+
+    t <- t_date + lubridate::hours(9L) + lubridate::minutes(30L)
+    while (1) {
+      i <- i + 1
+      dt[[i]] <- api$stk_mins(start_date = t - lubridate::seconds(),
+                              end_date   = t + lubridate::seconds(), freq = freq)
+      t <- t + lubridate::minutes(freq_min)
+      if (t > break_noon) {
+        break
+      }
+    }
+
+    #no data on 13:00:00
+    t <- t_date + lubridate::hours(13L) + lubridate::minutes(freq_min)
+    while (1) {
+      i <- i + 1
+      dt[[i]] <- api$stk_mins(start_date = t - lubridate::seconds(),
+                              end_date   = t + lubridate::seconds(), freq = freq)
+      t <- t + lubridate::minutes(freq_min)
+      if (t > break_day) {
+        break
+      }
+    }
+
+    dt <- data.table::rbindlist(dt)
+    data.table::setkeyv(dt, c("ts_code", "trade_time"))
+
+  } else {
+    dt_arg_name <- switch(func,
+                          suspend = "suspend_date",
+                          income_vip = ,
+                          balancesheet_vip = ,
+                          cashflow_vip = ,
+                          forecast_vip = ,
+                          express_vip = ,
+                          dividend = ,
+                          fina_indicator_vip = ,
+                          fina_mainbz_vip = ,
+                          repurchase = ,
+                          share_float = ,
+                          stk_holdertrade = ,
+                          fund_div = ,
+                          cb_issue = "ann_date",
+                          fund_nav = "end_date",
+                          "trade_date")
+    #construct args
+    args <- list(...)
+    args[[dt_arg_name]] <- date
+    #construct query function
+    f <- do.call("$", list(api, func))
+    dt <- do.call(f, args)
+    data.table::setkeyv(dt, "ts_code")
+  }
+
+  dt
+}

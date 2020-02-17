@@ -12,12 +12,6 @@ cast_datetime_POSIXct <- function(x, tz) {
   ans
 }
 
-cast_datetime_Date <- function(x) {
-  suppressWarnings(
-    lubridate::as_date(x)
-  )
-}
-
 cast_logical <- function(x) {
 
   if (is.character(x)) {
@@ -34,7 +28,7 @@ cast_date <- function(api) {
 
   switch(attr(api, "date_mode"),
          POSIXct = function(x) cast_datetime_POSIXct(x, tz = attr(api, "tz")),
-         Date    = function(x) cast_datetime_Date(x),
+         Date    = lubridate::as_date,
          as.character
   )
 }
@@ -57,10 +51,9 @@ cast_logi <- function(api) {
 cast_datetime_char <- function(x, tz, func) {
 
   if (lubridate::is.Date(x)) {
-    dt <- lubridate::as_datetime(x)
-  } else {
-    dt <- lubridate::as_datetime(x, tz = tz)
+    x <- as.character(x)
   }
+  dt <- lubridate::as_datetime(x, tz = tz)
   hr <- lubridate::hour(dt)
 
   if (is.na(hr) || !hr) {
