@@ -55,7 +55,7 @@ sina_realtime <- function(api = TushareApi(), sina_code) {
   if (is.null(tus.globals$sina_hanlde)) {
     tus.globals$sina_hanlde <- curl::new_handle()
   }
-  handle <-tus.globals$sina_hanlde
+  handle <- tus.globals$sina_hanlde
 
   n <- length(sina_code) %/% 800L + 1L
   code_part <- suppressWarnings(split(sina_code, f = seq_len(n)))

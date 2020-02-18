@@ -33,7 +33,4 @@ utils::globalVariables(c(
 
 .onUnload <- function(libpath) {
 
-  if (!is.null(tus.globals$sina_handle)) {
-    curl::handle_reset(tus.globals$sina_hanlde)
-  }
 }

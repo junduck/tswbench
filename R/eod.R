@@ -152,7 +152,7 @@ market_eod <- function(api, func, date, freq = c("60", "15", "5", "1"), ...) {
   if (func == "index_daily") {
     q_index <- c("000001.SH", "000005.SH", "000006.SH", "000016.SH", "000300.SH", "000905.SH",
                  "399001.SZ", "399005.SZ", "399006.SZ", "399016.SZ", "399300.SZ", "399905.SZ")
-    #to maintain consistentcy with index_dailybasic
+    #to maintain consistency with index_dailybasic
     tmp <- api$index_dailybasic(trade_date = date, fields = "ts_code")
     q_index <- tmp$ts_code
     dt <- list()

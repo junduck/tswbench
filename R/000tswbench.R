@@ -1,6 +1,6 @@
 #' @import data.table
 #' @import httr
-#' @import curl
+#' @importFrom curl curl_fetch_memory new_handle
 #' @importFrom lubridate as_date as_datetime
 #' @import Ckmeans.1d.dp
 #' @import mixtools
