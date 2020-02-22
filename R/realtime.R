@@ -262,11 +262,14 @@ get_sina_code <- function(symbol) {
   #Jun's note: this method does not work for netease symbols which are [0,1][0-9]{6}
 
   #extract 6 digits
-  ans <- stringr::str_extract(symbol, "[0-9]{6}")
-  #attach prefix
-  is_shanghai <- startsWith(ans, "6")
-  ans[ is_shanghai] <- paste0("sh", ans[ is_shanghai])
-  ans[!is_shanghai] <- paste0("sz", ans[!is_shanghai])
+  digits <- stringr::str_extract(symbol, "[0-9]{6}")
 
-  ans
+  #guess market
+  if (all(stringr::str_detect(symbol, "[a-zA-Z]{2}"))) {
+    market <- tolower(stringr::str_extract(symbol, "(^[a-zA-Z]{2})|([a-zA-Z]{2}$)"))
+  } else {
+    market <- ifelse(startsWith(digits, "6"), "sh", "sz")
+  }
+
+  paste0(market, digits)
 }
