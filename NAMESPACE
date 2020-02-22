@@ -2,6 +2,8 @@
 
 S3method("$",tsapi)
 S3method(print,tsapi)
+export(GetToken)
+export(SetToken)
 export(TushareApi)
 export(adjust_ohlc)
 export(csv_data_writer)

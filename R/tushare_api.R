@@ -3,6 +3,7 @@
 #' @param token a character vector
 #'
 #' @return token itself, invisibly.
+#' @export
 SetToken <- function(token) {
 
   tus.globals$api_token <- as.character(token)
@@ -11,6 +12,7 @@ SetToken <- function(token) {
 }
 
 #' @rdname SetToken
+#' @export
 GetToken <- function() {
 
   if (is.null(tus.globals$api_token)) {
@@ -239,15 +241,8 @@ arg_logi <- c("is_open", "is_new", "is_audit", "is_release", "is_buyback",
       }
 
       #try to set keys
-      if ("ts_code" %in% cols) {
-        if (any(dt$ts_code != dt$ts_code[1])) {
-          data.table::setkeyv(dt, "ts_code")
-        } else {
-          cidx <- c(col_time, col_date)
-          if (length(cidx)) {
-            data.table::setkeyv(dt, cols[cidx[1]])
-          }
-        }
+      if (("ts_code" %in% cols) && anyDuplicated(dt$ts_code)) {
+        data.table::setkeyv(dt, "ts_code")
       } else {
         cidx <- c(col_time, col_date)
         if (length(cidx)) {
