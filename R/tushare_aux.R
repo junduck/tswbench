@@ -3,6 +3,13 @@ chk_number_n <- function(x, n) stringr::str_detect(x, sprintf("^[0-9]{%d}$", n))
 chk_sina <- function(x) stringr::str_detect(x, "(^sh|^sz)[0-9]{6}$")
 
 cast_datetime_POSIXct <- function(x, tz) {
+
+  if (lubridate::is.Date(x)) {
+    #fix timezone issue with Date class when converting to POSIXct
+    posix <- .POSIXct(unclass(x) * 86400.0, tz = "UTC")
+    x <- lubridate::force_tz(posix, tz)
+  }
+
   suppressWarnings({
     ans <- lubridate::as_datetime(x, tz = tz)
     if (anyNA(ans)) {
@@ -51,9 +58,10 @@ cast_logi <- function(api) {
 cast_datetime_char <- function(x, tz, func) {
 
   if (lubridate::is.Date(x)) {
-    x <- as.character(x)
+    dt <- x
+  } else {
+    dt <- lubridate::as_datetime(x, tz = tz)
   }
-  dt <- lubridate::as_datetime(x, tz = tz)
   hr <- lubridate::hour(dt)
 
   if (is.na(hr) || !hr) {
