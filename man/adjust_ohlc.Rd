@@ -2,20 +2,24 @@
 % Please edit documentation in R/eod.R
 \name{adjust_ohlc}
 \alias{adjust_ohlc}
-\title{Perform dividen adjustment on OHLC data}
+\title{Perform dividen adjustment on OHLC data.}
 \usage{
-adjust_ohlc(api, ohlc, adjust = c("forward", "qfq", "backward", "hfq"))
+adjust_ohlc(
+  ohlc,
+  adjust = c("forward", "qfq", "backward", "hfq"),
+  api = TushareApi()
+)
 }
 \arguments{
-\item{api}{a tsapi object}
-
 \item{ohlc}{a data.table of OHLC data}
 
 \item{adjust}{Adjustment method}
+
+\item{api}{a tsapi object}
 }
 \value{
 a data.table
 }
 \description{
-Perform dividen adjustment on OHLC data
+Only open, high, low, close columns are ajusted.
 }

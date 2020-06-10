@@ -30,28 +30,18 @@ GetToken <- function() {
 #' @param envir passed to do.call
 #' @param attempt max number of attempts
 #' @param sleep sleep time between attempts
-#' @param warn whether to throw warning when error captured, or an error handling function
+#' @param handler error handling function
 #'
 #' @return The returned value from function call
 do.retry <- function(what, args, quote = FALSE, envir = parent.frame(),
-                     attempt = 3, sleep = 0, warn = TRUE) {
+                     attempt = 3, sleep = 0, handler = warning) {
 
   flag <- FALSE
-  if (is.logical(warn)) {
-    err_func <- function(e) {
-      if (warn) {
-        warning(e$message, call. = FALSE)
-      }
-      flag <<- FALSE
-      Sys.sleep(sleep)
-    }
-  } else {
-    warn <- match.fun(warn)
-    err_func <- function(e) {
-      warn(e)
-      flag <<- FALSE
-      Sys.sleep(sleep)
-    }
+
+  err_func <- function(e) {
+    flag <<- FALSE
+    handler(e)
+    Sys.sleep(sleep)
   }
 
   for (i in seq_len(attempt)) {
@@ -84,7 +74,7 @@ TusRequest <- function(api_name, ..., fields = c(""), token = GetToken(), timeou
 
   api_url <- "http://api.waditu.com"
 
-  args <- list(
+  req_args <- list(
     token    = as.character(token),
     api_name = api_name,
     params   = list(...),
@@ -94,10 +84,10 @@ TusRequest <- function(api_name, ..., fields = c(""), token = GetToken(), timeou
   post_args <- list(
     url    = api_url,
     config = httr::timeout(timeout),
-    body   = args,
+    body   = req_args,
     encode = "json"
   )
-  req <- do.retry(httr::POST, post_args, attempt = attempt, sleep = 0.5, warn = TRUE)
+  req <- do.retry(httr::POST, post_args, attempt = attempt, sleep = 0.5)
   res <- httr::content(req,
                        as = "parsed",
                        type = "application/json",
@@ -118,8 +108,8 @@ TusRequest <- function(api_name, ..., fields = c(""), token = GetToken(), timeou
       })
     } else {
       #create an empty data.table
-      dt <- do.call(data.table::data.table, rep_len(x = list(logical()),
-                                                    length.out = length(res$data$fields)))
+      dt <- do.call(data.table::data.table,
+                    rep_len(x = list(logical()), length.out = length(res$data$fields)))
     }
   })
   data.table::setnames(dt, unlist(res$data$fields))
@@ -140,7 +130,7 @@ TusRequest <- function(api_name, ..., fields = c(""), token = GetToken(), timeou
 #'
 TushareApi <- function(api_token = GetToken(),
                        time_mode = c("POSIXct", "char"),
-                       date_mode = c("POSIXct", "Date", "char"),
+                       date_mode = c("Date", "POSIXct", "char"),
                        logi_mode = c("logical", "char"),
                        tz = "Asia/Shanghai") {
 
@@ -198,10 +188,10 @@ arg_logi <- c("is_open", "is_new", "is_audit", "is_release", "is_buyback",
     #fix date/time/logical arguments
     argn <- names(arg)
 
-    #date/time
+    #datetime
     idx <- stringr::str_detect(argn, "date$|time$|^period$")
     if (any(idx)) {
-      arg[idx] <- lapply(arg[idx], cast_datetime_char, tz = attr(x, "tz"), func = func)
+      arg[idx] <- lapply(arg[idx], datetime_to_char, tz = get_tz(x))
     }
     #logical
     for (i in seq_along(arg)) {
@@ -212,54 +202,51 @@ arg_logi <- c("is_open", "is_new", "is_audit", "is_release", "is_buyback",
 
     #extra arguments passed to TusRequest()
     arg$api_name <- func
-    arg$token <- x
-    arg$timeout <- timeout
-    arg$attempt <- attempt
+    arg$token    <- x
+    arg$timeout  <- timeout
+    arg$attempt  <- attempt
 
     dt <- do.call(TusRequest, arg)
     #parse dt
     if (nrow(dt)) {
-      date_col_cast <- cast_date(x)
-      time_col_cast <- cast_time(x)
-      logi_col_cast <- cast_logi(x)
+      parse_date     <- date_parser(x)
+      parse_datetime <- datetime_parser(x)
+      parse_logical  <- logical_parser(x)
 
       cols <- colnames(dt)
-      #check date
+      #parse date columns
       col_date <- which(stringr::str_detect(cols, "date$|^period$"))
       if (length(col_date)) {
-        data.table::set(dt, j = col_date, value = lapply(dt[, ..col_date], date_col_cast))
+        dt[, (col_date) := lapply(.SD, parse_date), .SDcol = col_date]
       }
-      #check time
+      #parse datetime columns
       col_time <- which(stringr::str_detect(cols, "time$"))
       if (length(col_time)) {
-        data.table::set(dt, j = col_time, value = lapply(dt[, ..col_time], time_col_cast))
+        dt[, (col_time) := lapply(.SD, parse_datetime), .SDcol = col_time]
       }
-      #check logi
+      #parse logical columns
       col_logi <- which(cols %in% arg_logi)
       if (length(col_logi)) {
-        data.table::set(dt, j = col_logi, value = lapply(dt[, ..col_logi], logi_col_cast))
+        dt[, (col_logi) := lapply(.SD, parse_logical), .SDcol = col_logi]
       }
 
-      #try to set keys
-      if (("ts_code" %in% cols) && anyDuplicated(dt$ts_code)) {
-        data.table::setkeyv(dt, "ts_code")
-      } else {
-        cidx <- c(col_time, col_date)
-        if (length(cidx)) {
-          data.table::setkeyv(dt, cols[cidx[1]])
-        }
+      #set keys
+      keys <- NULL
+      dttm_idx <- c(col_time, col_date)
+      if ("ts_code" %in% cols) {
+        keys <- "ts_code"
+      }
+      if (length(dttm_idx)) {
+        keys <- c(keys, cols[dttm_idx[1]])
+      }
+      if (length(keys)) {
+        data.table::setkeyv(dt, keys)
       }
 
       #fix update_flag issue for fundamental data
       if (("update_flag" %in% cols) && ("ts_code" %in% cols) && ("end_date" %in% cols)) {
-        n_ts_code <- unique(dt$ts_code)
-        if (length(n_ts_code) > 1L) {
-          data.table::setkeyv(dt, c("ts_code", "update_flag"))
-          dt <- dt[, .SD[.N], by = ts_code]
-        } else {
-          data.table::setkeyv(dt, c("end_date", "update_flag"))
-          dt <- dt[, .SD[.N], by = end_date]
-        }
+        data.table::setkeyv(dt, c("ts_code", "end_date", "update_flag"))
+        dt <- dt[, lapply(.SD, last), by = c("ts_code", "end_date")]
       }
     }
 

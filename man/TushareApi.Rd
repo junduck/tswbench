@@ -7,7 +7,7 @@
 TushareApi(
   api_token = GetToken(),
   time_mode = c("POSIXct", "char"),
-  date_mode = c("POSIXct", "Date", "char"),
+  date_mode = c("Date", "POSIXct", "char"),
   logi_mode = c("logical", "char"),
   tz = "Asia/Shanghai"
 )

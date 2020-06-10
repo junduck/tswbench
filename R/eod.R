@@ -1,60 +1,67 @@
 #' Query intraday OHLC data
 #'
-#' @param api a tsapi object
 #' @param ts_code Tushare code
 #' @param start_date OPTIONAL, start time of OHLC
 #' @param end_date OPTIONAL, end time of OHLC
 #' @param freq frequency of OHLC
+#' @param api a tsapi object
 #'
 #' @return a data.table
 #' @export
 #'
-intraday <- function(api, ts_code, start_date = "", end_date = "", freq = c("1", "5", "15", "60")) {
+intraday <- function(ts_code, start_date = "", end_date = "", freq = c("1", "5", "15", "60"), api = TushareApi()) {
 
   freq <- as.character(freq)
   freq <- match.arg(freq)
   freq <- paste0(freq, "min")
 
   #intraday OHLC
-  ohlc <- api$stk_mins(ts_code = ts_code, start_date = start_date, end_date = end_date,
-               freq = freq)
+  ohlc <- api$stk_mins(ts_code = ts_code, start_date = start_date, end_date = end_date, freq = freq)
+  data.table::setkeyv(ohlc, "trade_time")
 
   #daily indicator
   n <- nrow(ohlc)
-  date <- as.Date(ohlc$trade_time[n])
-  indi <- api$daily_basic(ts_code = ts_code, end_date = date,
-                          fields = c("trade_date", "close", "pe_ttm", "pb", "ps_ttm"))
-  indi[, td_posix := as.POSIXct(trade_date)]
-  data.table::setkeyv(indi, "td_posix")
+  date_1 <- lubridate::as_date(ohlc$trade_time[1])
+  date_n <- lubridate::as_date(ohlc$trade_time[n])
+  indi <- api$daily_basic(ts_code = ts_code, start_date = date_1, end_date = date_n,
+                          fields = c("trade_date", "close", "pe", "pe_ttm", "pb", "ps", "ps_ttm"))
+  indi[, trade_date_posix := as_POSIXct(trade_date, tz = get_tz(api))]
+  data.table::setkeyv(indi, "trade_date_posix")
 
-  indi[, pe_p := pe_ttm * close]
-  indi[, pb_p := pb     * close]
-  indi[, ps_p := ps_ttm * close]
+  indi[, pe_p     := pe     * close]
+  indi[, pe_ttm_p := pe_ttm * close]
+  indi[, pb_p     := pb     * close]
+  indi[, ps_p     := ps     * close]
+  indi[, ps_ttm_p := ps_ttm * close]
 
   dt <- indi[ohlc, roll = TRUE]
-  dt[, pe := pe_p / i.close]
-  dt[, pb := pb_p / i.close]
-  dt[, ps := ps_p / i.close]
+  dt[, pe     := pe_p     / i.close]
+  dt[, pe_ttm := pe_ttm_p / i.close]
+  dt[, pb     := pb_p     / i.close]
+  dt[, ps     := ps_p     / i.close]
+  dt[, ps_ttm := ps_ttm_p / i.close]
 
   dt[, close := i.close]
 
-  data.table::setnames(dt[, c("ts_code", "td_posix", "open", "high", "low", "close", "vol", "amount", "pe", "pb", "ps")],
-                       old = "td_posix",
-                       new = "trade_time")
+  dt <- data.table::setnames(dt[, c("ts_code", "trade_date_posix",
+                                    "open", "high", "low", "close", "vol", "amount",
+                                    "pe", "pe_ttm", "pb", "ps", "ps_ttm")],
+                             old = "trade_date_posix", new = "trade_time")
+  data.table::setkeyv(dt, "trade_time")
 }
 
 #' Query daily OHLC data
 #'
-#' @param api a tsapi object
 #' @param ts_code Tushare code
 #' @param start_date OPTIONAL, start date of OHLC
 #' @param end_date OPTIONAL, end date of OHLC
 #' @param adjust Dividen adjustment method
+#' @param api a tsapi object
 #'
 #' @return a data.table
 #' @export
 #'
-daily <- function(api, ts_code, start_date = "", end_date = "", adjust = c("none", "forward", "qfq", "backward", "hfq")) {
+daily <- function(ts_code, start_date = "", end_date = "", adjust = c("none", "forward", "qfq", "backward", "hfq"), api = TushareApi()) {
 
   adjust <- match.arg(adjust)
 
@@ -64,65 +71,71 @@ daily <- function(api, ts_code, start_date = "", end_date = "", adjust = c("none
   if (adjust != "none") {
     f <- api$adj_factor(ts_code = ts_code, start_date = start_date, end_date = end_date)
     if (adjust == "forward" || adjust == "qfq") {
-      f[, adj_factor := adj_factor / adj_factor[.N]]
+      f[, adj_factor := adj_factor / last(adj_factor)]
     }
-    ohlc <- f[ohlc, roll = TRUE]
+    ohlc <- f[ohlc, roll = TRUE, on = "trade_date"]
     ohlc[, open       := open  * adj_factor]
     ohlc[, high       := high  * adj_factor]
     ohlc[, low        := low   * adj_factor]
     ohlc[, close      := close * adj_factor]
-    ohlc[, c("adj_factor", "i.ts_code") := NULL]
+    ohlc[, c("i.ts_code") := NULL]
   }
 
-  ohlc[indi, ][, c("i.ts_code", "i.close") := NULL]
+  ohlc[indi, on = "trade_date"][, c("i.ts_code", "i.close") := NULL]
 }
 
 #' Query whole-market daily OHLC data
 #'
-#' @param api a tsapi object
 #' @param trade_date trade date to query
+#' @param api a tsapi object
 #'
 #' @return a data.table
 #' @export
 #'
-mdaily <- function(api, trade_date = Sys.Date()) {
+mdaily <- function(trade_date = Sys.Date(), api = TushareApi()) {
 
   ohlc <- api$daily(trade_date = trade_date)
   indi <- api$daily_basic(trade_date = trade_date)
 
-  data.table::setkeyv(ohlc, "ts_code")
-  data.table::setkeyv(indi, "ts_code")
-
-  ohlc[indi, ][, c("i.trade_date", "i.close") := NULL]
+  ohlc[indi, on = "ts_code"][, c("i.trade_date", "i.close") := NULL]
 }
 
-#' Perform dividen adjustment on OHLC data
+#' Perform dividen adjustment on OHLC data.
 #'
-#' @param api a tsapi object
+#' Only open, high, low, close columns are ajusted.
+#'
 #' @param ohlc a data.table of OHLC data
 #' @param adjust Adjustment method
+#' @param api a tsapi object
 #'
 #' @return a data.table
 #' @export
 #'
-adjust_ohlc <- function(api, ohlc, adjust = c("forward", "qfq", "backward", "hfq")) {
+adjust_ohlc <- function(ohlc, adjust = c("forward", "qfq", "backward", "hfq"), api = TushareApi()) {
 
   adjust <- match.arg(adjust)
 
-  datetime <- c("trade_date", "trade_time", "date", "time")
-  cols <- colnames(ohlc)
-  test <- datetime %in% cols
+  cols <- names(ohlc)
+  test <- stringr::str_detect(cols, "date$|time$")
   if (!any(test)) {
-    stop("No date/time column found in OHLC data.")
+    stop("No date/time column found in OHLC data.", call. = FALSE)
   }
-  col <- datetime[test][1]
+  col <- which(test)[1L]
 
-  f <- api$adj_factor(ts_code    = ohlc$ts_code[1],
-                      start_date = ohlc[ 1, ..col][[1]],
-                      end_date   = ohlc[.N, ..col][[1]])
+  ts_code <- unique(ohlc$ts_code)
+  if (!length(ts_code)) {
+    stop("No ts_code column found in OHLC data.", call. = FALSE)
+  }
+  if (length(ts_code) > 1L) {
+    stop("Non-unique ts_code found in OHLC data.", call. = FALSE)
+  }
+
+  f <- api$adj_factor(ts_code    = ts_code,
+                      start_date = data.table::first(ohlc[[col]]),
+                      end_date   = data.table::last(ohlc[[col]]))
 
   if (adjust == "forward" || adjust == "qfq") {
-    f[, adj_factor := adj_factor / adj_factor[.N]]
+    f[, adj_factor := adj_factor / last(adj_factor)]
   }
 
   dt <- f[ohlc, roll = TRUE]
@@ -130,26 +143,27 @@ adjust_ohlc <- function(api, ohlc, adjust = c("forward", "qfq", "backward", "hfq
   dt[, high       := high  * adj_factor]
   dt[, low        := low   * adj_factor]
   dt[, close      := close * adj_factor]
-  dt[, c("adj_factor", "i.ts_code") := NULL]
+  dt[, c("i.ts_code") := NULL]
 
   dt
 }
 
 #' Query whole-market end-of-day data by date
 #'
-#' @param api a tsapi object
-#' @param func Tushare function to call, with special function intraday for intraday OHLC
+#' @param func Tushare function to call. Use intraday for intraday data.
 #' @param date date to query
 #' @param freq only used when func == "intraday", intraday data frequency
 #' @param ... other arguments passed to the query
+#' @param api a tsapi object
 #'
 #' @return a data.table object, keyed by ts_code (and trade_time if the query is intraday)
 #' @export
 #'
-market_eod <- function(api, func, date, freq = c("60", "15", "5", "1"), ...) {
+market_eod <- function(func, date = Sys.Date(), freq = c("60", "15", "5", "1"), ..., api = TushareApi()) {
 
   #deal with special case
   if (func == "index_daily") {
+
     q_index <- c("000001.SH", "000005.SH", "000006.SH", "000016.SH", "000300.SH", "000905.SH",
                  "399001.SZ", "399005.SZ", "399006.SZ", "399016.SZ", "399300.SZ", "399905.SZ")
     #to maintain consistency with index_dailybasic
@@ -157,7 +171,7 @@ market_eod <- function(api, func, date, freq = c("60", "15", "5", "1"), ...) {
     q_index <- tmp$ts_code
     dt <- list()
     for (i in seq_along(q_index)) {
-      dt[[i]] <- api$index_daily(ts_code = q_index[i], trade_date = date)
+      dt[[i]] <- api$index_daily(ts_code = q_index[i], trade_date = date, ...)
     }
 
     dt <- data.table::rbindlist(dt)
@@ -165,45 +179,26 @@ market_eod <- function(api, func, date, freq = c("60", "15", "5", "1"), ...) {
 
   } else if (func == "intraday") {
 
-    #intraday is tricky
-    freq <- as.character(freq)
-    freq <- match.arg(freq)
-    freq_min <- as.integer(freq)
-    freq <- paste0(freq, "min")
+    freq     <- as.character(freq)
+    freq     <- match.arg(freq)
+    freq_sec <- as.integer(freq) * 60L
+    freq     <- paste0(freq, "min")
 
-    #workaround for tzone issue of Date object when converting to POSIXct
-    if (lubridate::is.Date(date)) {
-      date <- as.character(date)
-    }
-    t_date <- lubridate::as_datetime(date, tz = attr(api, "tz"))
-    break_noon <- t_date + lubridate::hours(11L) + lubridate::minutes(30L)
-    break_day <- t_date + lubridate::hours(15L)
+    tl1 <- tl2 <- as.POSIXlt(as_POSIXct(date, tz = get_tz(api)))
+    #morning section
+    tl1$hour <- 9 ; tl1$min <- 30; tl1$sec <- 0
+    tl2$hour <- 11; tl2$min <- 30; tl2$sec <- 0
+    t <- seq(unclass(as.POSIXct(tl1)), unclass(as.POSIXct(tl2)), by = freq_sec)
+    #shift 12600 (3.5 hr) seconds to get afternoon section
+    t <- lubridate::as_datetime(c(t, t + 12600), tz = get_tz(api))
 
-    i <- 0
     dt <- list()
-
-    t <- t_date + lubridate::hours(9L) + lubridate::minutes(30L)
-    while (1) {
-      i <- i + 1
-      dt[[i]] <- api$stk_mins(start_date = t - lubridate::seconds(),
-                              end_date   = t + lubridate::seconds(), freq = freq)
-      t <- t + lubridate::minutes(freq_min)
-      if (t > break_noon) {
-        break
-      }
+    for (i in seq_along(t)) {
+      dt[[i]] <- api$stk_mins(start_date = t[i], end_date = t[i] + 1.0, freq = freq, ...)
     }
 
-    #no data on 13:00:00
-    t <- t_date + lubridate::hours(13L) + lubridate::minutes(freq_min)
-    while (1) {
-      i <- i + 1
-      dt[[i]] <- api$stk_mins(start_date = t - lubridate::seconds(),
-                              end_date   = t + lubridate::seconds(), freq = freq)
-      t <- t + lubridate::minutes(freq_min)
-      if (t > break_day) {
-        break
-      }
-    }
+    dt_idx <- as.logical(sapply(dt, nrow))
+    dt <- dt[dt_idx]
 
     dt <- data.table::rbindlist(dt)
     data.table::setkeyv(dt, c("ts_code", "trade_time"))
@@ -230,7 +225,7 @@ market_eod <- function(api, func, date, freq = c("60", "15", "5", "1"), ...) {
     args <- list(...)
     args[[dt_arg_name]] <- date
     #construct query function
-    f <- do.call("$", list(api, func))
+    f  <- do.call("$", list(api, func))
     dt <- do.call(f, args)
     data.table::setkeyv(dt, "ts_code")
   }

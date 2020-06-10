@@ -5,16 +5,14 @@
 \title{Query intraday OHLC data}
 \usage{
 intraday(
-  api,
   ts_code,
   start_date = "",
   end_date = "",
-  freq = c("1", "5", "15", "60")
+  freq = c("1", "5", "15", "60"),
+  api = TushareApi()
 )
 }
 \arguments{
-\item{api}{a tsapi object}
-
 \item{ts_code}{Tushare code}
 
 \item{start_date}{OPTIONAL, start time of OHLC}
@@ -22,6 +20,8 @@ intraday(
 \item{end_date}{OPTIONAL, end time of OHLC}
 
 \item{freq}{frequency of OHLC}
+
+\item{api}{a tsapi object}
 }
 \value{
 a data.table

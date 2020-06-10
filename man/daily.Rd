@@ -5,16 +5,14 @@
 \title{Query daily OHLC data}
 \usage{
 daily(
-  api,
   ts_code,
   start_date = "",
   end_date = "",
-  adjust = c("none", "forward", "qfq", "backward", "hfq")
+  adjust = c("none", "forward", "qfq", "backward", "hfq"),
+  api = TushareApi()
 )
 }
 \arguments{
-\item{api}{a tsapi object}
-
 \item{ts_code}{Tushare code}
 
 \item{start_date}{OPTIONAL, start date of OHLC}
@@ -22,6 +20,8 @@ daily(
 \item{end_date}{OPTIONAL, end date of OHLC}
 
 \item{adjust}{Dividen adjustment method}
+
+\item{api}{a tsapi object}
 }
 \value{
 a data.table

@@ -4,12 +4,12 @@
 \alias{mdaily}
 \title{Query whole-market daily OHLC data}
 \usage{
-mdaily(api, trade_date = Sys.Date())
+mdaily(trade_date = Sys.Date(), api = TushareApi())
 }
 \arguments{
-\item{api}{a tsapi object}
-
 \item{trade_date}{trade date to query}
+
+\item{api}{a tsapi object}
 }
 \value{
 a data.table

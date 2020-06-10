@@ -1,16 +1,3 @@
-sina_column_names <- c(#ohlc
-                       "name", "today_open", "pre_close", "last", "today_high", "today_low", "bid", "ask", "vol", "amount",
-                       #bid and ask
-                       "bid1_vol", "bid1", "bid2_vol", "bid2", "bid3_vol", "bid3", "bid4_vol", "bid4", "bid5_vol", "bid5",
-                       "ask1_vol", "ask1", "ask2_vol", "ask2", "ask3_vol", "ask3", "ask4_vol", "ask4", "ask5_vol", "ask5",
-                       #timestamps
-                       "date_str", "time_str")
-sina_numeric_columns <- c(#ohlc
-                          "today_open", "pre_close", "last", "today_high", "today_low", "bid", "ask", "vol", "amount",
-                          #bid and ask
-                          "bid1_vol", "bid1", "bid2_vol", "bid2", "bid3_vol", "bid3", "bid4_vol", "bid4", "bid5_vol", "bid5",
-                          "ask1_vol", "ask1", "ask2_vol", "ask2", "ask3_vol", "ask3", "ask4_vol", "ask4", "ask5_vol", "ask5")
-
 curl_get_plaintext <- function(url, handle, encoding) {
 
   req <- curl::curl_fetch_memory(url, handle)
@@ -19,235 +6,155 @@ curl_get_plaintext <- function(url, handle, encoding) {
   stringr::str_conv(req$content, encoding = encoding)
 }
 
-sina_realtime_parse <- function(data, dt_cast) {
+realtime_js_str_var <- function(baseurl, rand_var, code_var, encode, max_batch, split, keep_cols) {
 
-  #columns to work on
-  col_idx <- seq_len(32)
-  #split by comma, drop unused column i.e. 33
-  dt <- data.table::tstrsplit(data, ",", fixed = TRUE, keep = col_idx)
-  #convert to data.table
-  data.table::setDT(dt)
-  #set column names
-  data.table::setnames(dt, old = col_idx, new = sina_column_names)
-  #convert numeric columns to numeric
-  dt[, (sina_numeric_columns) := lapply(.SD, as.numeric), .SDcols = sina_numeric_columns]
-  #convert date_str & time_str to trade_time
-  dt[, trade_time := dt_cast(paste0(date_str, time_str))]
-  #remove date_str, time_str columns
+  if (endsWith(baseurl, "/")) {
+    url <- paste0(baseurl, rand_var, "=%.0f&", code_var, "=%s")
+  } else {
+    url <- paste0(baseurl, "/", rand_var, "=%.0f&", code_var, "=%s")
+  }
+  function(code) {
+    handle = curl::new_handle()
+    code_part <- split(code, seq_along(code) %/% max_batch)
+    data <- lapply(code_part, function(codes) {
+      req_url <- sprintf(url, unclass(Sys.time()) * 1000, paste0(codes, collapse = ","))
+      req_ans <- curl_get_plaintext(req_url, handle, encode) %>%
+        stringr::str_match_all(., pattern = '"(.*?)"') %>%
+        magrittr::extract2(1L)
+      req_ans[, 2L]
+    })
+    dt <- data.table::tstrsplit(do.call(c, data), split = split, fixed = TRUE, keep = keep_cols)
+    data.table::setDT(dt)
+  }
+}
+
+sina_realtime_quote_cols <- c(
+  #meta
+  "Name",
+  #ohlc
+  "Open", "PreClose", "Price", "High", "Low", "Bid", "Ask", "Vol", "Tnvr",
+  #bid and ask
+  "Bid_V1", "Bid_P1", "Bid_V2", "Bid_P2", "Bid_V3", "Bid_P3", "Bid_V4", "Bid_P4", "Bid_V5", "Bid_P5",
+  "Ask_V1", "Ask_P1", "Ask_V2", "Ask_P2", "Ask_V3", "Ask_P3", "Ask_V4", "Ask_P4", "Ask_V5", "Ask_P5",
+  #timestamps
+  "date_str", "time_str"
+)
+
+sina_realtime_quote_num_cols <- c(
+  #ohlc
+  "Open", "PreClose", "Price", "High", "Low", "Bid", "Ask", "Vol", "Tnvr",
+  #bid and ask
+  "Bid_V1", "Bid_P1", "Bid_V2", "Bid_P2", "Bid_V3", "Bid_P3", "Bid_V4", "Bid_P4", "Bid_V5", "Bid_P5",
+  "Ask_V1", "Ask_P1", "Ask_V2", "Ask_P2", "Ask_V3", "Ask_P3", "Ask_V4", "Ask_P4", "Ask_V5", "Ask_P5"
+)
+
+sina_realtime_quote_data <- realtime_js_str_var(baseurl = "http://hq.sinajs.cn/",
+                                                rand_var = "rn",
+                                                code_var = "list",
+                                                encode = "GB18030",
+                                                max_batch = 800L,
+                                                split = ",",
+                                                keep_cols = seq_len(32L))
+
+#' Query realtime quotes from Sina
+#'
+#' @param sina_code Sina codes to query
+#' @param api an tsapi object
+#'
+#' @return data.table
+#' @export
+#'
+sina_realtime_quote <- function(sina_code, api = TushareApi()) {
+
+  dt <- sina_realtime_quote_data(sina_code)
+  data.table::setnames(dt, sina_realtime_quote_cols)
+  dt[, (sina_realtime_quote_num_cols) := lapply(.SD, as.numeric), .SDcols = sina_realtime_quote_num_cols]
+  parse_datetime <- datetime_parser(api)
+  dt[, Time := parse_datetime(paste0(date_str, time_str))]
+  dt[, sina_code := sina_code]
   dt[, c("date_str", "time_str") := NULL]
 
   dt
 }
 
-#' Query Sina realtime quotes
+tencent_realtime_quote_cols <- c(
+  "MktId", "Name", "Code", "Price", "PreClose", "Open", "Vol", "Bid_Vol", "Ask_Vol",
+  "Bid_P1", "Bid_V1", "Bid_P2", "Bid_V2", "Bid_P3", "Bid_V3", "Bid_P4", "Bid_V4", "Bid_P5", "Bid_V5",
+  "Ask_P1", "Ask_V1", "Ask_P2", "Ask_V2", "Ask_P3", "Ask_V3", "Ask_P4", "Ask_V4", "Ask_P5", "Ask_V5",
+  "RecentOrder", "Time", "Change", "ChangePct", "High", "Low",
+  "PriceVolTnvr", "Vol_Duplicate", "TnvrDisp", "TnvrRatio", "PE", "V41_Unknow", "High_Duplicate",
+  "Low_Duplicate", "AmpPct", "FreeFloat", "MktCap", "PB", "HighLimit", "LowLimit",
+  "OrderVolRatio", "OrderValSpread", "VWAP", "PE_Dynamic", "PE_Static", "V55_Unknow", "V56_Unknow",
+  "V57_Unknow", "Tnvr", "V59_Unknow", "V60_Unknow", "V61_Unknow", "MktTag", "V63_Unknow",
+  "V64_Unknow", "V65_Unknow", "V66_Unknow", "V67_Unknow"
+)
+
+tencent_realtime_quote_data <- realtime_js_str_var(baseurl = "http://qt.gtimg.cn/",
+                                                   rand_var = "r",
+                                                   code_var = "q",
+                                                   encode = "GBK",
+                                                   max_batch = 800L,
+                                                   split = "~",
+                                                   keep_cols = seq_len(67L))
+
+#' Query realtime quotes from Tencent
 #'
-#' Jun's note: It takes about 2 secs to query whole market here in Australia and
-#' time slice of Sina L1 data is about 3 secs.
+#' Tencent quotes format is not full understood yet. Do not use.
 #'
-#' @param api A tsapi object
-#' @param sina_code Sina codes to query quotes
+#' @param tencent_code Tencent codes to query
+#' @param api as tsapi object
 #'
-#' @return a data.table
+#' @return data.table
 #' @export
 #'
-sina_realtime <- function(api = TushareApi(), sina_code) {
+tencent_realtime_quote <- function(tencent_code, api = TushareApi()) {
 
-  if (is.null(tus.globals$sina_hanlde)) {
-    tus.globals$sina_hanlde <- curl::new_handle()
-  }
-  handle <- tus.globals$sina_hanlde
+  dt <- tencent_realtime_quote_data(tencent_code)
+  data.table::setnames(dt, tencent_realtime_quote_cols)
+  parse_datetime <- datetime_parser(api)
+  dt[, Time := parse_datetime(Time)]
 
-  n <- length(sina_code) %/% 800L + 1L
-  code_part <- suppressWarnings(split(sina_code, f = seq_len(n)))
-
-  dt_cast <- cast_time(api)
-  base_url <- "http://hq.sinajs.cn/rn=%0.f&list=%s"
-  ans <- lapply(code_part, function(codes) {
-    #concatenate codes by comma and construct request url
-    req_url <- sprintf(base_url, unclass(Sys.time()), paste0(codes, collapse = ","))
-    req_ans <- curl_get_plaintext(req_url, handle, "GB18030") %>%
-      #extract in between quotes
-      stringr::str_extract_all(., pattern = '(?<=")(.*?)(?=")') %>%
-      magrittr::extract2(1L) %>%
-      #parse data
-      sina_realtime_parse(., dt_cast)
-    #put sina_code in data.table
-    req_ans[, sina_code := codes]
-
-    req_ans
-  })
-
-  ans <- data.table::rbindlist(ans)
-  data.table::setkeyv(ans, cols = c("sina_code", "trade_time"))
-
-  ans
+  dt
 }
 
-#' A simple timed loop to process Sina realtime quote
+tencent_realtime_mf_cols <- c(
+  "tencent_code",
+  "main_buy", "main_sale", "main_net", "main_ratio",
+  "chive_buy", "chive_sale", "chive_net", "chive_ratio", "tot_buy",
+  "V11_Unknow", "V12_Unknow", "Name", "Date", "Hist1", "Hist2", "Hist3", "Hist4",
+  "V19_Unknow", "V20_Unknow", "V21_Unknow"
+)
+
+tencent_realtime_mf_num_cols <- c(
+  "main_buy", "main_sale", "main_net", "main_ratio",
+  "chive_buy", "chive_sale", "chive_net", "chive_ratio", "tot_buy"
+)
+
+tencent_realtime_mf_data <- realtime_js_str_var(baseurl = "http://qt.gtimg.cn/",
+                                                rand_var = "r",
+                                                code_var = "q",
+                                                encode = "GBK",
+                                                max_batch = 600L,
+                                                split = "~",
+                                                keep_cols = seq_len(21L))
+
+#' Query realtime moneyflow data from Tencent
 #'
-#' @param api A tsapi object
-#' @param sina_code A vector of Sina codes
-#' @param data_handler A data handler function, that accepts a data.table as input
-#' @param signal_handler A function to handle signals generated by data_handler
-#' @param data_writer A data writer function to write recieved Sina quotes
-#' @param incremental Whether to pass incremental data to data_handler. If TRUE, only new recieved data is passed, otherwise accumulated history data is passed.
-#' @param combined Whether to pass all quotes in sina_code combined. If TRUE all quotes are passed to data_handler, otherwise quotes are passed to data_handler grouped by their sina_code.
-#' @param walltime Timeout for each loop. Sina updates level 1 quotes on a 3 seconds basis.
+#' @param tencent_code Tencent codes to query
+#' @param api an tsapi object
 #'
-#' @return a worker function
+#' @return data.table
 #' @export
 #'
-#' @examples
-#' codes <- c("sz000001", "sh600000")
-#' worker <- sina_realtime_worker(sina_code = codes, data_handler = example_data_handler, signal_handler = example_signal_handler, combined = TRUE, walltime = 3)
-sina_realtime_worker <- function(api = TushareApi(), sina_code, data_handler,
-                                 signal_handler = NULL, data_writer = NULL,
-                                 incremental = TRUE, combined = FALSE, walltime = 3) {
+tencent_realtime_moneyflow <- function(tencent_code, api = TushareApi()) {
 
-  #fix Sina codes
-  sina_code <- get_sina_code(sina_code)
+  dt <- tencent_realtime_mf_data(paste0("ff_", tencent_code))
+  data.table::setnames(dt, tencent_realtime_mf_cols)
+  dt[, (tencent_realtime_mf_num_cols) := lapply(.SD, as.numeric), .SDcol = tencent_realtime_mf_num_cols]
+  parse_date <- date_parser(api)
+  dt[, Date := parse_date(Date)]
 
-  #match functions
-  data_handler <- match.fun(data_handler)
-  if (is.null(data_writer)) {
-    data_writer <- function(...) NULL
-  } else {
-    data_writer <- match.fun(data_writer)
-  }
-  if (is.null(signal_handler)) {
-    signal_handler <- function(...) NULL
-  } else {
-    signal_handler <- match.fun(signal_handler)
-  }
-
-  worker <- function() {
-
-    #defer reset time limit to default
-    on.exit({
-      setTimeLimit()
-    })
-
-    #call Sina once to establish connection
-    old_frame <- sina_realtime(api = api, sina_code = sina_code)[0, ]
-    uni_frame <- old_frame
-    inc_frame <- old_frame
-
-    while (TRUE) {
-
-      #set time limit for current loop
-      setTimeLimit(elapsed = walltime, transient = TRUE)
-
-      #loop timer
-      t_loop <- Sys.time()
-
-      tryCatch({
-
-        #query data from Sina
-        new_frame <- sina_realtime(api = api, sina_code = sina_code)
-
-        #parse incremental data
-        inc_frame <- data.table::fsetdiff(new_frame, old_frame)
-        old_frame <- new_frame
-
-        if (nrow(inc_frame)) {
-
-          if (incremental) {
-            #only incremental data is passed to data_handler
-            if (combined) {
-              signal <- do.call(data.table::data.table, data_handler(inc_frame))
-            } else {
-              signal <- inc_frame[, data_handler(.SD), by = name]
-            }
-          } else {
-            #all data since loop is passed to data_handler
-            uni_frame <- data.table::funion(uni_frame, inc_frame)
-            data.table::setkeyv(uni_frame, c("sina_code", "trade_time"))
-            if (combined) {
-              signal <- do.call(data.table::data.table, data_handler(uni_frame))
-            } else {
-              signal <- uni_frame[, data_handler(.SD), by = name]
-            }
-          }
-
-          #add timestamp to signal
-          signal[, timestamp := Sys.time()]
-          #handle signals
-          signal_handler(signal)
-          #write data
-          data_writer(inc_frame)
-        }
-
-        #check loop time if walltime is not set to Inf
-        if (!is.infinite(walltime)) {
-          t_delta <- Sys.time() - t_loop
-          t_remain <- walltime - t_delta
-          Sys.sleep(t_remain)
-        }
-
-      }, error = function(err) {
-        msg <- err$message
-        if (!startsWith(msg, "reached")) {
-          stop(err, call. = FALSE)
-        }
-      })
-    }
-  }
-
-  worker
-}
-
-#' Generate a simple csv writer for sina_realtime_worker()
-#'
-#' @param file output csv file path
-#'
-#' @return a data_write function that appends Sina quote data to csv file
-#' @export
-#'
-#' @examples
-#' data_writer <- csv_data_write("records.csv")
-csv_data_writer <- function(file = tempfile(fileext = "csv")) {
-
-  data_writer <- function(frame) {
-    data.table::fwrite(frame, file = file, append = TRUE)
-  }
-
-  data_writer
-}
-
-#' An example signal_handler for sina_realtime_worker()
-#'
-#' @param result result passed by worker
-#'
-#' @return NULL
-#' @export
-#'
-example_signal_handler <- function(result) {
-
-  for (i in seq_len(nrow(result))) {
-    msg <- sprintf("[%s] %sing %s at price %.3f", result$timestamp[i], result$side[i], result$code[i], result$price[i])
-    print(msg)
-  }
-
-  NULL
-}
-
-#' An example data_handler for sina_realtime_worker()
-#'
-#' @param frame a frame of realtime quote data passed by worker
-#'
-#' @return a named list, which is further converted to a data.table then passed to result_reporter
-#' @export
-#'
-example_data_handler <- function(frame) {
-
-  #pick a random side
-  side <- if (runif(1) >= 0.5) "SELL" else "BUY"
-  #pick a random stock to buy/sell
-  idx <- sample(nrow(frame), 1)
-  code <- frame$sina_code[idx]
-  price <- frame$last[idx]
-
-  list(side = side, code = code, price = price)
+  dt
 }
 
 #' Convert symbols to Sina codes

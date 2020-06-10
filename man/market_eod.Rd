@@ -4,18 +4,24 @@
 \alias{market_eod}
 \title{Query whole-market end-of-day data by date}
 \usage{
-market_eod(api, func, date, freq = c("60", "15", "5", "1"), ...)
+market_eod(
+  func,
+  date = Sys.Date(),
+  freq = c("60", "15", "5", "1"),
+  ...,
+  api = TushareApi()
+)
 }
 \arguments{
-\item{api}{a tsapi object}
-
-\item{func}{Tushare function to call, with special function intraday for intraday OHLC}
+\item{func}{Tushare function to call. Use intraday for intraday data.}
 
 \item{date}{date to query}
 
 \item{freq}{only used when func == "intraday", intraday data frequency}
 
 \item{...}{other arguments passed to the query}
+
+\item{api}{a tsapi object}
 }
 \value{
 a data.table object, keyed by ts_code (and trade_time if the query is intraday)

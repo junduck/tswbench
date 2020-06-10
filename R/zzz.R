@@ -3,34 +3,7 @@ tus.globals$api_token <- NULL
 
 #fixes for R CMD check
 utils::globalVariables(c(
-  "update_flag",
-  "end_date",
-  "..cidx",
-  "adj_factor",
-  "i.ts_code",
-  "open",
-  "high",
-  "low",
-  "close",
-  #dapdv
-  "roe",
-  "pb",
-  "pe_ttm",
-  #adjust_ohlc
-  "..col",
-  #intraday
-  "td_posix",
-  "trade_date",
-  "pe_p",
-  "pb_p",
-  "ps_p",
-  "ps_ttm",
-  "pe",
-  "i.close",
-  "ps",
-  "trade_time"
+  ".", "Date", "Time", "adj_factor", "date_str", "high", "i.close", "low", "pb",
+  "pb_p", "pe", "pe_p", "pe_ttm", "pe_ttm_p", "ps", "ps_p", "ps_ttm", "ps_ttm_p",
+  "time_str", "token", "trade_date", "trade_date_posix", "val"
 ))
-
-.onUnload <- function(libpath) {
-
-}

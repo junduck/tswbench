@@ -11,7 +11,7 @@ do.retry(
   envir = parent.frame(),
   attempt = 3,
   sleep = 0,
-  warn = TRUE
+  handler = warning
 )
 }
 \arguments{
@@ -27,7 +27,7 @@ do.retry(
 
 \item{sleep}{sleep time between attempts}
 
-\item{warn}{whether to throw warning when error captured, or an error handling function}
+\item{handler}{error handling function}
 }
 \value{
 The returned value from function call
