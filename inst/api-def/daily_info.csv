@@ -1,0 +1,15 @@
+名称,类型,默认显示,描述
+trade_date,str,Y,交易日期
+ts_code,str,Y,市场代码
+ts_name,str,Y,市场名称
+com_count,int,Y,挂牌数
+total_share,float,Y,总股本（亿股）
+float_share,float,Y,流通股本（亿股）
+total_mv,float,Y,总市值（亿元）
+float_mv,float,Y,流通市值（亿元）
+amount,float,Y,交易金额（亿元）
+vol,float,Y,成交量（亿股）
+trans_count,int,Y,成交笔数（万笔）
+pe,float,Y,平均市盈率
+tr,float,Y,换手率（％），注：深交所暂无此列
+exchange,str,Y,交易所（SH上交所 SZ深交所）

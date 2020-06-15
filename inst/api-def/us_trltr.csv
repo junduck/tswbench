@@ -1,0 +1,3 @@
+名称,类型,默认显示,描述
+date,str,Y,日期
+ltr_avg,float,Y,实际平均利率LT Real Average (10> Yrs)

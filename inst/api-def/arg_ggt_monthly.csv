@@ -1,0 +1,4 @@
+名称,类型,必选,描述
+month,str,N,月度（格式YYYYMM，下同，支持多个输入）
+start_month,str,N,开始月度
+end_month,str,N,结束月度

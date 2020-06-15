@@ -1,0 +1,9 @@
+名称,类型,默认显示,描述
+date,str,Y,日期
+time,str,Y,时间
+currency,str,Y,货币代码
+country,str,Y,国家
+event,str,Y,经济事件
+value,str,Y,今值
+pre_value,str,Y,前值
+fore_value,str,Y,预测值

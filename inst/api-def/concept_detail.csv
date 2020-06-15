@@ -1,0 +1,7 @@
+名称,类型,默认显示,描述
+id,str,Y,概念代码
+concept_name,str,Y,概念名称
+ts_code,str,Y,股票代码
+name,str,Y,股票名称
+in_date,str,N,纳入日期
+out_date,str,N,剔除日期

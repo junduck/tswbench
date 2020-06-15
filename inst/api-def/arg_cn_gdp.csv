@@ -1,0 +1,5 @@
+名称,类型,必选,描述
+q,str,N,季度（2019Q1表示，2019年第一季度）
+start_q,str,N,开始季度
+end_q,str,N,结束季度
+fields,str,N,"指定输出字段（e.g. fields='quarter,gdp,gdp_yoy'）"

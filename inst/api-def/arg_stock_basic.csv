@@ -1,0 +1,4 @@
+名称,类型,必选,描述
+is_hs,str,N,是否沪深港通标的，N否 H沪股通 S深股通
+list_status,str,N,上市状态： L上市 D退市 P暂停上市，默认L
+exchange,str,N,交易所 SSE上交所 SZSE深交所 HKEX港交所(未上线)

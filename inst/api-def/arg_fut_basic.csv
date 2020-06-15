@@ -1,0 +1,3 @@
+名称,类型,必选,描述
+exchange,str,Y,交易所代码 CFFEX-中金所 DCE-大商所 CZCE-郑商所 SHFE-上期所 INE-上海国际能源交易中心
+fut_type,str,N,合约类型 (1 普通合约 2主力与连续合约 默认取全部)

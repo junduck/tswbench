@@ -1,0 +1,5 @@
+名称,类型,默认显示,描述
+date,str,Y,日期
+ltc,float,Y,收益率 LT COMPOSITE (>10 Yrs)
+cmt,float,Y,20年期CMT利率(TREASURY 20-Yr CMT)
+e_factor,float,Y,外推因子EXTRAPOLATION FACTOR

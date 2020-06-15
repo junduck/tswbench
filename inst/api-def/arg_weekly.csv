@@ -1,0 +1,5 @@
+名称,类型,必选,描述
+ts_code,str,N,"TS代码 （ts_code,trade_date两个参数任选一）"
+trade_date,str,N,交易日期 （每周最后一个交易日期，YYYYMMDD格式）
+start_date,str,N,开始日期
+end_date,str,N,结束日期

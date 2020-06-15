@@ -1,0 +1,4 @@
+名称,类型,必选,描述
+ts_code,str,N,转债代码
+list_date,str,N,上市日期
+exchange,str,N,上市地点

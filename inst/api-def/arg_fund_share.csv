@@ -1,0 +1,7 @@
+名称,类型,必选,描述
+ts_code,str,N,TS基金代码
+trade_date,str,N,交易日期
+start_date,str,N,开始日期
+end_date,str,N,结束日期
+fund_type,str,N,基金类型，见下表
+market,str,N,市场：SH/SZ

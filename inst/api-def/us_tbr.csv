@@ -1,0 +1,12 @@
+名称,类型,默认显示,描述
+date,str,Y,日期
+w4_bd,float,Y,4周银行折现收益率
+w4_ce,float,Y,4周票面利率
+w8_bd,float,Y,8周银行折现收益率
+w8_ce,float,Y,8周票面利率
+w13_bd,float,Y,13周银行折现收益率
+w13_ce,float,Y,13周票面利率
+w26_bd,float,Y,26周银行折现收益率
+w26_ce,float,Y,26周票面利率
+w52_bd,float,Y,52周银行折现收益率
+w52_ce,float,Y,52周票面利率

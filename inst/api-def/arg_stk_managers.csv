@@ -1,0 +1,5 @@
+名称,类型,必选,描述
+ts_code,str,N,股票代码，支持单个或多个股票输入
+ann_date,str,N,公告日期（YYYYMMDD格式，下同）
+start_date,str,N,公告开始日期
+end_date,str,N,公告结束日期

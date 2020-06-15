@@ -1,0 +1,13 @@
+名称,类型,默认显示,描述
+ts_code,str,Y,外汇代码
+trade_date,str,Y,交易日期
+bid_open,float,Y,买入开盘价
+bid_close,float,Y,买入收盘价
+bid_high,float,Y,买入最高价
+bid_low,float,Y,买入最低价
+ask_open,float,Y,卖出开盘价
+ask_close,float,Y,卖出收盘价
+ask_high,float,Y,卖出最高价
+ask_low,float,Y,卖出最低价
+tick_qty,int,Y,报价笔数
+exchange,str,N,交易商

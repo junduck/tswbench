@@ -1,0 +1,4 @@
+名称,类型,必选,描述
+ts_code,str,N,TS期权代码
+exchange,str,N,交易所代码 （包括上交所SSE等交易所）
+call_put,str,N,期权类型

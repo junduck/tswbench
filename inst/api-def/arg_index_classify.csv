@@ -1,0 +1,4 @@
+名称,类型,必选,描述
+index_code,str,N,指数代码
+level,str,N,行业分级（L1/L2/L3）
+src,str,N,指数来源（SW申万）

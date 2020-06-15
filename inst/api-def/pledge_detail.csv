@@ -1,0 +1,15 @@
+名称,类型,默认显示,描述
+ts_code,str,Y,TS股票代码
+ann_date,str,Y,公告日期
+holder_name,str,Y,股东名称
+pledge_amount,float,Y,质押数量（万股）
+start_date,str,Y,质押开始日期
+end_date,str,Y,质押结束日期
+is_release,str,Y,是否已解押
+release_date,str,Y,解押日期
+pledgor,str,Y,质押方
+holding_amount,float,Y,持股总数（万股）
+pledged_amount,float,Y,质押总数（万股）
+p_total_ratio,float,Y,本次质押占总股本比例
+h_total_ratio,float,Y,持股总数占总股本比例
+is_buyback,str,Y,是否回购

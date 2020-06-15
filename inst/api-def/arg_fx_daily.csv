@@ -1,0 +1,6 @@
+名称,类型,必选,描述
+ts_code,str,N,TS代码
+trade_date,str,N,交易日期（GMT，日期是格林尼治时间，比北京时间晚一天）
+start_date,str,N,开始日期（GMT）
+end_date,str,N,结束日期（GMT）
+exchange,str,N,交易商，目前只有FXCM

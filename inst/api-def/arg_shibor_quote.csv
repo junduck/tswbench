@@ -1,0 +1,5 @@
+名称,类型,必选,描述
+date,str,N,日期 (日期输入格式：YYYYMMDD，下同)
+start_date,str,N,开始日期
+end_date,str,N,结束日期
+bank,str,N,银行名称 （中文名称，例如 农业银行）

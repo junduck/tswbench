@@ -1,0 +1,4 @@
+名称,类型,必选,描述
+ts_code,str,N,TS基金代码 （二选一）
+end_date,str,N,净值日期 （二选一）
+market,str,N,E场内 O场外

@@ -1,0 +1,5 @@
+名称,类型,必选,描述
+ts_code,str,N,股票代码
+trade_date,str,N,交易日期
+start_date,str,N,开始日期
+end_date,str,N,结束日期

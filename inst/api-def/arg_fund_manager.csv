@@ -1,0 +1,6 @@
+名称,类型,必选,描述
+ts_code,str,N,基金代码，支持多只基金，逗号分隔
+ann_date,str,N,公告日期，格式：YYYYMMDD
+name,str,N,基金经理姓名
+offset,intint,N,开始行数
+limit,int,N,每页行数

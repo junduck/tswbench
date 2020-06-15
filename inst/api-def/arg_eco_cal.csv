@@ -1,0 +1,7 @@
+名称,类型,必选,描述
+date,str,N,日期（YYYYMMDD格式）
+start_date,str,N,开始日期
+end_date,str,N,结束日期
+currency,str,N,货币代码
+country,str,N,国家（比如：中国、美国）
+event,str,N,事件 （支持模糊匹配： *非农*）

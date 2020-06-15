@@ -1,0 +1,14 @@
+field,dtype,default,desc
+area_id,str,N,地区代码
+publish_date,str,Y,发布日期
+country,str,Y,国家
+country_enname,str,Y,国家英文名
+province,str,Y,省份
+province_short,str,Y,省份简称
+province_enname,str,Y,省份英文名
+confirmed_num,int,Y,累计确诊病例
+confirmed_num_now,int,Y,现有确诊病例
+suspected_num,int,Y,疑似感染病例
+cured_num,int,Y,治愈人数
+dead_num,int,Y,死亡人数
+update_time,str,Y,更新时间

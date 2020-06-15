@@ -1,0 +1,11 @@
+名称,类型,默认显示,描述
+date,str,Y,日期
+name,str,Y,影片名称
+avg_price,float,Y,平均票价
+day_amount,float,Y,当日票房（万）
+total,float,Y,累计票房（万）
+list_day,int,Y,上映天数
+p_pc,int,Y,场均人次
+wom_index,float,Y,口碑指数
+up_ratio,float,Y,环比变化 （%）
+rank,int,Y,排名

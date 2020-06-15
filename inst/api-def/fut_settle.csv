@@ -1,0 +1,13 @@
+名称,类型,默认显示,描述
+ts_code,str,Y,合约代码
+trade_date,str,Y,交易日期
+settle,float,Y,结算价
+trading_fee_rate,float,Y,交易手续费率
+trading_fee,float,Y,交易手续费
+delivery_fee,float,Y,交割手续费
+b_hedging_margin_rate,float,Y,买套保交易保证金率
+s_hedging_margin_rate,float,Y,卖套保交易保证金率
+long_margin_rate,float,Y,买投机交易保证金率
+short_margin_rate,float,Y,卖投机交易保证金率
+offset_today_fee,float,N,平今仓手续率
+exchange,str,N,交易所

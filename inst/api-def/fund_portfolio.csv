@@ -1,0 +1,9 @@
+名称,类型,默认显示,描述
+ts_code,str,Y,TS基金代码
+ann_date,str,Y,公告日期
+end_date,str,Y,截止日期
+symbol,str,Y,股票代码
+mkv,float,Y,持有股票市值(元)
+amount,float,Y,持有股票数量（股）
+stk_mkv_ratio,float,Y,占股票市值比
+stk_float_ratio,float,Y,占流通股本比例

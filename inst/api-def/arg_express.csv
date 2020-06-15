@@ -1,0 +1,6 @@
+名称,类型,必选,描述
+ts_code,str,Y,股票代码
+ann_date,str,N,公告日期
+start_date,str,N,公告开始日期
+end_date,str,N,公告结束日期
+period,str,N,"报告期(每个季度最后一天的日期,比如20171231表示年报)"

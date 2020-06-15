@@ -1,0 +1,4 @@
+名称,类型,默认显示,描述
+code,str,Y,概念分类ID
+name,str,Y,概念分类名称
+src,str,Y,来源

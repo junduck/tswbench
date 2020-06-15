@@ -1,0 +1,5 @@
+名称,类型,默认显示,描述
+datetime,str,Y,新闻时间
+content,str,Y,内容
+title,str,Y,标题
+channels,str,N,分类

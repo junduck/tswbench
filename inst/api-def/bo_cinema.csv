@@ -1,0 +1,10 @@
+名称,类型,默认显示,描述
+date,str,Y,日期
+c_name,str,Y,影院名称
+aud_count,int,Y,观众人数
+att_ratio,float,Y,上座率
+day_amount,float,Y,当日票房
+day_showcount,float,Y,当日场次
+avg_price,float,Y,场均票价（元）
+p_pc,float,Y,场均人次
+rank,int,Y,排名

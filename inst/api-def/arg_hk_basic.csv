@@ -1,0 +1,3 @@
+名称,类型,必选,描述
+ts_code,str,N,TS代码
+list_status,str,N,上市状态 L上市 D退市 P暂停上市 ，默认L

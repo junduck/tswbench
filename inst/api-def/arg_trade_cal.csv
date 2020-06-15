@@ -1,0 +1,5 @@
+名称,类型,必选,描述
+exchange,str,N,"交易所 SSE上交所,SZSE深交所,CFFEX 中金所,SHFE 上期所,CZCE 郑商所,DCE 大商所,INE 上能源,IB 银行间,XHKG 港交所"
+start_date,str,N,开始日期
+end_date,str,N,结束日期
+is_open,str,N,是否交易 '0'休市 '1'交易

@@ -1,0 +1,4 @@
+名称,类型,必选,描述
+trade_date,str,N,交易日期 （格式YYYYMMDD，下同。支持单日和多日输入）
+start_date,str,N,开始日期
+end_date,str,N,结束日期

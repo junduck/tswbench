@@ -1,0 +1,5 @@
+名称,类型,必选,描述
+date,str,N,日期
+start_date,str,N,开始日期
+end_date,str,N,结束日期
+fields,str,N,指定字段

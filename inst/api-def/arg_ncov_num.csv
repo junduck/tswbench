@@ -1,0 +1,6 @@
+field,dtype,mandatory,desc
+area_name,str,N,地区名称
+level,str,N,级别：2-中国内地，3-省级，4-地区市级别
+ann_date,str,N,公告日期
+start_date,str,N,查询开始日期
+end_date,str,N,查询结束日期

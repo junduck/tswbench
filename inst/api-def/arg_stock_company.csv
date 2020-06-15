@@ -1,0 +1,3 @@
+名称,类型,必须,描述
+ts_code,str,N,股票代码
+exchange,str,N,交易所代码 ，SSE上交所 SZSE深交所

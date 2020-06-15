@@ -1,0 +1,10 @@
+名称,类型,默认显示,描述
+ts_code,str,Y,TS代码
+ann_date,str,Y,公告日期
+end_date,str,Y,截止日期
+unit_nav,float,Y,单位净值
+accum_nav,float,Y,累计净值
+accum_div,float,Y,累计分红
+net_asset,float,Y,资产净值
+total_netasset,float,Y,合计资产净值
+adj_nav,float,Y,复权单位净值

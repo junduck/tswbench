@@ -1,0 +1,5 @@
+名称,类型,默认显示,描述
+ts_code,str,Y,TS代码
+trade_date,str,Y,停复牌日期
+suspend_timing,str,Y,日内停牌时间段
+suspend_type,str,Y,停复牌类型：S-停牌，R-复牌

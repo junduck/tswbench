@@ -1,0 +1,11 @@
+名称,类型,默认显示,描述
+month,str,Y,月份YYYYMM
+m0,float,Y,M0（亿元）
+m0_yoy,float,Y,M0同比（%）
+m0_mom,float,Y,M0环比（%）
+m1,float,Y,M1（亿元）
+m1_yoy,float,Y,M1同比（%）
+m1_mom,float,Y,M1环比（%）
+m2,float,Y,M2（亿元）
+m2_yoy,float,Y,M2同比（%）
+m2_mom,float,Y,M2环比（%）

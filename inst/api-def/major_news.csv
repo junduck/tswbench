@@ -1,0 +1,5 @@
+名称,类型,默认显示,描述
+title,str,Y,标题
+content,str,N,内容 (默认不显示，需要在fields里指定)
+pub_time,str,Y,发布时间
+src,str,Y,来源网站

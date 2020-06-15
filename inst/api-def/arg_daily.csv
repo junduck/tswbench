@@ -1,0 +1,5 @@
+名称,类型,必选,描述
+ts_code,str,N,股票代码（支持多个股票同时提取，逗号分隔）
+trade_date,str,N,交易日期（YYYYMMDD）
+start_date,str,N,开始日期(YYYYMMDD)
+end_date,str,N,结束日期(YYYYMMDD)

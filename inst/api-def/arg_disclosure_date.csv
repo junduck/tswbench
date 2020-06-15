@@ -1,0 +1,5 @@
+名称,类型,必选,描述
+ts_code,str,N,TS股票代码
+end_date,str,N,财报周期（比如20181231表示2018年年报，20180630表示中报)
+pre_date,str,N,计划披露日期
+actual_date,str,N,实际披露日期

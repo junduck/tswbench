@@ -1,0 +1,5 @@
+名称,类型,必选,描述
+m,str,N,月度（202001表示，2020年1月）
+start_m,str,N,开始月度
+end_m,str,N,结束月度
+fields,str,N,"指定输出字段（e.g. fields='month,m0,m1,m2'）"

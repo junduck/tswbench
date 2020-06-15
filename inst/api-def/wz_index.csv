@@ -1,0 +1,14 @@
+名称,类型,默认显示,描述
+date,str,Y,日期
+comp_rate,float,Y,温州民间融资综合利率指数 (%，下同)
+center_rate,float,Y,民间借贷服务中心利率
+micro_rate,float,Y,小额贷款公司放款利率
+cm_rate,float,Y,民间资本管理公司融资价格
+sdb_rate,float,Y,社会直接借贷利率
+om_rate,float,Y,其他市场主体利率
+aa_rate,float,Y,农村互助会互助金费率
+m1_rate,float,Y,温州地区民间借贷分期限利率（一月期）
+m3_rate,float,Y,温州地区民间借贷分期限利率（三月期）
+m6_rate,float,Y,温州地区民间借贷分期限利率（六月期）
+m12_rate,float,Y,温州地区民间借贷分期限利率（一年期）
+long_rate,float,Y,温州地区民间借贷分期限利率（长期）

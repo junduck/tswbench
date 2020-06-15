@@ -1,0 +1,12 @@
+名称,类型,描述
+trade_date,str,交易日期
+ts_code,str,TS股票代码
+name,str,股票名称 （20190910后有数据）
+rzye,float,融资余额(元)
+rqye,float,融券余额(元)
+rzmre,float,融资买入额(元)
+rqyl,float,融券余量（手）
+rzche,float,融资偿还额(元)
+rqchl,float,融券偿还量(手)
+rqmcl,float,"融券卖出量(股,份,手)"
+rzrqye,float,融资融券余额(元)

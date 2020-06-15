@@ -1,0 +1,14 @@
+名称,类型,默认显示,描述
+ts_code,str,Y,TS代码
+ann_date,str,Y,公告日期
+holder_name,str,Y,股东名称
+holder_type,str,Y,股东类型G高管P个人C公司
+in_de,str,Y,类型IN增持DE减持
+change_vol,float,Y,变动数量
+change_ratio,float,Y,占流通比例（%）
+after_share,float,Y,变动后持股
+after_ratio,float,Y,变动后占流通比例（%）
+avg_price,float,Y,平均价格
+total_share,float,Y,持股总数
+begin_date,str,N,增减持开始日期
+close_date,str,N,增减持结束日期

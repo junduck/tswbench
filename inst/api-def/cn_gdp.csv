@@ -1,0 +1,10 @@
+名称,类型,默认显示,描述
+quarter,str,Y,季度
+gdp,float,Y,GDP累计值（亿元）
+gdp_yoy,float,Y,当季同比增速（%）
+pi,float,Y,第一产业累计值（亿元）
+pi_yoy,float,Y,第一产业同比增速（%）
+si,float,Y,第二产业累计值（亿元）
+si_yoy,float,Y,第二产业同比增速（%）
+ti,float,Y,第三产业累计值（亿元）
+ti_yoy,float,Y,第三产业同比增速（%）

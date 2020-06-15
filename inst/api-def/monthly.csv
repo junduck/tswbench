@@ -1,0 +1,12 @@
+名称,类型,默认显示,描述
+ts_code,str,Y,股票代码
+trade_date,str,Y,交易日期
+close,float,Y,月收盘价
+open,float,Y,月开盘价
+high,float,Y,月最高价
+low,float,Y,月最低价
+pre_close,float,Y,上月收盘价
+change,float,Y,月涨跌额
+pct_chg,float,Y,月涨跌幅 （未复权，如果是复权请用 通用行情接口 ）
+vol,float,Y,月成交量
+amount,float,Y,月成交额

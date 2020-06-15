@@ -1,0 +1,7 @@
+名称,类型,必选,描述
+trade_date,str,N,交易日期（YYYYMMDD格式，下同）
+ts_code,str,N,板块代码（请参阅下方列表）
+exchange,str,N,股票市场（SH上交所 SZ深交所）
+start_date,str,N,开始日期
+end_date,str,N,结束日期
+fields,str,N,指定提取字段

@@ -1,0 +1,6 @@
+名称,类型,必选,描述
+ts_code,str,N,TS代码
+ann_date,str,N,公告日
+record_date,str,N,股权登记日期
+ex_date,str,N,除权除息日
+imp_ann_date,str,N,实施公告日

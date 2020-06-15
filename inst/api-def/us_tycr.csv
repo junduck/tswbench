@@ -1,0 +1,14 @@
+名称,类型,默认显示,描述
+date,str,Y,日期
+m1,float,Y,1月期
+m2,float,Y,2月期
+m3,float,Y,3月期
+m6,float,Y,6月期
+y1,float,Y,1年期
+y2,float,Y,2年期
+y3,float,Y,3年期
+y5,float,Y,5年期
+y7,float,Y,7年期
+y10,float,Y,10年期
+y20,float,Y,20年期
+y30,float,Y,30年期

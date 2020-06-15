@@ -1,0 +1,4 @@
+名称,类型,描述
+date,str,报告期
+item,str,产品代码
+op_income,str,月度收入

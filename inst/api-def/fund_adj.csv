@@ -1,0 +1,4 @@
+名称,类型,默认显示,描述
+ts_code,str,Y,ts基金代码
+trade_date,str,Y,交易日期
+adj_factor,float,Y,复权因子

@@ -1,0 +1,8 @@
+名称,类型,默认显示,描述
+ts_code,str,Y,TS股票代码
+ann_date,str,Y,公告日期
+end_date,str,Y,截止日期
+name,str,Y,姓名
+title,str,Y,职务
+reward,float,Y,报酬
+hold_vol,float,Y,持股数

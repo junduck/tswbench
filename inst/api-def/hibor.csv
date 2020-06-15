@@ -1,0 +1,10 @@
+名称,类型,默认显示,描述
+date,str,Y,日期
+on,float,Y,隔夜
+1w,float,Y,1周
+2w,float,Y,2周
+1m,float,Y,1个月
+2m,float,Y,2个月
+3m,float,Y,3个月
+6m,float,Y,6个月
+12m,float,Y,12个月

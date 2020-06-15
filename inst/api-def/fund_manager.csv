@@ -1,0 +1,11 @@
+名称,类型,默认显示,描述
+ts_code,str,Y,基金代码
+ann_date,str,Y,公告日期
+name,str,Y,基金经理姓名
+gender,str,Y,性别
+birth_year,str,Y,出生年份
+edu,str,Y,学历
+nationality,str,Y,国籍
+begin_date,str,Y,任职日期
+end_date,str,Y,离任日期
+resume,str,Y,简历

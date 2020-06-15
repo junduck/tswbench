@@ -1,0 +1,5 @@
+名称,类型,必选,描述
+ann_date,str,N,公告日（以下参数四选一）
+ex_date,str,N,除息日
+pay_date,str,N,派息日
+ts_code,str,N,基金代码

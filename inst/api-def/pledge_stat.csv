@@ -1,0 +1,8 @@
+名称,类型,默认显示,描述
+ts_code,str,Y,TS代码
+end_date,str,Y,截至日期
+pledge_count,int,Y,质押次数
+unrest_pledge,float,Y,无限售股质押数量（万）
+rest_pledge,float,Y,限售股份质押数量（万）
+total_share,float,Y,总股本
+pledge_ratio,float,Y,质押比例

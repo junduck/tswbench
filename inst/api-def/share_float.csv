@@ -1,0 +1,8 @@
+名称,类型,默认显示,描述
+ts_code,str,Y,TS代码
+ann_date,str,Y,公告日期
+float_date,str,Y,解禁日期
+float_share,float,Y,流通股份
+float_ratio,float,Y,流通股份占总股本比率
+holder_name,str,Y,股东名称
+share_type,str,Y,股份类型

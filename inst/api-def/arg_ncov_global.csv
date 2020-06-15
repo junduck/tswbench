@@ -1,0 +1,6 @@
+field,dtype,mandatory,desc
+country,str,N,国家名称
+province,str,N,省份简称（北京、上海）
+publish_date,datetime,N,公布日期
+start_date,datetime,N,开始日期（YYYYMMDD）
+end_date,datetime,N,结束日期（YYYYMMDD）

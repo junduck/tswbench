@@ -1,0 +1,6 @@
+名称,类型,必选,描述
+ts_code,str,N,股票代码(可输入多值)
+trade_date,str,N,交易日日期
+start_date,str,N,停复牌查询开始日期
+end_date,str,N,停复牌查询结束日期
+suspend_type,str,N,"停复牌类型：S-停牌,R-复牌"

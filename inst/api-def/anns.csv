@@ -1,0 +1,7 @@
+名称,类型,默认显示,描述
+ts_code,str,Y,股票代码
+ann_date,str,Y,公告日期
+ann_type,str,N,公告类型
+title,str,Y,公告标题
+content,str,Y,公告内容
+pub_time,str,N,公告发布时间

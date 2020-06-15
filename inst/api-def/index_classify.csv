@@ -1,0 +1,6 @@
+名称,类型,默认显示,描述
+index_code,str,Y,指数代码
+industry_name,str,Y,行业名称
+level,str,Y,行业名称
+industry_code,str,N,行业代码
+src,str,N,行业分类（SW申万）

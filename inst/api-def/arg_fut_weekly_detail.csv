@@ -1,0 +1,7 @@
+名称,类型,必选,描述
+week,str,N,周期（每年第几周，e.g. 202001 表示2020第1周）
+prd,str,N,期货品种（支持多品种输入，逗号分隔）
+start_week,str,N,开始周期
+end_week,str,N,结束周期
+exchange,str,N,交易所（请参考交易所说明）
+fields,str,N,"提取的字段，e.g. fields='prd,name,vol'"

@@ -1,0 +1,5 @@
+名称,类型,必选,描述
+trade_date,str,N,交易日期
+exchange_id,str,N,交易所代码
+start_date,str,N,开始日期
+end_date,str,N,结束日期

@@ -1,0 +1,11 @@
+field,dtype,default,desc
+ann_date,str,Y,发布日期
+area_name,str,Y,地区名称
+parent_name,str,Y,上一级地区
+level,int,Y,级别
+confirmed_num,int,Y,累计确诊人数
+suspected_num,int,Y,累计疑似人数
+confirmed_num_now,int,Y,现有确诊人数
+suspected_num_now,int,Y,现有疑似人数
+cured_num,int,Y,累计治愈人数
+dead_num,int,Y,累计死亡人数

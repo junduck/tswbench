@@ -1,0 +1,10 @@
+名称,类型,默认显示,描述
+month,str,Y,交易日期
+day_buy_amt,float,Y,当月日均买入成交金额（亿元）
+day_buy_vol,float,Y,当月日均买入成交笔数（万笔）
+day_sell_amt,float,Y,当月日均卖出成交金额（亿元）
+day_sell_vol,float,Y,当月日均卖出成交笔数（万笔）
+total_buy_amt,float,Y,总买入成交金额（亿元）
+total_buy_vol,float,Y,总买入成交笔数（万笔）
+total_sell_amt,float,Y,总卖出成交金额（亿元）
+total_sell_vol,float,Y,总卖出成交笔数（万笔）

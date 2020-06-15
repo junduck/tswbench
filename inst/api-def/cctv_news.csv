@@ -1,0 +1,4 @@
+名称,类型,默认显示,描述
+date,str,Y,日期
+title,str,Y,标题
+content,str,Y,内容

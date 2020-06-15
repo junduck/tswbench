@@ -1,0 +1,4 @@
+名称,类型,默认显示,描述
+ts_code,str,Y,连续合约代码
+trade_date,str,Y,起始日期
+mapping_ts_code,str,Y,期货合约代码

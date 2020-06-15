@@ -1,0 +1,7 @@
+名称,类型,必选,描述
+code,str,N,交易所代码
+ts_code,str,N,TS股票代码
+trade_date,str,N,交易日期
+start_date,str,N,开始日期
+end_date,str,N,结束日期
+exchange,str,N,类型：SH沪股通（北向）SZ深股通（北向）HK港股通（南向持股）

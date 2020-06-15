@@ -1,0 +1,14 @@
+名称,类型,默认显示,描述
+name,str,Y,电视剧名称
+classify,str,Y,题材
+types,str,Y,体裁
+org,str,Y,报备机构
+report_date,str,Y,报备时间
+license_key,str,Y,许可证号
+episodes,str,Y,集数
+shooting_date,str,Y,拍摄时间
+prod_cycle,str,Y,制作周期
+content,str,Y,内容提要
+pro_opi,str,Y,省级管理部门备案意见
+dept_opi,str,Y,相关部门意见
+remarks,str,Y,备注

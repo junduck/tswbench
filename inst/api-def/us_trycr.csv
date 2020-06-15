@@ -1,0 +1,7 @@
+名称,类型,默认显示,描述
+date,str,Y,日期
+y5,float,Y,5年期
+y7,float,Y,7年期
+y10,float,Y,10年期
+y20,float,Y,20年期
+y30,float,Y,30年期

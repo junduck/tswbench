@@ -1,0 +1,12 @@
+名称,类型,默认显示,描述
+symbol,str,Y,交易代码
+trade_time,str,Y,交易时间
+trade_ms,str,Y,交易毫秒数
+price,str,Y,当前价
+vol,str,Y,成交量
+amount,str,Y,成交金额
+ask_p1,str,Y,申卖价一
+ask_v1,str,Y,申卖量一
+bid_p1,str,Y,申买价一
+bid_v1,str,Y,申买量一
+oi,str,Y,持仓量

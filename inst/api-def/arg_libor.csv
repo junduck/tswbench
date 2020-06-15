@@ -1,0 +1,5 @@
+名称,类型,必选,描述
+date,str,N,日期 (日期输入格式：YYYYMMDD，下同)
+start_date,str,N,开始日期
+end_date,str,N,结束日期
+curr_type,str,N,货币代码 (USD美元 EUR欧元 JPY日元 GBP英镑 CHF瑞郎，默认是USD)

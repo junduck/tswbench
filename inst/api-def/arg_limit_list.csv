@@ -1,0 +1,6 @@
+名称,类型,必选,描述
+trade_date,str,N,交易日期 YYYYMMDD格式，支持单个或多日期输入
+ts_code,str,N,股票代码 （支持单个或多个股票输入）
+limit_type,str,N,涨跌停类型：U涨停D跌停
+start_date,str,N,开始日期 YYYYMMDD格式
+end_date,str,N,结束日期 YYYYMMDD格式

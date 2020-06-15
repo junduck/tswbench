@@ -1,0 +1,7 @@
+名称,类型,必选,描述
+ts_code,str,N,TS基金代码（支持多只基金输入）
+trade_date,str,N,交易日期（格式：yyyymmdd，下同）
+start_date,str,N,开始日期
+end_date,str,N,结束日期
+offset,str,N,开始行数
+limit,str,N,最大行数

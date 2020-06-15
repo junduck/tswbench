@@ -1,0 +1,7 @@
+名称,类型,必选,描述
+ts_code,str,N,股票代码(二选一)
+ann_date,str,N,公告日期 (二选一)
+start_date,str,N,公告开始日期
+end_date,str,N,公告结束日期
+period,str,N,报告期(每个季度最后一天的日期，比如20171231表示年报)
+type,str,N,预告类型(预增/预减/扭亏/首亏/续亏/续盈/略增/略减)

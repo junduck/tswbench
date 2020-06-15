@@ -1,0 +1,5 @@
+名称,类型,必选,描述
+ts_code,str,N,TS代码（股票代码和日期至少输入一个参数）
+trade_date,str,N,交易日期（格式：YYYYMMDD，下同）
+start_date,str,N,开始日期
+end_date,str,N,结束日期

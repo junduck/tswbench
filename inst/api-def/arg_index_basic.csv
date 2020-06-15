@@ -1,0 +1,5 @@
+名称,类型,必选,描述
+ts_code,str,N,指数代码
+market,str,N,交易所或服务商
+publisher,str,N,发布商
+category,str,N,指数类别

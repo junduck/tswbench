@@ -1,0 +1,8 @@
+名称,类型,默认显示,描述
+index_code,str,Y,指数代码
+index_name,str,N,指数名称
+con_code,str,Y,成分股票代码
+con_name,str,Y,成分股票名称
+in_date,str,Y,纳入日期
+out_date,str,Y,剔除日期
+is_new,str,N,是否最新Y是N否

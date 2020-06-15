@@ -1,0 +1,12 @@
+名称,类型,描述
+trade_date,str,交易日期
+ts_code,str,股票代码
+name,str,股票名称
+close,float,收盘价
+change,float,涨跌额
+rank,int,资金排名
+market_type,str,市场类型（1：沪市 3：深市）
+amount,float,成交金额（元）
+net_amount,float,净成交金额（元）
+buy,float,买入金额（元）
+sell,float,卖出金额（元）

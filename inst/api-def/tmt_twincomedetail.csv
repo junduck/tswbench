@@ -1,0 +1,6 @@
+名称,类型,描述
+date,str,报告期
+item,str,产品代码
+symbol,str,公司代码
+op_income,str,月度营收
+consop_income,str,合并月度营收（默认不展示）

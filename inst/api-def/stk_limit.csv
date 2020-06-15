@@ -1,0 +1,6 @@
+名称,类型,默认显示,描述
+trade_date,str,Y,交易日期
+ts_code,str,Y,TS股票代码
+pre_close,float,N,昨日收盘价
+up_limit,float,Y,涨停价
+down_limit,float,Y,跌停价

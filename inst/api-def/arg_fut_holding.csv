@@ -1,0 +1,6 @@
+名称,类型,必选,描述
+trade_date,str,N,交易日期 （trade_date/symbol至少输入一个参数）
+symbol,str,N,合约或产品代码
+start_date,str,N,开始日期
+end_date,str,N,结束日期
+exchange,str,N,交易所代码

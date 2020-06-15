@@ -1,0 +1,13 @@
+名称,类型,默认显示,描述
+ts_code,str,Y,
+name,str,Y,股票简称
+fullname,str,Y,公司全称
+enname,str,Y,英文名称
+cn_spell,str,Y,拼音
+market,str,Y,市场类别
+list_status,str,Y,上市状态
+list_date,str,Y,上市日期
+delist_date,str,Y,退市日期
+trade_unit,float,Y,交易单位
+isin,str,Y,ISIN代码
+curr_type,str,Y,货币代码

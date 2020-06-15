@@ -1,0 +1,4 @@
+名称,类型,必选,描述
+ann_date,str,N,公告日期（任意填参数，如果都不填，单次默认返回2000条）
+start_date,str,N,公告开始日期
+end_date,str,N,公告结束日期

@@ -1,0 +1,4 @@
+名称,类型,默认显示,描述
+ts_code,str,Y,基金代码，支持多只基金同时提取，用逗号分隔
+trade_date,str,Y,交易（变动）日期，格式YYYYMMDD
+fd_share,float,Y,基金份额（万）

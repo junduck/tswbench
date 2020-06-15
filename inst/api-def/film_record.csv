@@ -1,0 +1,10 @@
+名称,类型,默认显示,描述
+rec_no,str,Y,备案号
+film_name,str,Y,影片名称
+rec_org,str,Y,备案单位
+script_writer,str,Y,编剧
+rec_result,str,Y,备案结果
+rec_area,str,Y,备案地（备案时间）
+classified,str,Y,影片分类
+date_range,str,Y,备案日期区间
+ann_date,str,Y,备案结果发布时间

@@ -1,0 +1,6 @@
+名称,类型,必选,描述
+ts_code,str,Y,"TS股票代码,e.g. 600001.SH/000001.SZ"
+ann_date,str,N,公告日期
+start_date,str,N,报告期开始日期
+end_date,str,N,报告期结束日期
+period,str,N,"报告期(每个季度最后一天的日期,比如20171231表示年报)"

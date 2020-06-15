@@ -1,0 +1,10 @@
+名称,类型,描述
+trade_date,str,交易日期
+exchange_id,str,交易所代码（SSE上交所SZSE深交所）
+rzye,float,融资余额(元)
+rzmre,float,融资买入额(元)
+rzche,float,融资偿还额(元)
+rqye,float,融券余额(元)
+rqmcl,float,"融券卖出量(股,份,手)"
+rzrqye,float,融资融券余额(元)
+rqyl,float,"融券余量(股,份,手)"

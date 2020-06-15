@@ -1,0 +1,17 @@
+名称,类型,默认显示,描述
+ts_code,str,Y,合约代码
+symbol,str,Y,交易标识
+exchange,str,Y,交易市场
+name,str,Y,中文简称
+fut_code,str,Y,合约产品代码
+multiplier,float,Y,合约乘数
+trade_unit,str,Y,交易计量单位
+per_unit,float,Y,交易单位(每手)
+quote_unit,str,Y,报价单位
+quote_unit_desc,str,Y,最小报价单位说明
+d_mode_desc,str,Y,交割方式说明
+list_date,str,Y,上市日期
+delist_date,str,Y,最后交易日期
+d_month,str,Y,交割月份
+last_ddate,str,Y,最后交割日
+trade_time_desc,str,N,交易时间说明

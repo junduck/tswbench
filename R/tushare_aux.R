@@ -88,15 +88,3 @@ datetime_to_char <- function(x, tz) {
   ans[is.na(ans)] <- ""
   ans
 }
-
-get_fields_def <- function(func) {
-
-  if (endsWith(func, "_vip")) {
-    func <- substr(func, 1L, nchar(func) - 4L)
-  }
-
-  fname <- paste0(func, ".csv")
-  def_file <- system.file("fields-def", fname, package = "tswbench")
-
-  data.table::fread(def_file)
-}

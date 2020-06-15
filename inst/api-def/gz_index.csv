@@ -1,0 +1,8 @@
+名称,类型,默认显示,描述
+date,str,Y,日期
+d10_rate,float,Y,小额贷市场平均利率（十天） （单位：%，下同）
+m1_rate,float,Y,小额贷市场平均利率（一月期）
+m3_rate,float,Y,小额贷市场平均利率（三月期）
+m6_rate,float,Y,小额贷市场平均利率（六月期）
+m12_rate,float,Y,小额贷市场平均利率（一年期）
+long_rate,float,Y,小额贷市场平均利率（长期）

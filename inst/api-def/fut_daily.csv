@@ -1,0 +1,17 @@
+名称,类型,默认显示,描述
+ts_code,str,Y,TS合约代码
+trade_date,str,Y,交易日期
+pre_close,float,Y,昨收盘价
+pre_settle,float,Y,昨结算价
+open,float,Y,开盘价
+high,float,Y,最高价
+low,float,Y,最低价
+close,float,Y,收盘价
+settle,float,Y,结算价
+change1,float,Y,涨跌1 收盘价-昨结算价
+change2,float,Y,涨跌2 结算价-昨结算价
+vol,float,Y,成交量(手)
+amount,float,Y,成交金额(万元)
+oi,float,Y,持仓量(手)
+oi_chg,float,Y,持仓量变化
+delv_settle,float,N,交割结算价

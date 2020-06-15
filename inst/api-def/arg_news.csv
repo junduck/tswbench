@@ -1,0 +1,4 @@
+名称,类型,必选,描述
+start_date,datetime,Y,开始日期
+end_date,datetime,Y,结束日期
+src,str,Y,新闻来源 见下表

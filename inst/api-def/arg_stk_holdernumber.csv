@@ -1,0 +1,5 @@
+名称,类型,必选,描述
+ts_code,str,N,TS股票代码
+enddate,str,N,截止日期
+start_date,str,N,公告开始日期
+end_date,str,N,公告结束日期

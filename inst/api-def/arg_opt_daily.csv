@@ -1,0 +1,6 @@
+名称,类型,必选,描述
+ts_code,str,N,TS合约代码（输入代码或时间至少任意一个参数）
+trade_date,str,N,交易日期
+start_date,str,N,开始日期
+end_date,str,N,结束日期
+exchange,str,N,交易所

@@ -1,0 +1,4 @@
+名称,类型,描述
+ts_code,str,股票代码
+trade_date,str,交易日期
+adj_factor,float,复权因子

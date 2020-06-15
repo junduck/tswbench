@@ -1,0 +1,6 @@
+名称,类型,必选,描述
+ts_code,str,Y,股票代码
+period,str,N,"报告期(每个季度最后一天的日期,比如20171231表示年报)"
+type,str,N,类型：P按产品 D按地区（请输入大写字母P或者D）
+start_date,str,N,报告期开始日期
+end_date,str,N,报告期结束日期

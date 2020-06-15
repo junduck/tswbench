@@ -1,0 +1,5 @@
+名称,类型,必选,描述
+ts_code,str,Y,基金代码
+ann_date,str,N,公告日期
+start_date,str,N,报告期开始日期
+end_date,str,N,报告期结束日期

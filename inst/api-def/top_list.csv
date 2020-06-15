@@ -1,0 +1,16 @@
+名称,类型,默认显示,描述
+trade_date,str,Y,交易日期
+ts_code,str,Y,TS代码
+name,str,Y,名称
+close,float,Y,收盘价
+pct_change,float,Y,涨跌幅
+turnover_rate,float,Y,换手率
+amount,float,Y,总成交额
+l_sell,float,Y,龙虎榜卖出额
+l_buy,float,Y,龙虎榜买入额
+l_amount,float,Y,龙虎榜成交额
+net_amount,float,Y,龙虎榜净买入额
+net_rate,float,Y,龙虎榜净买额占比
+amount_rate,float,Y,龙虎榜成交额占比
+float_values,float,Y,当日流通市值
+reason,str,Y,上榜理由

@@ -1,0 +1,11 @@
+名称,类型,默认显示,描述
+trade_date,str,Y,交易日期
+symbol,str,Y,合约代码或类型
+broker,str,Y,期货公司会员简称
+vol,int,Y,成交量
+vol_chg,int,Y,成交量变化
+long_hld,int,Y,持买仓量
+long_chg,int,Y,持买仓量变化
+short_hld,int,Y,持卖仓量
+short_chg,int,Y,持卖仓量变化
+exchange,str,N,交易所

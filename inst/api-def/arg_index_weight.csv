@@ -1,0 +1,5 @@
+名称,类型,必选,描述
+index_code,str,Y,指数代码 (二选一)
+trade_date,str,Y,交易日期 （二选一）
+start_date,str,N,开始日期
+end_date,None,N,结束日期

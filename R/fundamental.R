@@ -19,7 +19,7 @@ report_market <- function(type = c("income", "balancesheet", "cashflow", "foreca
 
   type <- match.arg(type)
   func <- paste0(type, "_vip")
-  fdef <- get_fields_def(type)
+  fdef <- get_api_field(type)
 
   if (missing(period)) {
     if (missing(y) || missing(q)) {
@@ -57,7 +57,7 @@ report_quarter <- function(type = c("income", "balancesheet", "cashflow", "forec
                            ts_code, ..., api = TushareApi(), timeout = 60) {
 
   type <- match.arg(type)
-  fdef <- get_fields_def(type)
+  fdef <- get_api_field(type)
 
   qfunc <- `$.tsapi`(api, type)
   qfunc(ts_code = ts_code, ..., fields = fdef$field, timeout = timeout)

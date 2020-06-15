@@ -1,0 +1,13 @@
+名称,类型,默认显示,描述
+ts_code,str,Y,外汇代码
+name,str,Y,名称
+classify,str,Y,分类
+exchange,str,Y,交易商
+min_unit,float,Y,最小交易单位
+max_unit,float,Y,最大交易单位
+pip,float,Y,最大交易单位
+pip_cost,float,Y,点值
+traget_spread,float,Y,目标差价
+min_stop_distance,float,Y,最小止损距离（点子）
+trading_hours,str,Y,交易时间
+break_time,str,Y,休市时间
