@@ -7,4 +7,5 @@
 #' @import stringr
 #' @import websocket
 #' @import jsonlite
+#' @import DBI
 NULL
