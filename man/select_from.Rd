@@ -2,9 +2,12 @@
 % Please edit documentation in R/sql.R
 \name{select_from}
 \alias{select_from}
+\alias{select_from_where}
 \title{Select from an SQL connection}
 \usage{
 select_from(con, tbl, what = "*", ...)
+
+select_from_where(con, tbl, what = "*", where = "")
 }
 \arguments{
 \item{con}{an SQL connection}
@@ -14,10 +17,12 @@ select_from(con, tbl, what = "*", ...)
 \item{what}{what variables/columns to query}
 
 \item{...}{named arguments, parsed as WHERE AND clause}
+
+\item{where}{a string of the where clause (without "WHERE")}
 }
 \value{
 data.table
 }
 \description{
-Select from an SQL connection
+NOTICE: there is no safety check of argument where in select_from_where()
 }

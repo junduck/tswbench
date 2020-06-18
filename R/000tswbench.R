@@ -8,4 +8,5 @@
 #' @import websocket
 #' @import jsonlite
 #' @import DBI
+#' @importFrom RSQLite SQLite
 NULL
