@@ -49,16 +49,6 @@ quote_where <- function(..., op. = c("AND", "OR")) {
         paste0(q, collapse = op.))
 }
 
-select_from_where <- function(con, tbl, what = "*", where_clause = "") {
-
-  what <- quote_sql_id(con, what)
-  tbl  <- quote_sql_id(con, tbl)
-  q <- sprintf('SELECT %s FROM %s %s', paste0(what, collapse = ','), tbl, where_clause)
-  ans <- DBI::dbGetQuery(con, q)
-
-  data.table::setDT(ans)
-}
-
 quote_sql_id <- function(con, what) {
 
   if (length(what) == 1L && what == "*") {
@@ -70,9 +60,12 @@ quote_sql_id <- function(con, what) {
 
 #' Select from an SQL connection
 #'
+#' NOTICE: there is no safety check of argument where in select_from_where()
+#'
 #' @param con an SQL connection
 #' @param tbl name of table to query
 #' @param what what variables/columns to query
+#' @param where a string of the where clause (without "WHERE")
 #' @param ... named arguments, parsed as WHERE AND clause
 #'
 #' @return data.table
@@ -102,6 +95,24 @@ select_from <- function(con, tbl, what = "*", ...) {
   } else {
     ans <- DBI::dbGetQuery(con, q)
   }
+
+  data.table::setDT(ans)
+}
+
+#' @rdname select_from
+#' @export
+#'
+select_from_where <- function(con, tbl, what = "*", where = "") {
+
+  what <- quote_sql_id(con, what)
+  tbl  <- quote_sql_id(con, tbl)
+  q <- sprintf('SELECT %s FROM %s', paste0(what, collapse = ','), tbl)
+
+  if (nzchar(where)) {
+    q <- paste(q, "WHERE", where)
+  }
+
+  ans <- DBI::dbGetQuery(con, q)
 
   data.table::setDT(ans)
 }
@@ -158,6 +169,7 @@ create_index <- function(con, name, tbl, var, unique = FALSE) {
 
   tbl <- quote_sql_id(con, tbl)
   var <- quote_sql_id(con, var)
+  name <- quote_sql_id(con, name)
   if (unique) {
     unique = "UNIQUE"
   } else {
