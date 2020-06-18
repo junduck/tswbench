@@ -181,6 +181,8 @@ arg_logi <- c("is_open", "is_new", "is_audit", "is_release", "is_buyback",
 #'
 '$.tsapi' <- function(x, func) {
 
+  force(x)
+  force(func)
   f <- function(..., timeout = 10.0, attempt = 3L) {
 
     arg <- list(...)
