@@ -67,6 +67,12 @@ create_srt_db <- function(db = get_srt_db(), api = TushareApi()) {
   if (!r) {
     stop("Failed to create index sina_realtime_index.")
   }
+  r <- create_index(con = con,
+                    name = "sina_realtime_index_dt", tbl = "sina_realtime",
+                    var = c("idate", "itime"), ASC = TRUE, unique = FALSE)
+  if (!r) {
+    stop("Failed to create index sina_realtime_index_dt.")
+  }
 
   TRUE
 }
@@ -91,6 +97,9 @@ sina_realtime_loop <- function(db = get_srt_db(), today = Sys.Date(), api = Tush
   }
   con <- connect_srt_db(db = db)
   on.exit({DBI::dbDisconnect(con)})
+
+  #Normal sync should be safe enough for WAL
+  DBI::dbExecute(con, "PRAGMA synchronous = 1;")
 
   message(Sys.time(), " Request stock list from Tushare")
   slist <- api$stock_basic()
