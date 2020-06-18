@@ -63,7 +63,7 @@ create_srt_db <- function(db = get_srt_db(), api = TushareApi()) {
 
   r <- create_index(con = con,
                     name = "sina_realtime_index", tbl = "sina_realtime",
-                    var = c("Code", "idate", "itime"), unique = TRUE)
+                    var = c("Code", "idate", "itime"), ASC = TRUE, unique = TRUE)
   if (!r) {
     stop("Failed to create index sina_realtime_index.")
   }

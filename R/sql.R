@@ -160,12 +160,13 @@ insert_to <- function(con, tbl, dt, conflict = c("replace", "ignore", "default")
 #' @param name name of index
 #' @param tbl name of table
 #' @param var variables/columns to create index
+#' @param ASC TRUE for ascending FALSE for descending order
 #' @param unique whether to create a unique index
 #'
 #' @return TRUE/FALSE
 #' @export
 #'
-create_index <- function(con, name, tbl, var, unique = FALSE) {
+create_index <- function(con, name, tbl, var, ASC = TRUE, unique = FALSE) {
 
   tbl <- quote_sql_id(con, tbl)
   var <- quote_sql_id(con, var)
@@ -176,8 +177,22 @@ create_index <- function(con, name, tbl, var, unique = FALSE) {
     unique <- ""
   }
 
-  q_template <- "CREATE %s INDEX %s ON %s(%s)"
-  q <- sprintf(q_template, unique, name, tbl, paste0(var, collapse = ","))
+  if (length(ASC) == 1L) {
+    if (ASC) {
+      order <- rep("ASC", length(var))
+    } else {
+      order <- rep("DESC", length(var))
+    }
+  } else if (length(ASC) == length(var)) {
+    order <- ifelse(ASC, "ASC", "DESC")
+  } else {
+    warning("ASC should be of length 1 or same as var.", call. = FALSE)
+    return(FALSE)
+  }
+  var <- paste(var, order)
+
+  q_template <- "CREATE %s INDEX %s ON %s (%s)"
+  q <- sprintf(q_template, unique, name, tbl, paste0(var, collapse = ", "))
 
   r <- tryCatch({
     DBI::dbBegin(con)
