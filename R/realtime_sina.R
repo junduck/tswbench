@@ -1,3 +1,7 @@
+itime_now <- function(api) {
+  data.table::as.ITime(lubridate::with_tz(Sys.time(), tzone = get_tz(api)))
+}
+
 normalise_srt_data <- function(dt, api) {
 
   se   <- toupper(stringr::str_sub(dt$sina_code, 1L, 2L))
@@ -6,7 +10,7 @@ normalise_srt_data <- function(dt, api) {
   dt[, Code  := paste0(code, ".", se)]
   dt[, idate := data.table::as.IDate(Time)]
   dt[, itime := data.table::as.ITime(Time)]
-  dt[, irecv := data.table::as.ITime(lubridate::with_tz(Sys.time(), tzone = get_tz(api)))]
+  dt[, irecv := itime_now(api)]
 
   dt
 }
@@ -110,6 +114,19 @@ sina_realtime_loop <- function(db = get_srt_db(), today = Sys.Date(), api = Tush
 
   t <- 0
   while (TRUE) {
+
+    t_now <- itime_now(api = api)
+    #Sleep between 11:32:00 and 12:58:00
+    if (t_now >= 41520L && t_now < 46680L) {
+      t_sleep <- 46680L - t_now
+      message(Sys.time(), " Sleeping for ", t_sleep, " seconds.")
+      Sys.sleep(t_sleep)
+    }
+    #Exit on 15:32:00
+    if (t_now >= 55920L) {
+      message(Sys.time(), " End of market day. Exiting.")
+      break
+    }
 
     delta <- unclass(Sys.time()) - t
     if (delta < 1.0) {
