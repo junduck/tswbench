@@ -9,4 +9,5 @@
 #' @import jsonlite
 #' @import DBI
 #' @importFrom RSQLite SQLite
+#' @importFrom collections queue
 NULL
