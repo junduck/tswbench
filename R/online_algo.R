@@ -17,10 +17,10 @@ lcm <- function(x, y) {
 #' @param zscore z-score threshold for signal
 #' @param attenu attenuation for signal
 #'
-#' @return an online function
+#' @return a stateful online function
 #' @export
 #'
-moving_zscore <- function(window, zscore, attenu) {
+make_moving_zscore <- function(window, zscore, attenu) {
 
   if (window < 3L) {
     stop("Window size must be at least 3.", call. = FALSE)
@@ -76,10 +76,10 @@ moving_zscore <- function(window, zscore, attenu) {
 #' @param window moving window size
 #' @param order order of mements
 #'
-#' @return an online function
+#' @return a stateful function
 #' @export
 #'
-moving_moment <- function(window, order = 4L) {
+make_moving_moment <- function(window, order = 4L) {
 
   w  <- window
   n  <- 0L
@@ -180,10 +180,10 @@ moving_moment <- function(window, order = 4L) {
 #'
 #' @param order order of moments
 #'
-#' @return an online function
+#' @return a stateful function
 #' @export
 #'
-cumulative_moment <- function(order = 4L) {
+make_cumulative_moment <- function(order = 4L) {
 
   n  <- 0.0
 
@@ -265,10 +265,10 @@ cumulative_moment <- function(order = 4L) {
 #'
 #' @param window moving window size
 #'
-#' @return an online function
+#' @return a stateful function
 #' @export
 #'
-moving_cov <- function(window) {
+make_moving_cov <- function(window) {
 
   w <- window
   n <- 0L
@@ -320,10 +320,10 @@ moving_cov <- function(window) {
 
 #' Cumulative covariance
 #'
-#' @return an online function
+#' @return a stateful function
 #' @export
 #'
-cumulative_cov <- function() {
+make_cumulative_cov <- function() {
 
   n <- 0.0
 
@@ -349,6 +349,40 @@ cumulative_cov <- function() {
     for (i in seq_len(nx)) {
       push(x[i], y[i])
       ans[i] <- sxy / (n - 1.0)
+    }
+    ans
+  }
+}
+
+#' Fast Algorithm for Median Estimation
+#'
+#' This is an implementation of Feldman, D., & Shavitt, Y. (2007, May).
+#' An optimal median calculation algorithm for estimating Internet link delays from active measurements.
+#' In 2007 Workshop on End-to-End Monitoring Techniques and Services (pp. 1-7). IEEE.
+#'
+#' @param init init value
+#' @param b minimal initial step
+#'
+#' @return a stateful function
+#' @export
+#'
+make_fame_median <- function(init, b) {
+
+  M <- init
+  step <- max(abs(M)/2, b)
+
+  function(x) {
+    npt <- length(x)
+    ans <- vector(mode = "numeric", length = npt)
+    for (i in seq_len(npt)) {
+      if (M > x[i] + step) {
+        M <<- M - step
+      } else if (M < x[i] - step) {
+        M <<- M + step
+      } else {
+        step <<- step / 2.0
+      }
+      ans[i] <- M
     }
     ans
   }
