@@ -123,6 +123,37 @@ make_zlema <- function(period, ...) {
   }
 }
 
+#' Wilders smoothing average
+#'
+#' @param period smoothing period
+#' @param ... not used
+#'
+#' @return a stateful online function
+#' @export
+#'
+make_wilders <- function(period, ...) {
+
+  a <- 1.0 / period
+  n <- FALSE
+
+  wilders <- 0.0
+
+  function(x) {
+    npt <- length(x)
+    ans <- vector(mode = "numeric", length = npt)
+    for (i in seq_len(npt)) {
+      if (n) {
+        wilders <<- (x[i] - wilders) * a + wilders
+      } else {
+        wilders <<- x[i]
+        n <<- TRUE
+      }
+      ans[i] <- wilders
+    }
+    ans
+  }
+}
+
 #' Simple moving average
 #'
 #' @param period MA period
