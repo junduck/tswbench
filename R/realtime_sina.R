@@ -107,7 +107,10 @@ sina_realtime_loop <- function(db = get_srt_db(), today = Sys.Date(), api = Tush
 
   message(Sys.time(), " Request stock list from Tushare")
   slist <- api$stock_basic()
-  codes <- get_sina_code(symbol = slist$ts_code)
+  scode <- sina_ashare_code(code = slist$ts_code, type = "stock")
+  flist <- codes <- api$fund_basic(status = "L", market = "E")
+  fcode <- sina_ashare_code(code = flist$ts_code, type = "fund")
+  codes <- c(scode, fcode)
   message(Sys.time(), " Querying ", length(codes), " codes")
 
   today <- data.table::as.IDate(today)
