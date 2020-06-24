@@ -156,27 +156,3 @@ tencent_realtime_moneyflow <- function(tencent_code, api = TushareApi()) {
 
   dt
 }
-
-#' Convert symbols to Sina codes
-#'
-#' @param symbol a vector of character symbols
-#'
-#' @return a vector of Sina codes
-#' @export
-#'
-get_sina_code <- function(symbol) {
-
-  #Jun's note: this method does not work for netease symbols which are [0,1][0-9]{6}
-
-  #extract 6 digits
-  digits <- stringr::str_extract(symbol, "[0-9]{6}")
-
-  #guess market
-  if (all(stringr::str_detect(symbol, "[a-zA-Z]{2}"))) {
-    market <- tolower(stringr::str_extract(symbol, "(^[a-zA-Z]{2})|([a-zA-Z]{2}$)"))
-  } else {
-    market <- ifelse(startsWith(digits, "6"), "sh", "sz")
-  }
-
-  paste0(market, digits)
-}
