@@ -160,13 +160,13 @@ insert_to <- function(con, tbl, dt, conflict = c("replace", "ignore", "default")
 #' @param name name of index
 #' @param tbl name of table
 #' @param var variables/columns to create index
-#' @param ASC TRUE for ascending FALSE for descending order
+#' @param ASC NULL if not specified, TRUE for ascending and FALSE for descending order
 #' @param unique whether to create a unique index
 #'
 #' @return TRUE/FALSE
 #' @export
 #'
-create_index <- function(con, name, tbl, var, ASC = TRUE, unique = FALSE) {
+create_index <- function(con, name, tbl, var, ASC = NULL, unique = FALSE) {
 
   tbl <- quote_sql_id(con, tbl)
   var <- quote_sql_id(con, var)
@@ -177,17 +177,22 @@ create_index <- function(con, name, tbl, var, ASC = TRUE, unique = FALSE) {
     unique <- ""
   }
 
-  if (length(ASC) == 1L) {
-    if (ASC) {
-      order <- rep("ASC", length(var))
+  n_order <- length(ASC)
+  if (n_order) {
+    if (n_order == 1L) {
+      if (ASC) {
+        order <- "ASC"
+      } else {
+        order <- "DESC"
+      }
+    } else if (n_order == length(var)) {
+      order <- ifelse(ASC, "ASC", "DESC")
     } else {
-      order <- rep("DESC", length(var))
+      warning("ASC should be of length 1 or same as var.", call. = FALSE)
+      return(FALSE)
     }
-  } else if (length(ASC) == length(var)) {
-    order <- ifelse(ASC, "ASC", "DESC")
   } else {
-    warning("ASC should be of length 1 or same as var.", call. = FALSE)
-    return(FALSE)
+    order <- ""
   }
   var <- paste(var, order)
 

@@ -4,7 +4,7 @@
 \alias{create_index}
 \title{Create index on a table}
 \usage{
-create_index(con, name, tbl, var, ASC = TRUE, unique = FALSE)
+create_index(con, name, tbl, var, ASC = NULL, unique = FALSE)
 }
 \arguments{
 \item{con}{an SQL connection}
@@ -15,7 +15,7 @@ create_index(con, name, tbl, var, ASC = TRUE, unique = FALSE)
 
 \item{var}{variables/columns to create index}
 
-\item{ASC}{TRUE for ascending FALSE for descending order}
+\item{ASC}{NULL if not specified, TRUE for ascending and FALSE for descending order}
 
 \item{unique}{whether to create a unique index}
 }
