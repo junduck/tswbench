@@ -158,7 +158,7 @@ make_moving_moment <- function(window, order = 4L) {
              d_2   <- d * d
              d0_2  <- d0 * d0
              dd0_2 <- dd0 * dd0
-             s4 <<- s4 + d_2 * d_2 - d0_2 * d0_2 +
+             s4 <<- s4 + d_2 * d_2 - d0_2 * d0_2 -
                4.0 * dd0 * (s3 + d_2 * d - d0_2 * d0) / n +
                6.0 * (s2 + d_2 - d0_2) * dd0_2 / n2 -
                3.0 * dd0_2 * dd0_2 / n3
@@ -227,7 +227,7 @@ make_cumulative_moment <- function(order = 4L) {
              push(x[i])
              d_2 <- d * d
              s3 <<- s3 +
-               (1.0 - 2.0 / n / n) * d_2 * d -
+               (1.0 + 2.0 / n / n) * d_2 * d -
                3.0 * d * (s2 + d_2) / n
              s2 <<- s2 +
                (1.0 - 1.0 / n) * d_2
@@ -248,7 +248,7 @@ make_cumulative_moment <- function(order = 4L) {
                4.0 * d * (s3 + d_2 * d) / n +
                6.0 * (s2 + d_2) * d_2 / n / n
              s3 <<- s3 +
-               (1.0 - 2.0 / n / n) * d_2 * d -
+               (1.0 + 2.0 / n / n) * d_2 * d -
                3.0 * d * (s2 + d_2) / n
              s2 <<- s2 +
                (1.0 - 1.0 / n) * d_2
@@ -383,6 +383,128 @@ make_fame_median <- function(init, b) {
         step <<- step / 2.0
       }
       ans[i] <- M
+    }
+    ans
+  }
+}
+
+make_moving_min <- function(window) {
+
+  buf <- collections::queue()
+  deq <- collections::deque()
+
+  enQ <- function(x) {
+    while (deq$size() && deq$peekleft() > x) {
+      deq$popleft()
+    }
+    deq$pushleft(x)
+  }
+  deQ <- function(x) {
+    if (deq$peek() == x) {
+      deq$pop()
+    }
+  }
+
+  w <- window
+  n <- 0L
+
+  function(x) {
+    npt <- length(x)
+    ans <- vector(mode = "numeric", length = npt)
+    for (i in seq_len(npt)) {
+      buf$push(x[i])
+      enQ(x[i])
+      if (n < w) {
+        n <<- n + 1L
+      } else {
+        deQ(buf$pop())
+      }
+      ans[i] <- deq$peek()
+    }
+    ans
+  }
+}
+
+make_moving_max <- function(window) {
+
+  buf <- collections::queue()
+  deq <- collections::deque()
+
+  enQ <- function(x) {
+    while (deq$size() && deq$peekleft() < x) {
+      deq$popleft()
+    }
+    deq$pushleft(x)
+  }
+  deQ <- function(x) {
+    if (deq$peek() == x) {
+      deq$pop()
+    }
+  }
+
+  w <- window
+  n <- 0L
+
+  function(x) {
+    npt <- length(x)
+    ans <- vector(mode = "numeric", length = npt)
+    for (i in seq_len(npt)) {
+      buf$push(x[i])
+      enQ(x[i])
+      if (n < w) {
+        n <<- n + 1L
+      } else {
+        deQ(buf$pop())
+      }
+      ans[i] <- deq$peek()
+    }
+    ans
+  }
+}
+
+make_moving_minmax <- function(window) {
+
+  buf <- collections::queue()
+  #min deque
+  deq1 <- collections::deque()
+  #max deque
+  deq2 <- collections::deque()
+
+  enQ <- function(x) {
+    while (deq1$size() && deq1$peekleft() > x) {
+      deq1$popleft()
+    }
+    deq1$pushleft(x)
+    while (deq2$size() && deq2$peekleft() < x) {
+      deq2$popleft()
+    }
+    deq2$pushleft(x)
+  }
+  deQ <- function(x) {
+    if (deq1$peek() == x) {
+      deq1$pop()
+    }
+    if (deq2$peek() == x) {
+      deq2$pop()
+    }
+  }
+
+  w <- window
+  n <- 0L
+
+  function(x) {
+    npt <- length(x)
+    ans <- matrix(nrow = npt, ncol = 2L)
+    for (i in seq_len(npt)) {
+      buf$push(x[i])
+      enQ(x[i])
+      if (n < w) {
+        n <<- n + 1L
+      } else {
+        deQ(buf$pop())
+      }
+      ans[i, 1L] <- deq1$peek()
+      ans[i, 2L] <- deq2$peek()
     }
     ans
   }
