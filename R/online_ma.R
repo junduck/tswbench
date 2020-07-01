@@ -333,14 +333,14 @@ make_vwma <- function(period, ...) {
     for (i in seq_len(np)) {
       pv <- p[i] * v[i]
       bufp$push(pv)
-      bufv$push(v)
+      bufv$push(v[i])
       if (n < w) {
         n <<- n + 1L
         spv <<- spv + pv
-        sv  <<- sv  +  v
+        sv  <<- sv  + v[i]
       } else {
-        spv <<- spv + pv - bufp$pop()
-        sv  <<- sv  +  v - bufv$pop()
+        spv <<- spv + pv   - bufp$pop()
+        sv  <<- sv  + v[i] - bufv$pop()
       }
       ans[i] <- spv / sv
     }
