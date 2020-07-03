@@ -38,7 +38,7 @@ class IndexableSkiplist {
   int random_depth() {
     int depth = 1;
     // flip coins
-    while(rand() % 2 && depth < mxlv) {
+    while(rand() % 2 && depth <= mxlv) {
       ++depth;
     }
     return depth;
