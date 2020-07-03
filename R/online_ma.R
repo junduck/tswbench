@@ -14,7 +14,7 @@
 #'
 make_ema <- function(period, ...) {
 
-  period <- as.integer
+  period <- as.integer(period)
   stopifnot(period > 0L)
 
   calc <- new(ocls_ema, period)
@@ -28,7 +28,7 @@ make_ema <- function(period, ...) {
 #'
 make_dema <- function(period, ...) {
 
-  period <- as.integer
+  period <- as.integer(period)
   stopifnot(period > 0L)
 
   calc <- new(ocls_dema, period)
@@ -42,7 +42,7 @@ make_dema <- function(period, ...) {
 #'
 make_tema <- function(period, ...) {
 
-  period <- as.integer
+  period <- as.integer(period)
   stopifnot(period > 0L)
 
   calc <- new(ocls_tema, period)
@@ -56,7 +56,7 @@ make_tema <- function(period, ...) {
 #'
 make_zlema <- function(period, ...) {
 
-  period <- as.integer
+  period <- as.integer(period)
   stopifnot(period > 1L)
 
   calc <- new(ocls_zlema, period)
@@ -75,7 +75,7 @@ make_zlema <- function(period, ...) {
 #'
 make_wilders <- function(period, ...) {
 
-  period <- as.integer
+  period <- as.integer(period)
   stopifnot(period > 0L)
 
   calc <- new(ocls_wilders, period)
@@ -94,7 +94,7 @@ make_wilders <- function(period, ...) {
 #'
 make_sma <- function(period, ...) {
 
-  period <- as.integer
+  period <- as.integer(period)
   stopifnot(period > 0L)
 
   calc <- new(ocls_sma, period)
@@ -113,7 +113,7 @@ make_sma <- function(period, ...) {
 #'
 make_wma <- function(period, ...) {
 
-  period <- as.integer
+  period <- as.integer(period)
   stopifnot(period > 0L)
 
   calc <- new(ocls_wma, period)
@@ -134,7 +134,7 @@ make_wma <- function(period, ...) {
 #'
 make_kama <- function(period, period_short = 2, period_long = 30, ...) {
 
-  period <- as.integer
+  period <- as.integer(period)
   stopifnot(period > 0L, period_short > 0L, period_long > 0L, period_short < period_long, )
 
   calc <- new(ocls_kama, period, period_short, period_long)
@@ -153,7 +153,7 @@ make_kama <- function(period, period_short = 2, period_long = 30, ...) {
 #'
 make_hma <- function(period, ...) {
 
-  period <- as.integer
+  period <- as.integer(period)
   stopifnot(period > 1L)
 
   calc <- new(ocls_hma, period)
@@ -172,7 +172,7 @@ make_hma <- function(period, ...) {
 #'
 make_vwma <- function(period, ...) {
 
-  period <- as.integer
+  period <- as.integer(period)
   stopifnot(period > 0L)
 
   calc <- new(ocls_vwma, period)
