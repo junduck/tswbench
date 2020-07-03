@@ -1,3 +1,5 @@
+#' @import Rcpp
+#' @useDynLib tswbench, .registration = TRUE
 #' @import data.table
 #' @import httr
 #' @importFrom curl curl_fetch_memory new_handle
@@ -9,5 +11,8 @@
 #' @import jsonlite
 #' @import DBI
 #' @importFrom RSQLite SQLite
-#' @importFrom collections queue deque
+loadModule("ocls_stats", TRUE)
+loadModule("ocls_moving_minmax", TRUE)
+loadModule("ocls_ma", TRUE)
+loadModule("ocls_moving_order", TRUE)
 NULL

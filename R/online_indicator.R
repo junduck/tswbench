@@ -72,3 +72,63 @@ make_macd <- function(period_short = 12L, period_long = 26L, period_signal = 9L,
            ans
          })
 }
+
+make_willr <- function(period) {
+
+  mmin <- make_moving_min(window = period)
+  mmax <- make_moving_max(window = period)
+
+  function(high, low, close) {
+    nh <- length(high)
+    nl <- length(low)
+    nc <- length(close)
+    if (nh == nl && nl == nc) {
+      min <- mmin(low)
+      max <- mmax(high)
+      ans <- -100.0 * (max - close) / (max - min)
+    } else {
+      stop("Arguments are of different lengths", call. = FALSE)
+    }
+    ans
+  }
+}
+
+make_ad <- function() {
+
+  ad <- 0.0
+
+  function(high, low, close, volume) {
+    nh <- length(high)
+    nl <- length(low)
+    nc <- length(close)
+    nv <- length(volume)
+    if (nh == nl && nl == nc && nc == nv) {
+      delta <- volume * ((close - low) - (high - close)) / (high - low)
+      delta[is.nan(delta) | is.infinite(delta)] <- 0.0
+      ans <- vector(mode = "numeric", length = nh)
+      for (i in seq_len(nh)) {
+        ad <<- ad + delta[i]
+        ans[i] <- ad
+      }
+    } else {
+      stop("Arguments are of different lengths", call. = FALSE)
+    }
+    ans
+  }
+}
+
+make_adosc <- function(period_short, period_long) {
+
+  ema_short <- make_ema(period_short)
+  ema_long <- make_ema(period_long)
+  ad <- make_ad()
+
+  function(high, low, close, volume) {
+
+    val_ad <- ad(high, low, close, volume)
+    val_ema_short <- ema_short(val_ad)
+    val_ema_long <- ema_long(val_ad)
+
+    val_ema_short - val_ema_long
+  }
+}

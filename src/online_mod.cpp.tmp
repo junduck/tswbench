@@ -1,0 +1,32 @@
+#include <Rcpp.h>
+using namespace Rcpp;
+
+class ocls_ {
+
+public:
+
+  ocls_() {
+
+  }
+
+  NumericVector update(NumericVector x) {
+
+  }
+
+  double value() {
+
+  }
+
+};
+
+RCPP_MODULE(ocls_){
+  using namespace Rcpp;
+
+  class_<ocls_>("ocls_")
+
+    .constructor<>()
+
+    .method("update", &ocls_::update, "Update state")
+    .method("value", &ocls_::value, "Get last value")
+    ;
+}
