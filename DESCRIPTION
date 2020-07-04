@@ -6,12 +6,12 @@ Author: Jun <imlijunda@gmail.com>
 Maintainer: Jun <imlijunda@gmail.com>
 Description: Tushare Workbench (tswbench) is a rapid data analysis platform based
     on Tushare Pro (www.tushare.pro).
-Imports: data.table, curl, httr, lubridate, utils, magrittr, stringr, websocket, 
-    jsonlite, DBI, RSQLite, Rcpp (>= 1.0.1)
+Imports: data.table, curl, httr, lubridate, utils, magrittr, stringr,
+     DBI, RSQLite, Rcpp (>= 1.0.1)
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 LinkingTo: Rcpp
-RoxygenNote: 7.1.0
+RoxygenNote: 7.1.1
 Suggests: 
-    testthat, zoo, roll, moments
+    jsonlite, websocket, testthat, zoo, roll, moments

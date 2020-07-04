@@ -21,6 +21,11 @@ split_dict_values <- function(rec) {
 #'
 tushare_realtime_websocket <- function(topic, code, callback, api = TushareApi()) {
 
+  if (!requireNamespace("websocket", quietly = TRUE) ||
+      !requireNamespace("jsonlite", quietly = TRUE)) {
+    stop("Package websocket and jsonlite are needed to create a Tushare realtime websocket", call. = FALSE)
+  }
+
   api <- as.character(api)
   t_ping <- 0.0
 

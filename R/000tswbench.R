@@ -7,8 +7,6 @@
 #' @importFrom utils globalVariables
 #' @import magrittr
 #' @import stringr
-#' @import websocket
-#' @import jsonlite
 #' @import DBI
 #' @importFrom RSQLite SQLite
 loadModule("ocls_stats", TRUE)
