@@ -9,6 +9,10 @@ public:
 
   }
 
+  double update_one(double x) {
+
+  }
+
   NumericVector update(NumericVector x) {
 
   }
@@ -26,6 +30,7 @@ RCPP_MODULE(ocls_){
 
     .constructor<>()
 
+    .method("update_one", &ocls_::update_one, "Update state by one value")
     .method("update", &ocls_::update, "Update state")
     .method("value", &ocls_::value, "Get last value")
     ;

@@ -15,12 +15,11 @@ struct SkiplistNode {
   // widths
   std::vector<size_t> w;
 
-  SkiplistNode(T value, int depth, int maxlevel) {
-    v = value;
-    d = depth;
-    f = std::vector<SkiplistNode<T>*>(maxlevel, nullptr);
-    w = std::vector<size_t>(maxlevel, 0);
-  }
+  SkiplistNode(T value, int depth, int maxlevel):
+    v(value),
+    d(depth),
+    f(maxlevel, nullptr),
+    w(maxlevel, 0) {}
 
 };
 
@@ -31,7 +30,7 @@ class IndexableSkiplist {
   int mxlv;
   SkiplistNode<T> *head;
   // reused working vars
-  std::vector<SkiplistNode<T>*> found;
+  std::vector<SkiplistNode<T> *> found;
 
   Compare lt;
 
@@ -45,9 +44,17 @@ class IndexableSkiplist {
   }
 
 public:
-  IndexableSkiplist(int window): size(0), mxlv(1 + int(log(window))), lt() {
-    head    = new SkiplistNode<T>(T(), mxlv, mxlv);
-    found   = std::vector<SkiplistNode<T>*>(mxlv, nullptr);
+  IndexableSkiplist(int window): size(0), mxlv(1 + int(log(window))), found(mxlv, nullptr), lt() {
+    head = new SkiplistNode<T>(T(), mxlv, mxlv);
+  }
+
+  ~IndexableSkiplist() {
+    auto next = head;
+    while (head != nullptr) {
+      next = head->f[0];
+      delete head;
+      head = next;
+    }
   }
 
   T operator[](const size_t& i) {

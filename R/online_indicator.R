@@ -15,6 +15,7 @@
 make_macd <- function(period_short = 12L, period_long = 26L, period_signal = 9L, return = c("l", "m")) {
 
   return <- match.arg(return)
+  stopifnot(period_short < period_long)
 
   n <- as.integer(period_short)
   m <- as.integer(period_long)
@@ -31,14 +32,15 @@ make_macd <- function(period_short = 12L, period_long = 26L, period_signal = 9L,
            macd   <- ema_short(x) - ema_long(x)
            #wait for long period to generate signals
            if (init < m) {
-             npt <- length(x)
              signal <- macd
-             for (i in seq_len(npt)) {
-               if (init < m) {
-                 init <<- init + 1L
-               } else {
-                 signal[i] <- ema_signal(macd[i])
-               }
+             npt <- length(x)
+             gap <- m - init
+             if (npt >= gap) {
+               init <<- m
+               range <- seq.int(gap, npt)
+               signal[range] <- ema_signal(macd[range])
+             } else {
+               init <<- init + npt
              }
            } else {
              signal <- ema_signal(macd)
@@ -50,26 +52,23 @@ make_macd <- function(period_short = 12L, period_long = 26L, period_signal = 9L,
            )
          },
          m = function(x) {
-           npt <- length(x)
-           ans <- matrix(nrow = npt, ncol = 3L)
-           colnames(ans) <- c("macd", "signal", "histo")
-           ans[, 1L] <- ema_short(x) - ema_long(x)
+           macd   <- ema_short(x) - ema_long(x)
            #wait for long period to generate signals
            if (init < m) {
+             signal <- macd
              npt <- length(x)
-             ans[, 2L] <- ans[, 1L]
-             for (i in seq_len(npt)) {
-               if (init < m) {
-                 init <<- init + 1L
-               } else {
-                 ans[i, 2L] <- ema_signal(ans[i, 1L])
-               }
+             gap <- m - init
+             if (npt >= gap) {
+               init <<- m
+               range <- seq.int(gap, npt)
+               signal[range] <- ema_signal(macd[range])
+             } else {
+               init <<- init + npt
              }
            } else {
-             ans[, 2L] <- ema_signal(ans[, 1L])
+             signal <- ema_signal(macd)
            }
-           ans[, 3L] <- ans[, 1L] - ans[, 2L]
-           ans
+           cbind(macd = macd, signal = signal, histo = macd - signal)
          })
 }
 
@@ -79,16 +78,15 @@ make_willr <- function(period) {
   mmax <- make_moving_max(window = period)
 
   function(high, low, close) {
+
     nh <- length(high)
     nl <- length(low)
     nc <- length(close)
-    if (nh == nl && nl == nc) {
-      min <- mmin(low)
-      max <- mmax(high)
-      ans <- -100.0 * (max - close) / (max - min)
-    } else {
-      stop("Arguments are of different lengths", call. = FALSE)
-    }
+    stopifnot(nh == nl && nl == nc)
+
+    min <- mmin(low)
+    max <- mmax(high)
+    ans <- -100.0 * (max - close) / (max - min)
     ans
   }
 }
@@ -98,26 +96,25 @@ make_ad <- function() {
   ad <- 0.0
 
   function(high, low, close, volume) {
+
     nh <- length(high)
     nl <- length(low)
     nc <- length(close)
     nv <- length(volume)
-    if (nh == nl && nl == nc && nc == nv) {
-      delta <- volume * ((close - low) - (high - close)) / (high - low)
-      delta[is.nan(delta) | is.infinite(delta)] <- 0.0
-      ans <- vector(mode = "numeric", length = nh)
-      for (i in seq_len(nh)) {
-        ad <<- ad + delta[i]
-        ans[i] <- ad
-      }
-    } else {
-      stop("Arguments are of different lengths", call. = FALSE)
-    }
+    stopifnot(nh == nl && nl == nc && nc == nv)
+
+    delta <- volume * ((close - low) - (high - close)) / (high - low)
+    delta[is.nan(delta) | is.infinite(delta)] <- 0.0
+    ans <- ad + cumsum(delta)
+    ad <<- ans[nh]
+
     ans
   }
 }
 
 make_adosc <- function(period_short, period_long) {
+
+  stopifnot(period_short < period_long)
 
   ema_short <- make_ema(period_short)
   ema_long <- make_ema(period_long)

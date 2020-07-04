@@ -17,26 +17,36 @@ public:
     w = window;
   }
 
-  NumericVector as_vector() {
-    return wrap(skiplist.as_vector());
-  }
-
   double get_index(int idx) {
     return skiplist[idx];
   }
 
-  void insert(NumericVector x) {
+  NumericVector as_vector() {
+    return wrap(skiplist.as_vector());
+  }
+
+  void update_one(double x) {
+    if (n < w) {
+      n += 1;
+    } else {
+      skiplist.remove(buf.back());
+      buf.pop_back();
+    }
+    buf.push_front(x);
+    skiplist.insert(x);
+    return;
+  }
+
+  void update(NumericVector x) {
     auto npt = x.length();
     for (auto i = 0; i < npt; ++i) {
-      if (n < w) {
-        n += 1;
-      } else {
-        skiplist.remove(buf.back());
-        buf.pop_back();
-      }
-      buf.push_front(x[i]);
-      skiplist.insert(x[i]);
+      update_one(x[i]);
     }
+    return;
+  }
+
+  NumericVector value() {
+    return as_vector();
   }
 
 };
@@ -54,32 +64,32 @@ public:
     n = idx1 = idx2 = 0;
   }
 
+  double update_one(double x) {
+    if (n < w) {
+      // cumulative stage
+      n += 1;
+      if (n % 2) {
+        idx1 = idx2 = n / 2;
+      } else {
+        idx1 = n / 2;
+        idx2 = idx1 - 1;
+      }
+    } else {
+      // windowed stage
+      skiplist.remove(buf.back());
+      buf.pop_back();
+    }
+    buf.push_front(x);
+    skiplist.insert(x);
+
+    return value();
+  }
+
   NumericVector update(NumericVector x) {
     auto npt = x.length();
     auto y = NumericVector(npt);
     for (auto i = 0; i < npt; ++i) {
-      if (n < w) {
-        // cumulative stage
-        n += 1;
-        if (n % 2) {
-          idx1 = idx2 = n / 2;
-        } else {
-          idx1 = n / 2;
-          idx2 = idx1 - 1;
-        }
-      } else {
-        // windowed stage
-        skiplist.remove(buf.back());
-        buf.pop_back();
-      }
-      buf.push_front(x[i]);
-      skiplist.insert(x[i]);
-      if (idx1 == idx2) {
-        y[i] = skiplist[idx1];
-      } else {
-        y[i] = skiplist[idx1] / 2.0 + skiplist[idx2] / 2.0;
-      }
-
+      y[i] = update_one(x[i]);
     }
     return y;
   }
@@ -111,29 +121,37 @@ public:
     nidx = qidx.length();
   }
 
+  NumericVector update_one(double x) {
+    buf.push_front(x);
+    skiplist.insert(x);
+    auto y = NumericVector(nidx);
+    if (n < w - 1) {
+      n += 1;
+    } else {
+      for (auto i = 0; i < nidx; ++i) {
+        y[i] = skiplist[qidx[i]];
+      }
+      skiplist.remove(buf.back());
+      buf.pop_back();
+    }
+    return y;
+  }
+
   NumericMatrix update(NumericVector x) {
     auto npt = x.length();
     auto y = NumericMatrix(npt, nidx);
     for (auto i = 0; i < npt; ++i) {
-      buf.push_front(x[i]);
-      skiplist.insert(x[i]);
-      if (n < w - 1) {
-        n += 1;
-      } else {
-        for (auto j = 0; j < nidx; ++j) {
-          y(i, j) = skiplist[qidx[j]];
-        }
-        skiplist.remove(buf.back());
-        buf.pop_back();
-      }
+      y(i, _) = update_one(x[i]);
     }
     return y;
   }
 
   NumericVector value() {
     auto y = NumericVector(nidx);
-    for (auto i = 0; i < nidx; ++i) {
-      y[i] = skiplist[qidx[i]];
+    if (n + 1 > w) {
+      for (auto i = 0; i < nidx; ++i) {
+        y[i] = skiplist[qidx[i]];
+      }
     }
     return y;
   }
@@ -147,15 +165,16 @@ RCPP_MODULE(ocls_moving_order){
 
     .constructor<int>()
 
-    .method("insert", &ocls_moving_sort::insert, "Insert values")
-    .method("get_index", &ocls_moving_sort::get_index, "Get value at index")
-    .method("as_vector", &ocls_moving_sort::as_vector, "Convert to vector")
+    .method("update_one", &ocls_moving_sort::update_one, "Update state by one value")
+    .method("update", &ocls_moving_sort::update, "Update state")
+    .method("value", &ocls_moving_sort::value, "Get last value")
     ;
 
   class_<ocls_moving_median>("ocls_moving_median")
 
     .constructor<int>()
 
+    .method("update_one", &ocls_moving_median::update_one, "Update state by one value")
     .method("update", &ocls_moving_median::update, "Update state")
     .method("value", &ocls_moving_median::value, "Get last value")
     ;
@@ -164,6 +183,7 @@ RCPP_MODULE(ocls_moving_order){
 
     .constructor<int, IntegerVector>()
 
+    .method("update_one", &ocls_moving_quantile::update_one, "Update state by one value")
     .method("update", &ocls_moving_quantile::update, "Update state")
     .method("value", &ocls_moving_quantile::value, "Get last value")
     ;

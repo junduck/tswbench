@@ -29,26 +29,29 @@ public:
     w = window;
   }
 
+  double update_one(double x) {
+    buf.push_front(x);
+    enQ(x);
+    if (n < w) {
+      n += 1;
+    } else {
+      deQ(buf.back());
+      buf.pop_back();
+    }
+    return deq.front();
+  }
+
   NumericVector update(NumericVector x) {
     auto npt = x.length();
     auto y = NumericVector(npt);
     for (auto i = 0; i < npt; ++i) {
-      buf.push_front(x[i]);
-      enQ(x[i]);
-      if (n < w) {
-        n += 1;
-      } else {
-        deQ(buf.back());
-        buf.pop_back();
-      }
-      y[i] = deq.front();
+      y[i] = update_one(x[i]);
     }
     return y;
   }
 
-  NumericVector value() {
-    NumericVector ans = {deq.front()};
-    return ans;
+  double value() {
+    return deq.front();
   }
 
 };
@@ -78,26 +81,29 @@ public:
     w = window;
   }
 
+  double update_one(double x) {
+    buf.push_front(x);
+    enQ(x);
+    if (n < w) {
+      n += 1;
+    } else {
+      deQ(buf.back());
+      buf.pop_back();
+    }
+    return deq.front();
+  }
+
   NumericVector update(NumericVector x) {
     auto npt = x.length();
     auto y = NumericVector(npt);
     for (auto i = 0; i < npt; ++i) {
-      buf.push_front(x[i]);
-      enQ(x[i]);
-      if (n < w) {
-        n += 1;
-      } else {
-        deQ(buf.back());
-        buf.pop_back();
-      }
-      y[i] = deq.front();
+      y[i] = update_one(x[i]);
     }
     return y;
   }
 
-  NumericVector value() {
-    NumericVector ans = {deq.front()};
-    return ans;
+  double value() {
+    return deq.front();
   }
 
 };
@@ -139,26 +145,29 @@ public:
     w = window;
   }
 
+  int update_one(double x) {
+    buf.push_front(x);
+    enQ(x);
+    if (n < w) {
+      n += 1;
+    } else {
+      deQ(buf.back());
+      buf.pop_back();
+    }
+    return argdeq.front();
+  }
+
   IntegerVector update(NumericVector x) {
     auto npt = x.length();
     auto y = IntegerVector(npt);
     for (auto i = 0; i < npt; ++i) {
-      buf.push_front(x[i]);
-      enQ(x[i]);
-      if (n < w) {
-        n += 1;
-      } else {
-        deQ(buf.back());
-        buf.pop_back();
-      }
-      y[i] = argdeq.front();
+      y[i] = update_one(x[i]);
     }
     return y;
   }
 
-  IntegerVector value() {
-    IntegerVector ans = {argdeq.front()};
-    return ans;
+  int value() {
+    return argdeq.front();
   }
 
 };
@@ -195,26 +204,29 @@ public:
     w = window;
   }
 
+  int update_one(double x) {
+    buf.push_front(x);
+    enQ(x);
+    if (n < w) {
+      n += 1;
+    } else {
+      deQ(buf.back());
+      buf.pop_back();
+    }
+    return argdeq.front();
+  }
+
   IntegerVector update(NumericVector x) {
     auto npt = x.length();
     auto y = IntegerVector(npt);
     for (auto i = 0; i < npt; ++i) {
-      buf.push_front(x[i]);
-      enQ(x[i]);
-      if (n < w) {
-        n += 1;
-      } else {
-        deQ(buf.back());
-        buf.pop_back();
-      }
-      y[i] = argdeq.front();
+      y[i] = update_one(x[i]);
     }
     return y;
   }
 
-  IntegerVector value() {
-    IntegerVector ans = {argdeq.front()};
-    return ans;
+  int value() {
+    return argdeq.front();
   }
 
 };
@@ -226,6 +238,7 @@ RCPP_MODULE(ocls_moving_minmax){
 
     .constructor<int>()
 
+    .method("update_one", &ocls_moving_min::update_one, "Update state by one value")
     .method("update", &ocls_moving_min::update, "Update state")
     .method("value", &ocls_moving_min::value, "Get last value")
     ;
@@ -234,6 +247,7 @@ RCPP_MODULE(ocls_moving_minmax){
 
     .constructor<int>()
 
+    .method("update_one", &ocls_moving_max::update_one, "Update state by one value")
     .method("update", &ocls_moving_max::update, "Update state")
     .method("value", &ocls_moving_max::value, "Get last value")
     ;
@@ -242,6 +256,7 @@ RCPP_MODULE(ocls_moving_minmax){
 
     .constructor<int>()
 
+    .method("update_one", &ocls_moving_argmin::update_one, "Update state by one value")
     .method("update", &ocls_moving_argmin::update, "Update state")
     .method("value", &ocls_moving_argmin::value, "Get last value")
     ;
@@ -250,6 +265,7 @@ RCPP_MODULE(ocls_moving_minmax){
 
     .constructor<int>()
 
+    .method("update_one", &ocls_moving_argmax::update_one, "Update state by one value")
     .method("update", &ocls_moving_argmax::update, "Update state")
     .method("value", &ocls_moving_argmax::value, "Get last value")
     ;

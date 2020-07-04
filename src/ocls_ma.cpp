@@ -16,6 +16,16 @@ public:
     alpha = 2.0 / (period + 1);
   }
 
+  double update_one(double x) {
+    if (init) {
+      ema += (x - ema) * alpha;
+    } else {
+      ema = x;
+      init = true;
+    }
+    return ema;
+  }
+
   NumericVector update(NumericVector x) {
     auto npt = x.length();
     auto y = NumericVector(npt);
@@ -52,6 +62,17 @@ public:
     init = false;
     ema = ema2 = 0.0;
     alpha = 2.0 / (period + 1);
+  }
+
+  double update_one(double x) {
+    if (init) {
+      ema  += (x   - ema ) * alpha;
+      ema2 += (ema - ema2) * alpha;
+    } else {
+      ema = ema2 = x;
+      init = true;
+    }
+    return ema2;
   }
 
   NumericVector update(NumericVector x) {
@@ -94,6 +115,18 @@ public:
     alpha = 2.0 / (period + 1);
   }
 
+  double update_one(double x) {
+    if (init) {
+      ema  += (x    - ema ) * alpha;
+      ema2 += (ema  - ema2) * alpha;
+      ema3 += (ema2 - ema3) * alpha;
+    } else {
+      ema = ema2 = ema3 = x;
+      init = true;
+    }
+    return ema3;
+  }
+
   NumericVector update(NumericVector x) {
     auto npt = x.length();
     auto y = NumericVector(npt);
@@ -128,6 +161,7 @@ class ocls_zlema {
   int n, lag;
   double alpha, ema;
   deque buf;
+  double datum;
 
 public:
 
@@ -138,20 +172,24 @@ public:
     ema = 0.0;
   }
 
+  double update_one(double x) {
+    buf.push_front(x);
+    if (n < lag) {
+      n += 1;
+      ema = x;
+    } else {
+      datum = x + (x - buf.back());
+      ema  += (datum - ema) * alpha;
+      buf.pop_back();
+    }
+    return ema;
+  }
+
   NumericVector update(NumericVector x) {
     auto npt = x.length();
     auto y = NumericVector(npt);
-    double datum;
     for (auto i = 0; i < npt; ++i) {
-      if (n < lag) {
-        n += 1;
-        ema = x[i];
-      } else {
-        datum = x[i] + (x[i] - buf.back());
-        ema  += (datum - ema) * alpha;
-        buf.pop_back();
-      }
-      y[i] = ema;
+      y[i] = update_one(x[i]);
     }
     return y;
   }
@@ -173,6 +211,16 @@ public:
     init = false;
     alpha = 1.0 / period;
     wilders = 0.0;
+  }
+
+  double update_one(double x) {
+    if (init) {
+      wilders += (x - wilders) * alpha;
+    } else {
+      wilders = x;
+      init = true;
+    }
+    return wilders;
   }
 
   NumericVector update(NumericVector x) {
@@ -214,21 +262,25 @@ public:
     m = 0.0;
   }
 
+  double update_one(double x) {
+    buf.push_front(x);
+    if (n < p) {
+      // cumulative stage
+      n += 1;
+      m += (x - m) / n;
+    } else {
+      // windowed stage
+      m += (x - buf.back()) / n;
+      buf.pop_back();
+    }
+    return m;
+  }
+
   NumericVector update(NumericVector x) {
     auto npt = x.length();
     auto y = NumericVector(npt);
     for (auto i = 0; i < npt; ++i) {
-      buf.push_front(x[i]);
-      if (n < p) {
-        // cumulative stage
-        n += 1;
-        m += (x[i] - m) / n;
-      } else {
-        // windowed stage
-        m += (x[i] - buf.back()) / n;
-        buf.pop_back();
-      }
-      y[i] = m;
+      y[i] = update_one(x[i]);
     }
     return y;
   }
@@ -255,23 +307,27 @@ public:
     ws = s = 0.0;
   }
 
+  double update_one(double x) {
+    buf.push_front(x);
+    if (n < p) {
+      // cumulative stage
+      n += 1;
+      tot_w += n;
+      ws    += x * n;
+      s     += x;
+    } else {
+      ws += x * n - s;
+      s  += x - buf.back();
+      buf.pop_back();
+    }
+    return value();
+  }
+
   NumericVector update(NumericVector x) {
     auto npt = x.length();
     auto y = NumericVector(npt);
     for (auto i = 0; i < npt; ++i) {
-      buf.push_front(x[i]);
-      if (n < p) {
-        // cumulative stage
-        n += 1;
-        tot_w += n;
-        ws    += x[i] * n;
-        s     += x[i];
-      } else {
-        ws += x[i] * n - s;
-        s  += x[i] - buf.back();
-        buf.pop_back();
-      }
-      y[i] = ws / tot_w;
+      y[i] = update_one(x[i]);
     }
     return y;
   }
@@ -287,11 +343,11 @@ class ocls_kama {
   int n, p;
   double a_short, a_long, a_delta, a0, sdelta, kama;
   deque buf;
+  double old, e, a;
 
 public:
 
   ocls_kama(int period, int period_short = 2, int period_long = 30) {
-
     p = period;
     n = 0;
     a_short = 2.0 / (period_short + 1);
@@ -302,33 +358,35 @@ public:
     kama    = 0.0;
   }
 
-  NumericVector update(NumericVector x) {
+  double update_one(double x) {
+    if (n) {
+      sdelta += fabs(x - buf.front());
+    }
+    buf.push_front(x);
+    if (n < p) {
+      // cumulative stage
+      n += 1;
+      kama = x;
+    } else {
+      old = buf.back();
+      buf.pop_back();
+      if (sdelta != 0.0) {
+        e = fabs(x - old) / sdelta * a_delta + a_long;
+        a = e * e;
+      } else {
+        a = a0;
+      }
+      sdelta -= abs(old - buf.back());
+      kama   += (x - kama) * a;
+    }
+    return kama;
+  }
 
+  NumericVector update(NumericVector x) {
     auto npt = x.length();
     auto y = NumericVector(npt);
-    double old, e, a;
     for (auto i = 0; i < npt; ++i) {
-      if (n) {
-        sdelta += fabs(x[i] - buf.front());
-      }
-      buf.push_front(x[i]);
-      if (n < p) {
-        // cumulative stage
-        n += 1;
-        kama = x[i];
-      } else {
-        old = buf.back();
-        buf.pop_back();
-        if (sdelta != 0.0) {
-          e = fabs(x[i] - old) / sdelta * a_delta + a_long;
-          a = e * e;
-        } else {
-          a = a0;
-        }
-        sdelta -= abs(old - buf.back());
-        kama   += (x[i] - kama) * a;
-      }
-      y[i] = kama;
+      y[i] = update_one(x[i]);
     }
     return y;
   }
@@ -361,12 +419,18 @@ public:
     delete wma_s;
   }
 
+  double update_one(double x) {
+    auto mp = wma_p->update_one(x);
+    auto mm = wma_m->update_one(x);
+    auto x_new = 2.0 * mm - mp;
+    return wma_s->update_one(x_new);
+  }
+
   NumericVector update(NumericVector x) {
     auto mp = wma_p->update(x);
     auto mm = wma_m->update(x);
     auto x_new = 2.0 * mm - mp;
-    auto y = wma_s->update(x_new);
-    return y;
+    return wma_s->update(x_new);
   }
 
   double value() {
@@ -381,6 +445,7 @@ class ocls_vwma {
   deque buft, bufv;
   // sum of turnover, volume
   double st, sv;
+  double t;
 
 public:
 
@@ -391,26 +456,30 @@ public:
     sv = 0.0;
   }
 
+  double update_one(double p, double v) {
+    t = p * v;
+    buft.push_front(t);
+    bufv.push_front(v);
+    if (n < p_) {
+      // cumulative stage
+      n  += 1;
+      st += t;
+      sv += v;
+    } else {
+      st += t - buft.back();
+      sv += v - bufv.back();
+      buft.pop_back();
+      bufv.pop_back();
+    }
+    return value();
+  }
+
   NumericVector update(NumericVector p, NumericVector v) {
     auto npt = p.length();
     auto y = NumericVector(npt);
-    double t;
+
     for (auto i = 0; i < npt; ++i) {
-      t = p[i] * v[i];
-      buft.push_front(t);
-      bufv.push_front(v[i]);
-      if (n < p_) {
-        // cumulative stage
-        n  += 1;
-        st += t;
-        sv += v[i];
-      } else {
-        st += t    - buft.back();
-        sv += v[i] - bufv.back();
-        buft.pop_back();
-        bufv.pop_back();
-      }
-      y[i] = st / sv;
+      y[i] = update_one(p[i], v[i]);
     }
     return y;
   }
@@ -428,6 +497,7 @@ RCPP_MODULE(ocls_ma){
 
     .constructor<int>()
 
+    .method("update_one", &ocls_ema::update_one, "Update state by one value")
     .method("update", &ocls_ema::update, "Update state")
     .method("value", &ocls_ema::value, "Get last value")
     ;
@@ -436,6 +506,7 @@ RCPP_MODULE(ocls_ma){
 
     .constructor<int>()
 
+    .method("update_one", &ocls_dema::update_one, "Update state by one value")
     .method("update", &ocls_dema::update, "Update state")
     .method("value", &ocls_dema::value, "Get last value")
     ;
@@ -444,6 +515,7 @@ RCPP_MODULE(ocls_ma){
 
     .constructor<int>()
 
+    .method("update_one", &ocls_tema::update_one, "Update state by one value")
     .method("update", &ocls_tema::update, "Update state")
     .method("value", &ocls_tema::value, "Get last value")
     ;
@@ -452,6 +524,7 @@ RCPP_MODULE(ocls_ma){
 
     .constructor<int>()
 
+    .method("update_one", &ocls_zlema::update_one, "Update state by one value")
     .method("update", &ocls_zlema::update, "Update state")
     .method("value", &ocls_zlema::value, "Get last value")
     ;
@@ -460,6 +533,7 @@ RCPP_MODULE(ocls_ma){
 
     .constructor<int>()
 
+    .method("update_one", &ocls_wilders::update_one, "Update state by one value")
     .method("update", &ocls_wilders::update, "Update state")
     .method("value", &ocls_wilders::value, "Get last value")
     ;
@@ -468,6 +542,7 @@ RCPP_MODULE(ocls_ma){
 
     .constructor<int>()
 
+    .method("update_one", &ocls_sma::update_one, "Update state by one value")
     .method("update", &ocls_sma::update, "Update state")
     .method("value", &ocls_sma::value, "Get last value")
     ;
@@ -476,6 +551,7 @@ RCPP_MODULE(ocls_ma){
 
     .constructor<int>()
 
+    .method("update_one", &ocls_wma::update_one, "Update state by one value")
     .method("update", &ocls_wma::update, "Update state")
     .method("value", &ocls_wma::value, "Get last value")
     ;
@@ -484,6 +560,7 @@ RCPP_MODULE(ocls_ma){
 
     .constructor<int, int, int>()
 
+    .method("update_one", &ocls_kama::update_one, "Update state by one value")
     .method("update", &ocls_kama::update, "Update state")
     .method("value", &ocls_kama::value, "Get last value")
     ;
@@ -492,6 +569,7 @@ RCPP_MODULE(ocls_ma){
 
     .constructor<int>()
 
+    .method("update_one", &ocls_hma::update_one, "Update state by one value")
     .method("update", &ocls_hma::update, "Update state")
     .method("value", &ocls_hma::value, "Get last value")
     ;
@@ -500,6 +578,7 @@ RCPP_MODULE(ocls_ma){
 
     .constructor<int>()
 
+    .method("update_one", &ocls_vwma::update_one, "Update state by one value")
     .method("update", &ocls_vwma::update, "Update state")
     .method("value", &ocls_vwma::value, "Get last value")
     ;

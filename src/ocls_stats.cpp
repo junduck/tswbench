@@ -17,21 +17,25 @@ public:
     m = 0.0;
   }
 
+  double update_one(double x) {
+    if (n < w) {
+      // cumulative stage
+      n += 1;
+      m += (x - m) / n;
+    } else {
+      // windowed stage
+      m += (x - buf.back()) / n;
+      buf.pop_back();
+    }
+    buf.push_front(x);
+    return m;
+  }
+
   NumericVector update(NumericVector x) {
     auto npt = x.length();
     auto y = NumericVector(npt);
     for (auto i = 0; i < npt; ++i) {
-      if (n < w) {
-        // cumulative stage
-        n += 1;
-        m += (x[i] - m) / n;
-      } else {
-        // windowed stage
-        m += (x[i] - buf.back()) / n;
-        buf.pop_back();
-      }
-      buf.push_front(x[i]);
-      y[i] = m;
+      y[i] = update_one(x[i]);
     }
     return y;
   }
@@ -52,13 +56,17 @@ public:
     n = m = 0.0;
   }
 
+  double update_one(double x) {
+    n += 1.0;
+    m += (x - m) / n;
+    return m;
+  }
+
   NumericVector update(NumericVector x) {
     auto npt = x.length();
     auto y = NumericVector(npt);
     for (auto i = 0; i < npt; ++i) {
-      n += 1.0;
-      m += (x[i] - m) / n;
-      y[i] = m;
+      y[i] = update_one(x[i]);
     }
     return y;
   }
@@ -75,7 +83,15 @@ class ocls_moving_sd {
   deque buf;
   double s2, m, d, d0, dd0;
 
-  void update_one(double x) {
+public:
+
+  ocls_moving_sd(int window) {
+    w = window;
+    n = 0;
+    s2 = m = d = d0 = dd0 = 0.0;
+  }
+
+  NumericVector update_one(double x) {
     d = x - m;
     if (n < w) {
       // cumulative stage
@@ -91,24 +107,15 @@ class ocls_moving_sd {
     buf.push_front(x);
 
     dd0 = d - d0;
-  }
-
-public:
-
-  ocls_moving_sd(int window) {
-    w = window;
-    n = 0;
-    s2 = m = d = d0 = dd0 = 0.0;
+    s2 += d * d - d0 * d0 - dd0 * dd0 / n;
+    return value();
   }
 
   NumericMatrix update(NumericVector x) {
     auto npt = x.length();
     auto y = NumericMatrix(npt, 2);
     for (auto i = 0; i < npt; ++i) {
-      update_one(x[i]);
-      s2 += d * d - d0 * d0 - dd0 * dd0 / n;
-      y(i, 0) = m;
-      y(i, 1) = sqrt(s2 / (n - 1));
+      y(i, _) = update_one(x[i]);
     }
     return y;
   }
@@ -126,12 +133,6 @@ class ocls_cumulative_sd {
   double s2, m;
   double d;
 
-  void update_one(double x) {
-    n += 1.0;
-    d  = x - m;
-    m += d / n;
-  }
-
 public:
 
   ocls_cumulative_sd() {
@@ -140,16 +141,21 @@ public:
     d = 0.0;
   }
 
+  NumericVector update_one(double x) {
+    n += 1.0;
+    d  = x - m;
+    m += d / n;
+    // TODO: investigate numeric stability
+    s2 += (1.0 - 1.0 / n) * d * d;
+    return value();
+  }
+
   NumericMatrix update(NumericVector x) {
     auto npt = x.length();
     auto y = NumericMatrix(npt, 2);
     double d_2;
     for (auto i = 0; i < npt; ++i) {
-      update_one(x[i]);
-      // TODO: investigate numeric stability
-      s2 += (1.0 - 1.0 / n) * d * d;
-      y(i, 0) = m;
-      y(i, 1) = sqrt(s2 / (n - 1.0));
+      y(i, _) = update_one(x[i]);
     }
     return y;
   }
@@ -158,6 +164,7 @@ public:
     NumericVector y = {m, sqrt(s2 / (n - 1.0))};
     return y;
   }
+
 };
 
 class ocls_moving_moment {
@@ -169,28 +176,6 @@ class ocls_moving_moment {
   double s2, s3, s4, m;
   double d, d0, dd0, d_2, d0_2, dd0_2;
 
-  void update_one(double x) {
-    d = x - m;
-    if (n < w) {
-      // cumulative stage
-      n += 1;
-      m += d / n;
-      n2 = n * n;
-      n3 = n2 * n;
-    } else {
-      auto old = buf.back();
-      buf.pop_back();
-      d0 = old - m;
-      m += (x - old) / n;
-    }
-    buf.push_front(x);
-    // use SMA when order = 1 for better performance
-    dd0   = d - d0;
-    d_2   = d * d;
-    d0_2  = d0 * d0;
-    dd0_2 = dd0 * dd0;
-  }
-
 public:
 
   ocls_moving_moment(int window, int order = 4) {
@@ -201,30 +186,49 @@ public:
     d = d0 = dd0 = 0.0;
   }
 
+  NumericVector update_one(double x) {
+    d = x - m;
+    if (n < w) {
+      // cumulative stage
+      n += 1;
+      m += d / n;
+      n2 = n * n;
+      n3 = n2 * n;
+    } else {
+      // windowed stage
+      auto old = buf.back();
+      buf.pop_back();
+      d0 = old - m;
+      m += (x - old) / n;
+    }
+    buf.push_front(x);
+
+    dd0   = d - d0;
+    d_2   = d * d;
+    d0_2  = d0 * d0;
+    dd0_2 = dd0 * dd0;
+    switch (o) {
+    // TODO: investigate numeric stability
+    case 4:
+      s4 += d_2 * d_2 - d0_2 * d0_2
+      - 4.0 * dd0 * (s3 + d_2 * d - d0_2 * d0) / n
+      + 6.0 * (s2 + d_2 - d0_2) * dd0_2 / n2
+      - 3.0 * dd0_2 * dd0_2 / n3;
+    case 3:
+      s3 += d_2 * d - d0_2 * d0
+      - 3.0 * dd0 * (s2 + d_2 - d0_2) / n
+      + 2.0 * dd0_2 * dd0 / n2;
+    case 2:
+      s2 += d_2 - d0_2 - dd0_2 / n;
+    }
+    return value();
+  }
+
   NumericMatrix update(NumericVector x) {
     auto npt = x.length();
     auto y = NumericMatrix(npt, 4);
     for (auto i = 0; i < npt; ++i) {
-      update_one(x[i]);
-      switch (o) {
-      // TODO: investigate numeric stability
-      case 4:
-        s4 += d_2 * d_2 - d0_2 * d0_2
-          - 4.0 * dd0 * (s3 + d_2 * d - d0_2 * d0) / n
-          + 6.0 * (s2 + d_2 - d0_2) * dd0_2 / n2
-          - 3.0 * dd0_2 * dd0_2 / n3;
-        y(i, 3) = s4 / n;
-      case 3:
-        s3 += d_2 * d - d0_2 * d0
-          - 3.0 * dd0 * (s2 + d_2 - d0_2) / n
-          + 2.0 * dd0_2 * dd0 / n2;
-        y(i, 2) = s3 / n;
-      case 2:
-        s2 += d_2 - d0_2 - dd0_2 / n;
-        y(i, 1) = s2 / n;
-      case 1:
-        y(i, 0) = m;
-      }
+      y(i, _) = update_one(x[i]);
     }
     return y;
   }
@@ -241,13 +245,7 @@ class ocls_cumulative_moment {
   int o;
   double n;
   double s2, s3, s4, m;
-  double d;
-
-  void update_one(double x) {
-    n += 1.0;
-    d  = x - m;
-    m += d / n;
-  }
+  double d, d_2;
 
 public:
 
@@ -258,30 +256,31 @@ public:
     d = 0.0;
   }
 
+  NumericVector update_one(double x) {
+    n += 1.0;
+    d  = x - m;
+    m += d / n;
+    d_2 = d * d;
+    switch (o) {
+    // TODO: investigate numeric stability
+    case 4:
+      s4 += (1.0 - 3.0 / n / n / n) * d_2 * d_2
+      - 4.0 * d * (s3 + d_2 * d) / n
+      + 6.0 * (s2 + d_2) * d_2 / n / n;
+    case 3:
+      s3 += (1.0 + 2.0 / n / n) * d_2 * d
+      - 3.0 * d * (s2 + d_2) / n;
+    case 2:
+      s2 += (1.0 - 1.0 / n) * d_2;
+    }
+    return value();
+  }
+
   NumericMatrix update(NumericVector x) {
     auto npt = x.length();
     auto y = NumericMatrix(npt, 4);
-    double d_2;
     for (auto i = 0; i < npt; ++i) {
-      update_one(x[i]);
-      d_2 = d * d;
-      switch (o) {
-      // TODO: investigate numeric stability
-      case 4:
-        s4 += (1.0 - 3.0 / n / n / n) * d_2 * d_2
-          - 4.0 * d * (s3 + d_2 * d) / n
-          + 6.0 * (s2 + d_2) * d_2 / n / n;
-        y(i, 3) = s4 / n;
-      case 3:
-        s3 += (1.0 + 2.0 / n / n) * d_2 * d
-          - 3.0 * d * (s2 + d_2) / n;
-        y(i, 2) = s3 / n;
-      case 2:
-        s2 += (1.0 - 1.0 / n) * d_2;
-        y(i, 1) = s2 / n;
-      case 1:
-        y(i, 0) = m;
-      }
+      y(i, _) = update_one(x[i]);
     }
     return y;
   }
@@ -301,7 +300,16 @@ class ocls_moving_cov {
   double sxy, mx, my;
   double dx, dy, d0x, d0y;
 
-  void update_one(double x, double y) {
+public:
+
+  ocls_moving_cov(int window) {
+    w = window;
+    n = 0;
+    sxy = mx = my = 0.0;
+    dx = dy = d0x = d0y = 0.0;
+  }
+
+  double update_one(double x, double y) {
     dx = x - mx;
     dy = y - my;
     if (n < w) {
@@ -323,23 +331,14 @@ class ocls_moving_cov {
     bufy.push_front(y);
 
     sxy += dx * dy - d0x * d0y - (dx - d0x) * (dy - d0y) / n;
-  }
-
-public:
-
-  ocls_moving_cov(int window) {
-    w = window;
-    n = 0;
-    sxy = mx = my = 0.0;
-    dx = dy = d0x = d0y = 0.0;
+    return value();
   }
 
   NumericVector update(NumericVector x, NumericVector y) {
     auto npt = x.length();
     auto ans = NumericVector(npt);
     for (auto i = 0; i < npt; ++i) {
-      update_one(x[i], y[i]);
-      ans[i] = sxy / (n - 1);
+      ans[i] = update_one(x[i], y[i]);
     }
     return ans;
   }
@@ -356,16 +355,6 @@ class ocls_cumulative_cov {
   double sxy;
   double mx, my, dx, dy;
 
-  void update_one(double x, double y) {
-    dx   = x - mx;
-    dy   = y - my;
-    n   += 1.0;
-    mx  += dx / n;
-    my  += dy / n;
-
-    sxy += (1.0 - 1.0 / n) * dx * dy;
-  }
-
 public:
 
   ocls_cumulative_cov() {
@@ -374,12 +363,22 @@ public:
     mx = my = dx = dy = 0.0;
   }
 
+  double update_one(double x, double y) {
+    dx   = x - mx;
+    dy   = y - my;
+    n   += 1.0;
+    mx  += dx / n;
+    my  += dy / n;
+
+    sxy += (1.0 - 1.0 / n) * dx * dy;
+    return value();
+  }
+
   NumericVector update(NumericVector x, NumericVector y) {
     auto npt = x.length();
     auto ans = NumericVector(npt);
     for (auto i = 0; i < npt; ++i) {
-      update_one(x[i], y[i]);
-      ans[i] = sxy / (n - 1.0);
+      ans[i] = update_one(x[i], y[i]);
     }
     return ans;
   }
@@ -396,6 +395,8 @@ class ocls_moving_zscore {
   deque buf;
 
   double s2, m, sd, z, r;
+  double newpt, oldpt, d, d0, dd0;
+  double signal;
 
 public:
 
@@ -403,47 +404,56 @@ public:
     w = window;
     n = 0;
     s2 = m = sd = 0.0;
+    d = d0 = dd0 = 0.0;
+    signal = 0.0;
     z = zscore;
     r = attenu;
   }
 
-  NumericVector update(NumericVector x) {
+  double update_one(double x) {
+    if (n < w) {
+      // cumulative stage
+      newpt = x;
+      n += 1;
+      d  = newpt - m;
+      m += d / n;
+    } else {
+      // windowed stage
+      if (fabs(x - m) > z * sd) {
+        signal = (x - m) / sd;
+        // apply attenuation
+        newpt = r * x + (1.0 - r) * buf.front();
+      } else {
+        signal = 0.0;
+        newpt = x;
+      }
+      oldpt = buf.back();
+      buf.pop_back();
+      d  = newpt - m;
+      d0 = oldpt - m;
+      m += (newpt - oldpt) / n;
+    }
+    buf.push_front(newpt);
 
+    // update stats
+    dd0 = d - d0;
+    s2 += d * d - d0 * d0 - dd0 * dd0 / n;
+    sd  = sqrt(s2 / (n - 1));
+
+    return signal;
+  }
+
+  NumericVector update(NumericVector x) {
     auto npt = x.length();
     auto y = NumericVector(npt);
-    double newpt, oldpt, d, d0, dd0;
-
-    d = d0 = dd0 = 0.0;
-
     for (auto i = 0; i < npt; ++i) {
-
-      if (n < w) {
-        // initial window
-        newpt = x[i];
-        n += 1;
-        d  = newpt - m;
-        m += d / n;
-      } else {
-        if (fabs(x[i] - m) > z * sd) {
-          y[i] = (x[i] - m) / sd;
-          // apply attenuation
-          newpt = r * x[i] + (1.0 - r) * buf.front();
-        } else {
-          newpt = x[i];
-        }
-        oldpt = buf.back();
-        buf.pop_back();
-        d  = newpt - m;
-        d0 = oldpt - m;
-        m += (newpt - oldpt) / n;
-      }
-      buf.push_front(newpt);
-      // update stats
-      dd0 = d - d0;
-      s2 += d * d - d0 * d0 - dd0 * dd0 / n;
-      sd  = sqrt(s2 / (n - 1));
+      y[i] = update_one(x[i]);
     }
     return y;
+  }
+
+  double value() {
+    return signal;
   }
 
 };
@@ -455,6 +465,7 @@ RCPP_MODULE(ocls_stats){
 
     .constructor<int>()
 
+    .method("update_one", &ocls_moving_mean::update_one, "Update state by one value")
     .method("update", &ocls_moving_mean::update, "Update state")
     .method("value", &ocls_moving_mean::value, "Get last value")
     ;
@@ -463,6 +474,7 @@ RCPP_MODULE(ocls_stats){
 
     .constructor()
 
+    .method("update_one", &ocls_cumulative_mean::update_one, "Update state by one value")
     .method("update", &ocls_cumulative_mean::update, "Update state")
     .method("value", &ocls_cumulative_mean::value, "Get last value")
     ;
@@ -471,6 +483,7 @@ RCPP_MODULE(ocls_stats){
 
     .constructor<int>()
 
+    .method("update_one", &ocls_moving_sd::update_one, "Update state by one value")
     .method("update", &ocls_moving_sd::update, "Update state")
     .method("value", &ocls_moving_sd::value, "Get last value")
     ;
@@ -479,6 +492,7 @@ RCPP_MODULE(ocls_stats){
 
     .constructor()
 
+    .method("update_one", &ocls_cumulative_sd::update_one, "Update state by one value")
     .method("update", &ocls_cumulative_sd::update, "Update state")
     .method("value", &ocls_cumulative_sd::value, "Get last value")
     ;
@@ -487,34 +501,44 @@ RCPP_MODULE(ocls_stats){
 
     .constructor<int, int>()
 
+    .method("update_one", &ocls_moving_moment::update_one, "Update state by one value")
     .method("update", &ocls_moving_moment::update, "Update state")
+    .method("value", &ocls_moving_moment::value, "Get last value")
     ;
 
   class_<ocls_cumulative_moment>("ocls_cumulative_moment")
 
     .constructor<int>()
 
+    .method("update_one", &ocls_cumulative_moment::update_one, "Update state by one value")
     .method("update", &ocls_cumulative_moment::update, "Update state")
+    .method("value", &ocls_cumulative_moment::value, "Get last value")
     ;
 
   class_<ocls_moving_cov>("ocls_moving_cov")
 
     .constructor<int>()
 
+    .method("update_one", &ocls_moving_cov::update_one, "Update state by one value")
     .method("update", &ocls_moving_cov::update, "Update state")
+    .method("value", &ocls_moving_cov::value, "Get last value")
     ;
 
   class_<ocls_cumulative_cov>("ocls_cumulative_cov")
 
     .constructor()
 
+    .method("update_one", &ocls_cumulative_cov::update_one, "Update state by one value")
     .method("update", &ocls_cumulative_cov::update, "Update state")
+    .method("value", &ocls_cumulative_cov::value, "Get last value")
     ;
 
   class_<ocls_moving_zscore>("ocls_moving_zscore")
 
     .constructor<int, double, double>()
 
+    .method("update_one", &ocls_moving_zscore::update_one, "Update state by one value")
     .method("update", &ocls_moving_zscore::update, "Update state")
+    .method("value", &ocls_moving_zscore::value, "Get last value")
     ;
 }
