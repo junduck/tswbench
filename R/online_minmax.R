@@ -51,9 +51,6 @@ make_moving_argmin <- function(window, arg = c("index", "distance"), ...) {
          index    = function(x) {
            delta_w - calc$update(x)
          })
-  function(x) {
-    return(calc$update(x))
-  }
 }
 
 #' @rdname make_moving_min
