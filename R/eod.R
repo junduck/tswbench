@@ -161,6 +161,8 @@ adjust_ohlc <- function(ohlc, adjust = c("forward", "qfq", "backward", "hfq"), a
 #'
 market_eod <- function(func, date = Sys.Date(), freq = c("60", "15", "5", "1"), ..., api = TushareApi()) {
 
+  date <- lubridate::as_date(date)
+
   #deal with special case
   if (func == "index_daily") {
 
