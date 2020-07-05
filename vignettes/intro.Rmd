@@ -1,0 +1,215 @@
+---
+title: "Introduction to tswbench"
+output: 
+  md_document:
+    variant: markdown_github
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tswbench)
+library(data.table)
+```
+
+## Basic usage
+
+tswbench provides quick access to Tushare Pro (https://tushare.pro/) data. In order
+to query data from Tushare, simply create an tsapi object and access Tushare api
+functions using "$".
+
+```{r}
+# set token first
+# SetToken("YOUR TUSHARE TOKEN")
+api <- TushareApi()
+
+# argument formats are same as official documents
+eod <- api$daily(trade_date = "20200701")
+eod[]
+```
+
+## API function usage
+
+You can get help from API usage functions. To query all supported functions:
+
+```{r}
+tsapi_func()
+```
+
+Find specific funcion usage:
+
+```{r}
+tsapi_usage("daily", what = "arg")
+```
+
+```{r}
+tsapi_usage("daily", what = "field")
+```
+
+## End-of-day data
+
+tswbench wraps various end-of-day data functions to market_eod() to simplify 
+data acquisition. market_eod() supports most of Tushare APIs.
+
+### Query end-of-day intraday OHLC:
+
+Intraday data is not officially documented. However, data can be queried by special
+"intraday" func.
+
+```{r}
+ohlc <- market_eod(func = "intraday", date = "20200701", freq = 60)
+ohlc[]
+```
+
+### Query end-of-day index performance:
+
+```{r}
+index <- market_eod(func = "index_daily", date = "20200701")
+index[]
+```
+
+## Fundamental data
+
+tswbench also wraps various fundamental reports to report_market() to query
+whole market per year and quarter, and report_quarter() to query quaterly reports
+per ts_code. These functions handle update_flag and always return latest updated 
+data.
+
+```{r}
+income2020q1 <- report_market(type = "income", y = 2020, q = 1)
+income2020q1[]
+```
+
+## Standardise A-share symbols
+
+Different vendors may use different coding schemes for A-share traded securities.
+These symbols can be standardised to code and traded exchange by parse_ashare_code().
+Or convert to Tushare standard by norm_ashare_code(). 
+
+```{r}
+ts_code <- norm_ashare_code(code = c("000001.sz", "sh600000", "601989"), type = "stock")
+ts_code
+```
+
+
+## Realtime data
+
+Realtime data provided by Tushare Pro is not officially documented. Experimental
+support is provided by tushare_realtime_websocket(). Data handling is provided by
+user defined callback function, which should accept at least three arguments:
+  - topic : a character vector of length 1
+  - code: a character vector of length 1
+  - record: a character vector of various lengths depending on the topic
+
+Here is an example simple prints received data to console:
+
+```{r eval=FALSE}
+
+# define a callback function to handle realtime data
+# the call back function should accept at least three arguments:
+#   
+
+simple_callback <- function(topic, code, record, ...) {
+  cat("topic:  ", topic, "\n")
+  cat("code:   ", code, "\n")
+  cat("record: ")
+  str(record)
+
+  TRUE
+}
+
+# connect to Tushare service
+ws <- tushare_realtime_websocket(topic = "some_topic", code = "000001.SZ", callback = simple_callback)
+ws$connect()
+
+```
+
+## Third party realtime data vendors
+
+Realtime data provided by other vendors are provided, namely by Sina and Tencent.
+Data can be easily fetched calling sina_realtime_quote(), tencent_realtime_quote() and
+tencent_realtime_moneyflow().
+
+An example of querying all stocks traded from Sina:
+
+```{r}
+
+# fetch all traded stocks from Tushare:
+api <- TushareApi()
+stocks <- api$stock_basic()
+# convert ts_code to Sina format
+codes <- sina_ashare_code(stocks$ts_code)
+# query from Sina
+quotes <- sina_realtime_quote(codes)
+quotes[]
+```
+
+### Keeping track of Sina realtime data
+
+A simple incremental model is created to record and track Sina realtime data. Due
+to the single-thread nature of R, we need to query Sina data in a separate R process:
+
+```{r eval=FALSE}
+# define an sqlite database file
+db <- "/path/to/data.db"
+# run data query loop
+sina_realtime_loop(db)
+```
+
+On our working R process, a incremental data loader can be created and used to 
+fetch newly arrived data:
+
+```{r eval=FALSE}
+db <- "/path/to/data.db"
+ld <- sina_realtime_loader(db)
+
+# get new data
+quotes <- ld()
+# consume data
+quotes[, spread := Bid - Ask]
+summary(quotes$spread)
+# do other thins with quotes
+
+# get updated data
+quotes <- ld()
+```
+
+Please notice that PRAGMA WAL is used on the sqlite database, so data R process and 
+working R process must be on same machine.
+
+## Fast online algorithms
+
+tswbench provides a set of stateful online functions for realtime data processing.
+All online functions are created by calling corresponding make_*() functions. Please
+refer to manual to find full list of supported algorithms.
+
+```{r}
+
+# calculate triple exponential moving average
+tema <- make_tema(period = 12)
+data <- runif(10, max = 10)
+value <- tema(data)
+# the generated function tema() is stateful, thus suitable for incremental calculation
+new_data <- runif(2, max = 10)
+new_value <- tema(new_data)
+
+```
+
+```{r}
+
+# supported algorithm are usually pretty fast
+
+  n = 10000
+  w = 120
+
+  # moving quantile
+  x <- runif(n)
+  probs <- seq(0, 1, 0.25)
+  f <- make_moving_quantile(window = w, probs = probs)
+
+  t1 <- system.time({y1 <- f(x)})
+  t2 <- system.time({y2 <- zoo::rollapply(x, 120, quantile, probs = probs, type = 3, fill = NA, align = "right")})
+  
+  #speed-up
+  t2 / t1
+```
+
