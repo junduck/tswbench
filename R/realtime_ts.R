@@ -26,7 +26,7 @@ tushare_realtime_websocket <- function(topic, code, callback, api = TushareApi()
     stop("Package websocket and jsonlite are needed to create a Tushare realtime websocket", call. = FALSE)
   }
 
-  api <- as.character(api)
+  token <- as.character(api)
   t_ping <- 0.0
 
   #Tushare subscription WebSocket URL
