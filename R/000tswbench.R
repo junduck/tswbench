@@ -14,4 +14,5 @@ loadModule("ocls_moving_minmax", TRUE)
 loadModule("ocls_ma", TRUE)
 loadModule("ocls_moving_order", TRUE)
 loadModule("ocls_volclk", TRUE)
+loadModule("ocls_filter", TRUE)
 NULL
