@@ -147,8 +147,7 @@ public:
     // prepend zeroth order
     polybuf.push_front(1.0);
 
-    std::vector<double> tmpv{polybuf.begin(), polybuf.end()};
-    last_x = arma::colvec(std::move(tmpv));
+    last_x = arma::colvec(std::vector<double>(polybuf.begin(), polybuf.end()));
 
     if (n < w) {
       return NA_REAL;
@@ -197,8 +196,7 @@ public:
       buf.pop_back();
     }
 
-    std::vector<double> tmpv{buf.begin(), buf.end()};
-    last_x = arma::colvec(std::move(tmpv));
+    last_x = arma::colvec(std::vector<double>(buf.begin(), buf.end()));
 
     if (n < w) {
       return NA_REAL;

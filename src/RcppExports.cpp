@@ -12,6 +12,7 @@ RcppExport SEXP _rcpp_module_boot_ocls_ma();
 RcppExport SEXP _rcpp_module_boot_ocls_moving_minmax();
 RcppExport SEXP _rcpp_module_boot_ocls_moving_order();
 RcppExport SEXP _rcpp_module_boot_ocls_stats();
+RcppExport SEXP _rcpp_module_boot_ocls_utils();
 RcppExport SEXP _rcpp_module_boot_ocls_volclk();
 
 static const R_CallMethodDef CallEntries[] = {
@@ -20,6 +21,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_rcpp_module_boot_ocls_moving_minmax", (DL_FUNC) &_rcpp_module_boot_ocls_moving_minmax, 0},
     {"_rcpp_module_boot_ocls_moving_order", (DL_FUNC) &_rcpp_module_boot_ocls_moving_order, 0},
     {"_rcpp_module_boot_ocls_stats", (DL_FUNC) &_rcpp_module_boot_ocls_stats, 0},
+    {"_rcpp_module_boot_ocls_utils", (DL_FUNC) &_rcpp_module_boot_ocls_utils, 0},
     {"_rcpp_module_boot_ocls_volclk", (DL_FUNC) &_rcpp_module_boot_ocls_volclk, 0},
     {NULL, NULL, 0}
 };

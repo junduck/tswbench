@@ -57,7 +57,7 @@ public:
     }
   }
 
-  T operator[](const size_t& i) {
+  T operator[](size_t i) {
 
     if (i < 0 || i >= size) {
       throw std::out_of_range("Index out of range.");
