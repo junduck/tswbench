@@ -4,18 +4,20 @@ using namespace Rcpp;
 typedef std::deque<double> deque;
 
 class RLS {
+
   arma::colvec g;
   arma::mat P;
   arma::colvec w;
   double lambda, ilambda;
+
 public:
 
-  RLS(int n, double lambda, double sigma):
-    lambda(lambda),
-    ilambda(1.0 / lambda),
-    g(n,    arma::fill::zeros),
-    P(n, n, arma::fill::eye),
-    w(n,    arma::fill::zeros) {
+  RLS(int n, double lambda, double sigma)
+    : lambda(lambda),
+      ilambda(1.0 / lambda),
+      g(n,    arma::fill::zeros),
+      P(n, n, arma::fill::eye),
+      w(n,    arma::fill::zeros) {
     P *= sigma;
   }
 
@@ -46,10 +48,11 @@ class NLMS {
   arma::colvec w;
 
 public:
-  NLMS(int n, double mu, double eps):
-    mu(mu),
-    eps(eps),
-    w(n, arma::fill::zeros) {
+
+  NLMS(int n, double mu, double eps)
+    : mu(mu),
+      eps(eps),
+      w(n, arma::fill::zeros) {
   }
 
   const arma::colvec& get_filter() {
@@ -78,14 +81,14 @@ class GNGD {
   arma::colvec last_x;
 
 public:
-  GNGD(int n, double mu, double eps, double rho):
-    mu(mu),
-    eps(eps),
-    rho(rho),
-    w(n, arma::fill::zeros),
-    last_a(0.0),
-    last_norm(eps),
-    last_x(n, arma::fill::zeros) {
+  GNGD(int n, double mu, double eps, double rho)
+    : mu(mu),
+      eps(eps),
+      rho(rho),
+      w(n, arma::fill::zeros),
+      last_a(0.0),
+      last_norm(eps),
+      last_x(n, arma::fill::zeros) {
   }
 
   const arma::colvec& get_filter() {
@@ -123,8 +126,9 @@ class ocls_filter_rls_poly {
 
 public:
 
-  ocls_filter_rls_poly(int order, double lambda, double sigma):
-    rls(order + 1, lambda, sigma), w(order), n(0){
+  ocls_filter_rls_poly(int order, double lambda, double sigma)
+    : rls(order + 1, lambda, sigma), w(order),
+      n(0) {
     polybuf.push_front(1.0);
   }
 
@@ -180,8 +184,10 @@ class ocls_filter_rls_linear {
 
 public:
 
-  ocls_filter_rls_linear(int width, double lambda, double sigma):
-    rls(width, lambda, sigma), w(width), n(0){
+  ocls_filter_rls_linear(int width, double lambda, double sigma)
+    : rls(width, lambda, sigma),
+      w(width),
+      n(0){
   }
 
   double update_one(double x) {

@@ -400,41 +400,35 @@ public:
 class ocls_hma {
 
   int p, m, s;
-  ocls_wma *wma_p, *wma_m, *wma_s;
+  ocls_wma wma_p, wma_m, wma_s;
 
 public:
 
-  ocls_hma(int period) {
-    p = period;
-    m = p / 2;
-    s = sqrt(p);
-    wma_p = new ocls_wma(p);
-    wma_m = new ocls_wma(m);
-    wma_s = new ocls_wma(s);
-  }
-
-  ~ocls_hma() {
-    delete wma_p;
-    delete wma_m;
-    delete wma_s;
+  ocls_hma(int period)
+    : p(period),
+      m(p / 2),
+      s(sqrt(p)),
+      wma_p(p),
+      wma_m(m),
+      wma_s(s) {
   }
 
   double update_one(double x) {
-    auto mp = wma_p->update_one(x);
-    auto mm = wma_m->update_one(x);
+    auto mp = wma_p.update_one(x);
+    auto mm = wma_m.update_one(x);
     auto x_new = 2.0 * mm - mp;
-    return wma_s->update_one(x_new);
+    return wma_s.update_one(x_new);
   }
 
   NumericVector update(NumericVector x) {
-    auto mp = wma_p->update(x);
-    auto mm = wma_m->update(x);
+    auto mp = wma_p.update(x);
+    auto mm = wma_m.update(x);
     auto x_new = 2.0 * mm - mp;
-    return wma_s->update(x_new);
+    return wma_s.update(x_new);
   }
 
   double value() {
-    return wma_s->value();
+    return wma_s.value();
   }
 
 };

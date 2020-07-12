@@ -11,13 +11,14 @@ class ocls_moving_mean {
 
 public:
 
-  ocls_moving_mean(int window) {
-    w = window;
-    n = 0;
-    m = 0.0;
+  ocls_moving_mean(int window)
+    : w(window),
+      n(0),
+      m(0.0) {
   }
 
   double update_one(double x) {
+    buf.push_front(x);
     if (n < w) {
       // cumulative stage
       n += 1;
@@ -27,7 +28,6 @@ public:
       m += (x - buf.back()) / n;
       buf.pop_back();
     }
-    buf.push_front(x);
     return m;
   }
 
@@ -85,13 +85,14 @@ class ocls_moving_sd {
 
 public:
 
-  ocls_moving_sd(int window) {
-    w = window;
-    n = 0;
+  ocls_moving_sd(int window)
+    : w(window),
+      n(0) {
     s2 = m = d = d0 = dd0 = 0.0;
   }
 
   NumericVector update_one(double x) {
+    buf.push_front(x);
     d = x - m;
     if (n < w) {
       // cumulative stage
@@ -104,8 +105,6 @@ public:
       d0 = old - m;
       m += (x - old) / n;
     }
-    buf.push_front(x);
-
     dd0 = d - d0;
     s2 += d * d - d0 * d0 - dd0 * dd0 / n;
     return value();
@@ -135,10 +134,9 @@ class ocls_cumulative_sd {
 
 public:
 
-  ocls_cumulative_sd() {
-    n = 0.0;
-    s2 = m = 0.0;
-    d = 0.0;
+  ocls_cumulative_sd()
+    : n(0.0) {
+    s2 = m = d = 0.0;
   }
 
   NumericVector update_one(double x) {
@@ -178,15 +176,16 @@ class ocls_moving_moment {
 
 public:
 
-  ocls_moving_moment(int window, int order = 4) {
-    o = order;
-    w = window;
+  ocls_moving_moment(int window, int order = 4)
+    : o(order),
+      w(window) {
     n = n2 = n3 = 0;
     s2 = s3 = s4 = m = 0.0;
     d = d0 = dd0 = 0.0;
   }
 
   NumericVector update_one(double x) {
+    buf.push_front(x);
     d = x - m;
     if (n < w) {
       // cumulative stage
@@ -201,8 +200,6 @@ public:
       d0 = old - m;
       m += (x - old) / n;
     }
-    buf.push_front(x);
-
     dd0   = d - d0;
     d_2   = d * d;
     d0_2  = d0 * d0;
@@ -249,11 +246,10 @@ class ocls_cumulative_moment {
 
 public:
 
-  ocls_cumulative_moment(int order = 4) {
-    o = order;
-    n = 0.0;
-    s2 = s3 = s4 = m = 0.0;
-    d = 0.0;
+  ocls_cumulative_moment(int order = 4)
+    : o(order),
+      n(0.0) {
+    s2 = s3 = s4 = m = d = 0.0;
   }
 
   NumericVector update_one(double x) {
@@ -302,14 +298,16 @@ class ocls_moving_cov {
 
 public:
 
-  ocls_moving_cov(int window) {
-    w = window;
-    n = 0;
+  ocls_moving_cov(int window)
+    : w(window),
+      n(0) {
     sxy = mx = my = 0.0;
     dx = dy = d0x = d0y = 0.0;
   }
 
   double update_one(double x, double y) {
+    bufx.push_front(x);
+    bufy.push_front(y);
     dx = x - mx;
     dy = y - my;
     if (n < w) {
@@ -327,9 +325,6 @@ public:
       mx += (x - oldx) / n;
       my += (y - oldy) / n;
     }
-    bufx.push_front(x);
-    bufy.push_front(y);
-
     sxy += dx * dy - d0x * d0y - (dx - d0x) * (dy - d0y) / n;
     return value();
   }
@@ -357,10 +352,9 @@ class ocls_cumulative_cov {
 
 public:
 
-  ocls_cumulative_cov() {
-    n = 0.0;
-    sxy = 0.0;
-    mx = my = dx = dy = 0.0;
+  ocls_cumulative_cov()
+    : n(0.0) {
+    sxy = mx = my = dx = dy = 0.0;
   }
 
   double update_one(double x, double y) {
@@ -400,14 +394,14 @@ class ocls_moving_zscore {
 
 public:
 
-  ocls_moving_zscore(int window, double zscore, double attenu) {
-    w = window;
-    n = 0;
+  ocls_moving_zscore(int window, double zscore, double attenu)
+    : w(window),
+      n(0),
+      z(zscore),
+      r(attenu) {
     s2 = m = sd = 0.0;
     d = d0 = dd0 = 0.0;
     signal = 0.0;
-    z = zscore;
-    r = attenu;
   }
 
   double update_one(double x) {

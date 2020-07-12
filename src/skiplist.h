@@ -15,19 +15,20 @@ struct SkiplistNode {
   // widths
   std::vector<size_t> w;
 
-  SkiplistNode(T value, int depth, int maxlevel):
-    v(value),
-    d(depth),
-    f(maxlevel, nullptr),
-    w(maxlevel, 0) {}
+  SkiplistNode(T value, int depth, int maxlevel)
+    : v(std::move(value)),
+      d(depth),
+      f(maxlevel, nullptr),
+      w(maxlevel, 0) {
+  }
 
 };
 
 template <class T, class Compare = std::less<T> >
 class IndexableSkiplist {
 
-  size_t size;
-  int mxlv;
+  size_t _size;
+  int _cap, mxlv;
   SkiplistNode<T> *head;
   // reused working vars
   std::vector<SkiplistNode<T> *> found;
@@ -44,8 +45,31 @@ class IndexableSkiplist {
   }
 
 public:
-  IndexableSkiplist(int window): size(0), mxlv(1 + int(log(window))), found(mxlv, nullptr), lt() {
-    head = new SkiplistNode<T>(T(), mxlv, mxlv);
+  IndexableSkiplist(int window)
+    : _size(0),
+      _cap(window),
+      mxlv(1 + int(log(window))),
+      found(mxlv, nullptr),
+      lt(),
+      head(new SkiplistNode<T>(T(), mxlv, mxlv)) {
+  }
+
+  IndexableSkiplist(const IndexableSkiplist& other)
+    : IndexableSkiplist(other._cap) {
+    auto next = other.head->f[0];
+    while (next != nullptr) {
+      insert(next->v);
+    }
+  }
+
+  IndexableSkiplist(IndexableSkiplist&& other)
+    : _size(other._size),
+      _cap(other._cap),
+      mxlv(other.mxlv),
+      found(mxlv, nullptr),
+      lt(),
+      head(other.head) {
+    other.head = nullptr;
   }
 
   ~IndexableSkiplist() {
@@ -57,9 +81,25 @@ public:
     }
   }
 
+  IndexableSkiplist& operator=(IndexableSkiplist rhs) {
+    swap(*this, rhs);
+    return *this;
+  }
+
+  friend void swap(IndexableSkiplist& lhs, IndexableSkiplist& rhs) {
+    using std::swap;
+
+    swap(lhs._size, rhs._size);
+    swap(lhs._cap,  rhs._cap);
+    swap(lhs.mxlv,  rhs.mxlv);
+    swap(lhs.head,  rhs.head);
+    swap(lhs.found, rhs.found);
+    swap(lhs.lt,    rhs.lt);
+  }
+
   T operator[](size_t i) {
 
-    if (i < 0 || i >= size) {
+    if (i < 0 || i >= _size) {
       throw std::out_of_range("Index out of range.");
     }
 
@@ -81,7 +121,7 @@ public:
     std::vector<size_t> dist(mxlv, 0);
     // find first node where node->f[0]->v >= value, insert before node->f[0]
     auto node = head;
-    for (auto lv = mxlv - 1; lv >=0; --lv) {
+    for (auto lv = mxlv - 1; lv >= 0; --lv) {
       while (node->f[lv] != nullptr && lt(node->f[lv]->v, value)) {
         dist[lv] += node->w[lv];
         node      = node->f[lv];
@@ -107,7 +147,7 @@ public:
       found[lv]->w[lv] += 1;
     }
 
-    size += 1;
+    _size += 1;
   }
 
   void remove(T value) {
@@ -140,17 +180,25 @@ public:
     }
     delete node;
 
-    size -= 1;
+    _size -= 1;
   }
 
-  size_t get_size() {
-    return size;
+  size_t size() const {
+    return _size;
   }
 
-  std::vector<T> as_vector() {
-    auto ans = std::vector<T>(size, T());
+  size_t capacity() const {
+    return _cap;
+  }
+
+  bool empty() const {
+    return _size == 0;
+  }
+
+  std::vector<T> as_vector() const {
+    auto ans = std::vector<T>(_size);
     auto node = head->f[0];
-    for (auto i = 0; i < size; ++i) {
+    for (auto i = 0; i < _size; ++i) {
       ans[i] = node->v;
       node = node->f[0];
     }

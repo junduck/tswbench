@@ -10,7 +10,9 @@ class ocls_lag {
 
 public:
 
-  ocls_lag(int lag): w(lag), n(0) {
+  ocls_lag(int lag)
+    : w(lag),
+      n(0) {
   }
 
   double update_one(double x) {
@@ -23,23 +25,19 @@ public:
       y = buf.back();
       buf.pop_back();
     }
-
     return y;
   }
 
   NumericVector update(NumericVector x) {
-
     auto npt = x.length();
     auto y = NumericVector(npt);
     for (auto i = 0; i < npt; ++i) {
       y[i] = update_one(x[i]);
     }
-
     return y;
   }
 
   double value() {
-
     return buf.back();
   }
 };
@@ -51,7 +49,9 @@ class ocls_lag_delta {
 
 public:
 
-  ocls_lag_delta(int lag): w(lag), n(0) {
+  ocls_lag_delta(int lag)
+    : w(lag),
+      n(0) {
   }
 
   double update_one(double x) {
@@ -64,23 +64,19 @@ public:
       y = x - buf.back();
       buf.pop_back();
     }
-
     return y;
   }
 
   NumericVector update(NumericVector x) {
-
     auto npt = x.length();
     auto y = NumericVector(npt);
     for (auto i = 0; i < npt; ++i) {
       y[i] = update_one(x[i]);
     }
-
     return y;
   }
 
   double value() {
-
     return buf.front() - buf.back();
   }
 
@@ -93,7 +89,9 @@ class ocls_lag_ratio {
 
 public:
 
-  ocls_lag_ratio(int lag): w(lag), n(0) {
+  ocls_lag_ratio(int lag)
+    : w(lag),
+      n(0) {
   }
 
   double update_one(double x) {
@@ -106,23 +104,19 @@ public:
       y = x / buf.back();
       buf.pop_back();
     }
-
     return y;
   }
 
   NumericVector update(NumericVector x) {
-
     auto npt = x.length();
     auto y = NumericVector(npt);
     for (auto i = 0; i < npt; ++i) {
       y[i] = update_one(x[i]);
     }
-
     return y;
   }
 
   double value() {
-
     return buf.front() / buf.back();
   }
 

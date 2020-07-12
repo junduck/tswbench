@@ -12,9 +12,10 @@ class ocls_moving_sort {
 
 public:
 
-  ocls_moving_sort(int window): skiplist(window) {
-    n = 0;
-    w = window;
+  ocls_moving_sort(int window)
+    : skiplist(window),
+      n(0),
+      w(window) {
   }
 
   double get_index(int idx) {
@@ -26,15 +27,14 @@ public:
   }
 
   void update_one(double x) {
+    buf.push_front(x);
+    skiplist.insert(x);
     if (n < w) {
       n += 1;
     } else {
       skiplist.remove(buf.back());
       buf.pop_back();
     }
-    buf.push_front(x);
-    skiplist.insert(x);
-    return;
   }
 
   void update(NumericVector x) {
@@ -42,7 +42,6 @@ public:
     for (auto i = 0; i < npt; ++i) {
       update_one(x[i]);
     }
-    return;
   }
 
   NumericVector value() {
@@ -59,12 +58,15 @@ class ocls_moving_median {
 
 public:
 
-  ocls_moving_median(int window): skiplist(window) {
-    w = window;
+  ocls_moving_median(int window)
+    : skiplist(window),
+      w(window){
     n = idx1 = idx2 = 0;
   }
 
   double update_one(double x) {
+    buf.push_front(x);
+    skiplist.insert(x);
     if (n < w) {
       // cumulative stage
       n += 1;
@@ -79,9 +81,6 @@ public:
       skiplist.remove(buf.back());
       buf.pop_back();
     }
-    buf.push_front(x);
-    skiplist.insert(x);
-
     return value();
   }
 
@@ -114,11 +113,12 @@ class ocls_moving_quantile {
 
 public:
 
-  ocls_moving_quantile(int window, IntegerVector idx): skiplist(window) {
-    w = window;
-    n = 0;
-    qidx = idx;
-    nidx = qidx.length();
+  ocls_moving_quantile(int window, IntegerVector idx)
+    : skiplist(window),
+      w(window),
+      n(0),
+      qidx(idx),
+      nidx(idx.length()) {
   }
 
   NumericVector update_one(double x) {

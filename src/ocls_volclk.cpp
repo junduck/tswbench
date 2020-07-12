@@ -9,11 +9,10 @@ class ocls_volclk_order {
 
 public:
 
-  ocls_volclk_order(double bin_vol): bin(bin_vol) {
-    init = false;
-    lead = 0.0;
-    lead_tnvr = 0.0;
-    open = high = low = close = 0.0;
+  ocls_volclk_order(double bin_vol)
+    : bin(bin_vol),
+      init(false) {
+    lead = lead_tnvr = open = high = low = close = 0.0;
   }
 
   NumericVector update_one(double price, double volume) {
@@ -56,13 +55,11 @@ public:
   }
 
   NumericMatrix update(NumericVector price, NumericVector volume) {
-
     auto npt = price.length();
     auto ans = NumericMatrix(npt, 6);
     for (auto i = 0; i < npt; ++i) {
       ans(i, _) = update_one(price[i], volume[i]);
     }
-
     return ans;
   }
 
@@ -80,36 +77,34 @@ class ocls_volclk_tick {
 
 public:
 
-  ocls_volclk_tick(double bin_vol): volclk(bin_vol) {
-    vol_last_tick = 0.0;
+  ocls_volclk_tick(double bin_vol)
+    : volclk(bin_vol),
+      vol_last_tick(0.0) {
   }
 
   NumericVector update_one(double price, double volume) {
-
     auto tmp = volume;
     volume -= vol_last_tick;
     if (volume < 0.0) {
       stop("Volume is not monotonic increasing.");
     }
     vol_last_tick = tmp;
-
     return volclk.update_one(price, volume);
   }
 
   NumericMatrix update(NumericVector price, NumericVector volume) {
-
     auto npt = price.length();
     auto ans = NumericMatrix(npt, 6);
     for (auto i = 0; i < npt; ++i) {
       ans(i, _) = update_one(price[i], volume[i]);
     }
-
     return ans;
   }
 
   NumericVector value() {
     return volclk.value();
   }
+
 };
 
 RCPP_MODULE(ocls_volclk){
