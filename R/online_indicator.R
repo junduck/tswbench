@@ -188,13 +188,10 @@ make_atr <- function(period) {
 make_cci <- function(period, mdr = 0.015) {
 
   sma_p <- make_sma(period)
-  sma_md <- make_sma(period)
+  mae_md <- make_moving_mae(period)
 
   function(x) {
-    ap <- sma_p(x);
-    d <- x - ap;
-    md <- sma_md(abs(d));
-    d / (mdr * md)
+    (x - sma_p(x)) / (mdr * mae_md(x))
   }
 }
 
@@ -267,7 +264,7 @@ make_mass <- function(period, exp_period = 9L) {
 
   period <- as.integer(period)
   exp_period <- as.integer(exp_period)
-  stopifnot(period > 0, exp_period > 0)
+  stopifnot(period > 0L, exp_period > 0L)
 
   ema1 <- make_ema(period = exp_period)
   ema2 <- make_dema(period = exp_period)
@@ -277,6 +274,20 @@ make_mass <- function(period, exp_period = 9L) {
     d <- high - low
     e <- ema1(d) / ema2(d);
     ma(e)
+  }
+}
+
+#' @rdname online
+#' @export
+#'
+make_mfi <- function(period) {
+
+  period <- as.integer(period)
+  stopifnot(period > 0L)
+
+  calc <- new(ocls_mfi, period)
+  function(price, volume) {
+    calc$update(price, volume)
   }
 }
 

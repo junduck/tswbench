@@ -19,6 +19,8 @@ arosc: Aroon Oscillator
 
 atr: Average True Range
 
+cci: Commodity Channel Index
+
 cmo: Chande Momentum Oscillator
 
 dpo: Detrended Price Oscillator
@@ -26,6 +28,12 @@ dpo: Detrended Price Oscillator
 emv: Ease of Movement
 
 mass: Mass Index
+
+mfi: Money Flow Index
+
+obv: On Balance Volume
+
+pnvi: Positive/Negative Volume Index
 
 ppo: Percentage Price Oscillator
 

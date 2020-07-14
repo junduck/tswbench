@@ -53,6 +53,25 @@ make_cumulative_sd <- function(...) {
   }
 }
 
+#' Moving mean absolute error
+#'
+#' @param window moving window size
+#' @param ... not used
+#'
+#' @return a stateful online function
+#' @export
+#'
+make_moving_mae <- function(window, ...) {
+
+  window <- as.integer(window)
+  stopifnot(window >= 3L)
+
+  calc <- new(ocls_moving_mae, window)
+  function(x) {
+    calc$update(x)
+  }
+}
+
 #' Online moving/cumulative statistics
 #'
 #' Support up to 4th order central moments.

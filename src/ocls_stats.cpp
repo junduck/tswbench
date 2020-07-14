@@ -91,7 +91,7 @@ public:
     s2 = m = d = d0 = dd0 = 0.0;
   }
 
-  NumericVector update_one(double x) {
+  double update_one(double x) {
     buf.push_front(x);
     d = x - m;
     if (n < w) {
@@ -110,18 +110,17 @@ public:
     return value();
   }
 
-  NumericMatrix update(NumericVector x) {
+  NumericVector update(NumericVector x) {
     auto npt = x.length();
-    auto y = NumericMatrix(npt, 2);
+    auto y = NumericVector(npt);
     for (auto i = 0; i < npt; ++i) {
-      y(i, _) = update_one(x[i]);
+      y[i] = update_one(x[i]);
     }
     return y;
   }
 
-  NumericVector value() {
-    NumericVector y = {m, sqrt(s2 / (n - 1))};
-    return y;
+  double value() {
+    return sqrt(s2 / (n - 1));
   }
 
 };
@@ -139,7 +138,7 @@ public:
     s2 = m = d = 0.0;
   }
 
-  NumericVector update_one(double x) {
+  double update_one(double x) {
     n += 1.0;
     d  = x - m;
     m += d / n;
@@ -148,21 +147,72 @@ public:
     return value();
   }
 
-  NumericMatrix update(NumericVector x) {
+  NumericVector update(NumericVector x) {
     auto npt = x.length();
-    auto y = NumericMatrix(npt, 2);
+    auto y = NumericVector(npt);
     double d_2;
     for (auto i = 0; i < npt; ++i) {
-      y(i, _) = update_one(x[i]);
+      y[i] = update_one(x[i]);
     }
     return y;
   }
 
-  NumericVector value() {
-    NumericVector y = {m, sqrt(s2 / (n - 1.0))};
+  double value() {
+    return sqrt(s2 / (n - 1.0));
+  }
+
+};
+
+class ocls_moving_mae {
+
+  double w, n;
+  deque buf, buf_ad;
+
+  double m, mae;
+  double d, approx_ad;
+
+public:
+
+  ocls_moving_mae(int window)
+    : w(window),
+      n(0) {
+    m = mae = d = approx_ad = 0.0;
+  }
+
+  double update_one(double x) {
+    buf.push_front(x);
+    d = x - m;
+    if (n < w) {
+      // cumulative stage
+      n += 1;
+      m += d / n;
+    } else {
+      // windowed stage
+      auto old = buf.back();
+      buf.pop_back();
+      m += (x - old) / n;
+    }
+    // O(n) seems to be the only way. Compiler opt may be possible.
+    mae = 0.0;
+    for (auto i = 0; i < n; ++i) {
+      mae += fabs(buf[i] - m);
+    }
+    mae /= n;
+    return mae;
+  }
+
+  NumericVector update(NumericVector x) {
+    auto npt = x.length();
+    auto y = NumericVector(npt);
+    for (auto i = 0; i < npt; ++i) {
+      y[i] = update_one(x[i]);
+    }
     return y;
   }
 
+  double value() {
+    return mae;
+  }
 };
 
 class ocls_moving_moment {
@@ -489,6 +539,15 @@ RCPP_MODULE(ocls_stats){
     .method("update_one", &ocls_cumulative_sd::update_one, "Update state by one value")
     .method("update", &ocls_cumulative_sd::update, "Update state")
     .method("value", &ocls_cumulative_sd::value, "Get last value")
+    ;
+
+  class_<ocls_moving_mae>("ocls_moving_mae")
+
+    .constructor<int>()
+
+    .method("update_one", &ocls_moving_mae::update_one, "Update state by one value")
+    .method("update", &ocls_moving_mae::update, "Update state")
+    .method("value", &ocls_moving_mae::value, "Get last value")
     ;
 
   class_<ocls_moving_moment>("ocls_moving_moment")

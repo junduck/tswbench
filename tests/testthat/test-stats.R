@@ -17,9 +17,7 @@ test_that("moving and cumulative mean and sd", {
   f <- make_moving_sd(window = w)
 
   y <- f(x)
-  ym1 <- roll::roll_mean(x, width = w)
-  ym2 <- roll::roll_sd(x, width = w)
-  ym <- matrix(c(ym1, ym2), ncol = 2)
+  ym <- roll::roll_sd(x, width = w)
 
   delta <- sum(abs(y - ym), na.rm = TRUE)
   expect_equal(delta, 0.0)
@@ -38,11 +36,9 @@ test_that("moving and cumulative mean and sd", {
   f <- make_cumulative_sd()
 
   y <- f(x)
-  ym1 <- cumsum(x) / seq_along(x)
   for (i in seq_len(n)) {
-    ym2[i] <- sd(x[seq_len(i)])
+    ym[i] <- sd(x[seq_len(i)])
   }
-  ym <- matrix(c(ym1, ym2), ncol = 2)
 
   delta <- sum(abs(y - ym), na.rm = TRUE)
   expect_equal(delta, 0.0)

@@ -13,6 +13,7 @@
 \alias{make_dpo}
 \alias{make_emv}
 \alias{make_mass}
+\alias{make_mfi}
 \alias{make_obv}
 \alias{make_pnvi}
 \alias{make_ppo}
@@ -46,6 +47,8 @@ make_dpo(period)
 make_emv(lot = 100, lag = 1L)
 
 make_mass(period, exp_period = 9L)
+
+make_mfi(period)
 
 make_obv()
 

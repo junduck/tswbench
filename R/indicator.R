@@ -14,6 +14,8 @@
 #'
 #' atr: Average True Range
 #'
+#' cci: Commodity Channel Index
+#'
 #' cmo: Chande Momentum Oscillator
 #'
 #' dpo: Detrended Price Oscillator
@@ -21,6 +23,12 @@
 #' emv: Ease of Movement
 #'
 #' mass: Mass Index
+#'
+#' mfi: Money Flow Index
+#'
+#' obv: On Balance Volume
+#'
+#' pnvi: Positive/Negative Volume Index
 #'
 #' ppo: Percentage Price Oscillator
 #'
@@ -211,6 +219,21 @@ mass <- function(high, low, period, exp_period = 9L) {
 
   f <- make_mass(period = period, exp_period = exp_period)
   f(high, low)
+}
+
+#' Money Flow Index
+#'
+#' @param price price
+#' @param volume volume
+#' @param period period
+#'
+#' @return numeric vector
+#' @export
+#'
+mfi <- function(price, volume, period) {
+
+  f <- make_mfi(period)
+  f(price, volume)
 }
 
 #' On Balance Volume

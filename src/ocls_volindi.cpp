@@ -1,6 +1,8 @@
 #include <Rcpp.h>
 using namespace Rcpp;
 
+typedef std::deque<double> deque;
+
 class ocls_obv {
 
   bool init;
@@ -87,6 +89,71 @@ public:
   NumericVector value() {
     return NumericVector{pvi, nvi};
   }
+
+};
+
+class ocls_mfi {
+
+  double up, down, last_price;
+  deque buf_up, buf_down;
+  int w, n;
+
+public:
+
+  ocls_mfi(int period)
+    : w(period),
+      n(0) {
+    // small eps to avoid NaN
+    up = down = 0.000001;
+  }
+
+  double update_one(double price, double volume) {
+
+    double tnvr = price * volume;
+    double new_up, new_down;
+    if (!n) {
+      last_price = price;
+    }
+    new_up = new_down = 0.0;
+    if (price != last_price) {
+      if (price > last_price) {
+        new_up = tnvr;
+      } else {
+        new_down = tnvr;
+      }
+    }
+    last_price = price;
+    buf_up.push_front(new_up);
+    buf_down.push_front(new_down);
+    if (n < w) {
+      // cumulative stage
+      up += new_up;
+      down += new_down;
+      n += 1;
+    } else {
+      // windowed stage
+      up += new_up - buf_up.back();
+      buf_up.pop_back();
+      down += new_down - buf_down.back();
+      buf_down.pop_back();
+    }
+    return value();
+  }
+
+  NumericVector update(NumericVector price, NumericVector volume) {
+
+    auto npt = price.length();
+    auto y = NumericVector(npt);
+    for (auto i = 0; i < npt; ++i) {
+      y[i] = update_one(price[i], volume[i]);
+    }
+    return y;
+  }
+
+  double value() {
+    return 100.0 * (1.0 - 1.0 / (1.0 + up / down));
+  }
+
 };
 
 RCPP_MODULE(ocls_volindi){
@@ -108,6 +175,15 @@ RCPP_MODULE(ocls_volindi){
     .method("update_one", &ocls_pnvi::update_one, "Update state by one value")
     .method("update", &ocls_pnvi::update, "Update state")
     .method("value", &ocls_pnvi::value, "Get last value")
+    ;
+
+  class_<ocls_mfi>("ocls_mfi")
+
+    .constructor<int>()
+
+    .method("update_one", &ocls_mfi::update_one, "Update state by one value")
+    .method("update", &ocls_mfi::update, "Update state")
+    .method("value", &ocls_mfi::value, "Get last value")
     ;
 
 }
