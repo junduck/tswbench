@@ -136,7 +136,6 @@ public:
 
     buf.push_front(x);
 
-    auto d = NA_REAL;
     if (n < w) {
       n += 1;
     } else {
@@ -194,7 +193,6 @@ public:
 
     buf.push_front(x);
 
-    auto d = NA_REAL;
     if (n < w) {
       n += 1;
     } else {

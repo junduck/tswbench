@@ -2,14 +2,21 @@
 % Please edit documentation in R/online_ma.R
 \name{make_vwma}
 \alias{make_vwma}
+\alias{vwma}
 \title{Volume weighted moving average}
 \usage{
 make_vwma(period, ...)
+
+vwma(price, volume, period)
 }
 \arguments{
 \item{period}{MA period}
 
 \item{...}{not used}
+
+\item{price}{price}
+
+\item{volume}{volume}
 }
 \value{
 an online function

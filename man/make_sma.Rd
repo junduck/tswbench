@@ -2,14 +2,19 @@
 % Please edit documentation in R/online_ma.R
 \name{make_sma}
 \alias{make_sma}
+\alias{sma}
 \title{Simple moving average}
 \usage{
 make_sma(period, ...)
+
+sma(x, period)
 }
 \arguments{
 \item{period}{MA period}
 
 \item{...}{not used}
+
+\item{x}{variable to average}
 }
 \value{
 an online function

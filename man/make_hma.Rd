@@ -2,14 +2,19 @@
 % Please edit documentation in R/online_ma.R
 \name{make_hma}
 \alias{make_hma}
+\alias{hma}
 \title{Hull moving average}
 \usage{
 make_hma(period, ...)
+
+hma(x, period)
 }
 \arguments{
 \item{period}{MA period}
 
 \item{...}{not used}
+
+\item{x}{variable to average}
 }
 \value{
 an online function

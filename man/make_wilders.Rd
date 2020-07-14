@@ -2,14 +2,19 @@
 % Please edit documentation in R/online_ma.R
 \name{make_wilders}
 \alias{make_wilders}
+\alias{wilders}
 \title{Wilders smoothing average}
 \usage{
 make_wilders(period, ...)
+
+wilders(x, period)
 }
 \arguments{
 \item{period}{smoothing period}
 
 \item{...}{not used}
+
+\item{x}{variable to average}
 }
 \value{
 a stateful online function

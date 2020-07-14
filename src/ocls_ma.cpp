@@ -421,10 +421,12 @@ public:
   }
 
   NumericVector update(NumericVector x) {
-    auto mp = wma_p.update(x);
-    auto mm = wma_m.update(x);
-    auto x_new = 2.0 * mm - mp;
-    return wma_s.update(x_new);
+    auto npt = x.length();
+    auto y = NumericVector(npt);
+    for (auto i = 0; i < npt; ++i) {
+      y[i] = update_one(x[i]);
+    }
+    return y;
   }
 
   double value() {
@@ -483,6 +485,94 @@ public:
   }
 
 };
+
+class ocls_vidya {
+
+  bool init;
+  int pshort, plong, ns, nl;
+  double alpha, vidya;
+
+  deque bufs, bufl;
+  double s2s, ms, ds, d0s, dd0s,
+         s2l, ml, dl, d0l, dd0l;
+  double nr;
+
+public:
+
+  ocls_vidya(int period_short, int period_long, double alpha)
+    : pshort(period_short),
+      plong(period_long),
+      init(false),
+      ns(0),
+      nl(0),
+      alpha(alpha),
+      vidya(0.0) {
+    s2s = ms = ds = d0s = dd0s = 0.0;
+    s2l = ml = dl = d0l = dd0l - 0.0;
+    nr = alpha * sqrt(double(plong) / double(pshort));
+  }
+
+  double update_one(double x) {
+    bufs.push_front(x);
+    bufl.push_front(x);
+    ds = x - ms;
+    dl = x - ml;
+    if (ns < pshort) {
+      // cumulative stage: period short, period long
+      ns += 1;
+      nl += 1;
+      ms += ds / ns;
+      ml += dl / nl;
+    } else if (nl < plong) {
+      // cumulative stage: period long
+      nl += 1;
+      ml += dl / nl;
+      // windowed stage: period short
+      auto old = bufs.back();
+      bufs.pop_back();
+      d0s = old - ms;
+      ms += (x - old) / ns;
+    } else {
+      // windowed stage: period short
+      auto old = bufs.back();
+      bufs.pop_back();
+      d0s = old - ms;
+      ms += (x - old) / ns;
+      // windowed stage: period short
+      old = bufl.back();
+      bufl.pop_back();
+      d0l = old - ml;
+      ml += (x - old) / nl;
+    }
+    dd0s = ds - d0s;
+    dd0l = dl - d0l;
+    s2s += ds * ds - d0s * d0s - dd0s * dd0s / ns;
+    s2l += dl * dl - d0l * d0l - dd0l * dd0l / nl;
+
+    if (nl < plong) {
+      vidya = x;
+    } else {
+      auto r = nr * sqrt(s2s / s2l);
+      vidya = (1.0 - r) * vidya + r * x;
+    }
+    return vidya;
+  }
+
+  NumericVector update(NumericVector x) {
+    auto npt = x.length();
+    auto y = NumericVector(npt);
+    for (auto i = 0; i < npt; ++i) {
+      y[i] = update_one(x[i]);
+    }
+    return y;
+  }
+
+  double value() {
+    return vidya;
+  }
+
+};
+
 
 RCPP_MODULE(ocls_ma){
   using namespace Rcpp;
@@ -575,6 +665,15 @@ RCPP_MODULE(ocls_ma){
     .method("update_one", &ocls_vwma::update_one, "Update state by one value")
     .method("update", &ocls_vwma::update, "Update state")
     .method("value", &ocls_vwma::value, "Get last value")
+    ;
+
+  class_<ocls_vidya>("ocls_vidya")
+
+    .constructor<int, int, double>()
+
+    .method("update_one", &ocls_vidya::update_one, "Update state by one value")
+    .method("update", &ocls_vidya::update, "Update state")
+    .method("value", &ocls_vidya::value, "Get last value")
     ;
 
 }

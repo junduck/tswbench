@@ -2,14 +2,19 @@
 % Please edit documentation in R/online_ma.R
 \name{make_wma}
 \alias{make_wma}
+\alias{wma}
 \title{Weighted moving average}
 \usage{
 make_wma(period, ...)
+
+wma(x, period)
 }
 \arguments{
 \item{period}{MA period}
 
 \item{...}{not used}
+
+\item{x}{variable to average}
 }
 \value{
 an online function

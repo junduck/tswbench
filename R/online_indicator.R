@@ -189,13 +189,12 @@ make_cmo <- function(period) {
   period <- as.integer(period)
   stopifnot(period >= 3L)
 
-  last_x <- NA
-
   mup   <- make_sma(period = period)
   mdown <- make_sma(period = period)
+  delta <- make_lag_delta(1L)
 
   function(x) {
-    up <- x - data.table::shift(x, fill = last_x)
+    up <- delta(x)
     if (anyNA(up)) {
       up[is.na(up)] <- 0.0
     }
@@ -205,7 +204,6 @@ make_cmo <- function(period) {
     down[down < 0.0] <- 0.0
     up               <- mup(up)
     down             <- mdown(down)
-    last_x          <<- x[length(x)]
 
     100 * (up - down) / (up + down)
   }

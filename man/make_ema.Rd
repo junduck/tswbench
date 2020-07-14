@@ -2,23 +2,37 @@
 % Please edit documentation in R/online_ma.R
 \name{make_ema}
 \alias{make_ema}
+\alias{ema}
 \alias{make_dema}
+\alias{dema}
 \alias{make_tema}
+\alias{tema}
 \alias{make_zlema}
+\alias{zlema}
 \title{Online exponential moving average}
 \usage{
 make_ema(period, ...)
 
+ema(x, period)
+
 make_dema(period, ...)
+
+dema(x, period)
 
 make_tema(period, ...)
 
+tema(x, period)
+
 make_zlema(period, ...)
+
+zlema(x, period)
 }
 \arguments{
 \item{period}{MA period}
 
 \item{...}{not used}
+
+\item{x}{variable to average}
 }
 \value{
 an online function
