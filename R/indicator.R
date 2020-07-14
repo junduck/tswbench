@@ -137,6 +137,21 @@ atr <- function(high, low, close, period) {
   f(high, low, close)
 }
 
+#' Commodity Channel Index
+#'
+#' @param x measured variable / typical price
+#' @param period period
+#' @param mdr a ratio to adjust ±100 region
+#'
+#' @return numeric vector
+#' @export
+#'
+cci <- function(x, period, mdr = 0.015) {
+
+  f <- make_cci(period = period, mdr = mdr)
+  f(x)
+}
+
 #' Chande Momentum Oscillator
 #'
 #' @param x measured variable
@@ -196,6 +211,36 @@ mass <- function(high, low, period, exp_period = 9L) {
 
   f <- make_mass(period = period, exp_period = exp_period)
   f(high, low)
+}
+
+#' On Balance Volume
+#'
+#' @param close close
+#' @param volume volume
+#'
+#' @return numeric vector
+#' @export
+#'
+obv <- function(close, volume) {
+
+  f <- make_obv()
+  f(close, volume)
+}
+
+#' Positive/Negative Volume Index
+#'
+#' @param close close
+#' @param volume volume
+#' @param base_index base index of the first bar
+#' @param return return data type, l for list, m for matrix
+#'
+#' @return a list or matrix
+#' @export
+#'
+pnvi <- function(close, volume, base_index = 1000.0, return = c("l", "m")) {
+
+  f <- make_pnvi(base_index = base_index, return = return)
+  f(close, volume)
 }
 
 #' Percentage Price Oscillator

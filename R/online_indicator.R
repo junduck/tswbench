@@ -8,6 +8,7 @@
 #' @param return return value type
 #' @param lot volume per lot
 #' @param lag lag window
+#' @param base_index base index for positive/negative volume index
 #' @param ma moving average method
 #'
 #' @return a stateful online function
@@ -184,6 +185,22 @@ make_atr <- function(period) {
 #' @rdname online
 #' @export
 #'
+make_cci <- function(period, mdr = 0.015) {
+
+  sma_p <- make_sma(period)
+  sma_md <- make_sma(period)
+
+  function(x) {
+    ap <- sma_p(x);
+    d <- x - ap;
+    md <- sma_md(abs(d));
+    d / (mdr * md)
+  }
+}
+
+#' @rdname online
+#' @export
+#'
 make_cmo <- function(period) {
 
   period <- as.integer(period)
@@ -266,6 +283,40 @@ make_mass <- function(period, exp_period = 9L) {
 #' @rdname online
 #' @export
 #'
+make_obv <- function() {
+
+  calc <- new(ocls_obv)
+  function(close, volume) {
+    calc$update(close, volume)
+  }
+}
+
+#' @rdname online
+#' @export
+#'
+make_pnvi <- function(base_index = 1000.0, return = c("l", "m")) {
+
+  return <- match.arg(return);
+
+  calc <- new(ocls_pnvi, base_index)
+  switch(return,
+         l = function(close, volume) {
+           val <- calc$update(close, volume)
+           list(
+             pos = val[, 1L],
+             neg = val[, 2L]
+           )
+         },
+         m = function(close, volume) {
+           val <- calc$update(close, volume)
+           colnames(val) <- c("pos", "neg")
+           val
+         })
+}
+
+#' @rdname online
+#' @export
+#'
 make_ppo <- function(short_period, long_period, ma = c("ema", "sma")) {
 
   ma <- match.arg(ma)
@@ -339,3 +390,5 @@ make_willr <- function(period) {
     ans
   }
 }
+
+

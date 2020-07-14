@@ -8,10 +8,13 @@
 \alias{make_ao}
 \alias{make_arosc}
 \alias{make_atr}
+\alias{make_cci}
 \alias{make_cmo}
 \alias{make_dpo}
 \alias{make_emv}
 \alias{make_mass}
+\alias{make_obv}
+\alias{make_pnvi}
 \alias{make_ppo}
 \alias{make_rsi}
 \alias{make_willr}
@@ -34,6 +37,8 @@ make_arosc(period)
 
 make_atr(period)
 
+make_cci(period, mdr = 0.015)
+
 make_cmo(period)
 
 make_dpo(period)
@@ -41,6 +46,10 @@ make_dpo(period)
 make_emv(lot = 100, lag = 1L)
 
 make_mass(period, exp_period = 9L)
+
+make_obv()
+
+make_pnvi(base_index = 1000, return = c("l", "m"))
 
 make_ppo(short_period, long_period, ma = c("ema", "sma"))
 
@@ -64,6 +73,8 @@ make_willr(period)
 \item{lag}{lag window}
 
 \item{exp_period}{exponential smoothing period}
+
+\item{base_index}{base index for positive/negative volume index}
 
 \item{ma}{moving average method}
 }

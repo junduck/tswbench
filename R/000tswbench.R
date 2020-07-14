@@ -16,4 +16,5 @@ loadModule("ocls_moving_order", TRUE)
 loadModule("ocls_volclk", TRUE)
 loadModule("ocls_filter", TRUE)
 loadModule("ocls_utils", TRUE)
+loadModule("ocls_volindi", TRUE)
 NULL
