@@ -1,0 +1,37 @@
+==========
+
+#pragma once
+
+#include "ocls_common.h"
+
+==========
+
+// ===== ocls_ =====
+class ocls_ {
+
+
+
+public:
+  ocls_();
+
+  double update_one(double x);
+  Rcpp::NumericVector update(Rcpp::NumericVector x);
+  double value();
+};
+
+==========
+
+// ===== filter_ =====
+class filter_ {
+
+
+
+public:
+  filter_();
+
+  const arma::colvec& get_filter();
+  void update(arma::colvec x, double d);
+  double filter(arma::colvec x);
+};
+
+==========

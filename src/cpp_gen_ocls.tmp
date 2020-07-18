@@ -1,0 +1,66 @@
+==========
+
+#include "ocls_.h"
+
+using namespace Rcpp;
+
+==========
+
+// ===== ocls_ =====
+ocls_::ocls_() {
+}
+
+double ocls_::update_one(double x) {
+}
+
+NumericVector ocls_::update(NumericVector x) {
+}
+
+double ocls_::value() {
+}
+
+==========
+
+// ===== filter_ =====
+filter_::filter_() {
+}
+
+const arma::colvec& filter_::get_filter() {
+}
+
+void filter_::update(arma::colvec x, double d) {
+}
+
+double filter_::filter(arma::colvec x) {
+}
+
+==========
+
+RCPP_MODULE(ocls_) {
+  using namespace Rcpp;
+
+==========
+
+  class_<ocls_>("ocls_")
+    .constructor<>()
+    .method("update_one", &ocls_::update_one, "Update state by one value")
+    .method("update", &ocls_::update, "Update state")
+    .method("value", &ocls_::value, "Get last value")
+    ;
+
+==========
+
+  class_<filter_>("filter_")
+
+    .constructor<>()
+
+    .method("get_filter", &filter_::get_filter, "get_filter")
+    .method("update", &filter_::update, "update")
+    .method("filter", &filter_::filter, "filter")
+    ;
+
+==========
+
+}
+
+==========
