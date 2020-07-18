@@ -383,6 +383,19 @@ make_rsi <- function(period) {
 #' @rdname online
 #' @export
 #'
+make_trix <- function(period) {
+
+  ma <- make_tema(period = period)
+  ratio <- make_lag_ratio(1L)
+
+  function(x) {
+    100.0 * (1.0 - 1.0 / ratio(ma(x)))
+  }
+}
+
+#' @rdname online
+#' @export
+#'
 make_willr <- function(period) {
 
   mmin <- make_moving_min(window = period)

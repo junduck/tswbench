@@ -39,5 +39,7 @@ ppo: Percentage Price Oscillator
 
 rsi: Relative Strength Index
 
+trix: Trix Momentum Indicator
+
 willr: Williams %R
 }

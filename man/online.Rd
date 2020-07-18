@@ -18,6 +18,7 @@
 \alias{make_pnvi}
 \alias{make_ppo}
 \alias{make_rsi}
+\alias{make_trix}
 \alias{make_willr}
 \title{Technical indicators, online version}
 \usage{
@@ -57,6 +58,8 @@ make_pnvi(base_index = 1000, return = c("l", "m"))
 make_ppo(short_period, long_period, ma = c("ema", "sma"))
 
 make_rsi(period)
+
+make_trix(period)
 
 make_willr(period)
 }

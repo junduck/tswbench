@@ -34,6 +34,8 @@
 #'
 #' rsi: Relative Strength Index
 #'
+#' trix: Trix Momentum Indicator
+#'
 #' willr: Williams %R
 #'
 #'
@@ -293,6 +295,19 @@ ppo <- function(x, short_period, long_period, ma = c("ema", "sma")) {
 rsi <- function(x, period) {
 
   f <- make_rsi(period = period)
+  f(x)
+}
+
+#' Trix Momentum Indicator
+#'
+#' @param x measured variable
+#' @param period period
+#'
+#' @return numeric vector
+#' @export
+#'
+trix <- function(x, period) {
+  f <- make_trix(period = period)
   f(x)
 }
 
