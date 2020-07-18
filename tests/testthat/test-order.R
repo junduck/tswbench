@@ -36,7 +36,8 @@ test_that("moving sort", {
   for (i in seq_len(5)) {
     # flush window
     xx <- sample(x, size = w)
-    y <- f$update(xx)
+    f$update(xx)
+    y <- f$as_vector()
     ym <- sort(xx)
     delta <- sum(abs(y - ym), na.rm = TRUE)
     expect_equal(delta, 0.0)
@@ -45,8 +46,8 @@ test_that("moving sort", {
   x <- runif(n)
   for (i in seq_len(5)) {
     xx <- sample(x, size = 3000)
-    y <- f$update(xx)
-    expect_equal(is.unsorted(y), FALSE)
+    f$update(xx)
+    expect_equal(is.unsorted(f$as_vector()), FALSE)
   }
 })
 

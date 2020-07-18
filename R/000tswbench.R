@@ -10,11 +10,11 @@
 #' @import DBI
 #' @importFrom RSQLite SQLite
 loadModule("ocls_stats", TRUE)
-loadModule("ocls_moving_minmax", TRUE)
+loadModule("ocls_minmax", TRUE)
 loadModule("ocls_ma", TRUE)
-loadModule("ocls_moving_order", TRUE)
+loadModule("ocls_order", TRUE)
 loadModule("ocls_volclk", TRUE)
 loadModule("ocls_filter", TRUE)
-loadModule("ocls_utils", TRUE)
+loadModule("ocls_lag", TRUE)
 loadModule("ocls_volindi", TRUE)
 NULL

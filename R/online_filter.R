@@ -12,7 +12,7 @@ new_filter_RLS <- function(width, lambda = 0.99, sigma = 1.0) {
   width <- as.integer(width)
   stopifnot(width >= 2L, lambda > 0.0 && lambda <= 1.0)
 
-  return(new(RLS, width, lambda, sigma))
+  return(new(filter_RLS, width, lambda, sigma))
 }
 
 #' Create an NLMS (Normalized Least Mean Squares) filter object
@@ -29,7 +29,7 @@ new_filter_NLMS <- function(width, mu = 0.1, eps = 1.0) {
   width = as.integer(width)
   stopifnot(width >= 2.0, mu > 0.0, eps > 0.0)
 
-  return(new(NLMS, width, mu, eps))
+  return(new(filter_NLMS, width, mu, eps))
 }
 
 #' Create a GNGD (Generalized Normalized Gradient Descent) filter object
@@ -47,7 +47,7 @@ new_filter_GNGD <- function(width, mu = 0.1, eps = 1.0, rho = 0.1) {
   width <- as.integer(width)
   stopifnot(width >= 2.0, mu > 0.0, eps > 0.0, rho > 0.0)
 
-  return(new(GNGD, width, mu, eps, rho))
+  return(new(filter_GNGD, width, mu, eps, rho))
 }
 
 #' Create an online RLS filter for polynomial model

@@ -1,8 +1,7 @@
+#pragma once
+
 #include <cmath>
 #include <vector>
-
-#ifndef __skiplist_h__
-#define __skiplist_h__
 
 template <class T>
 struct SkiplistNode {
@@ -206,4 +205,3 @@ public:
   }
 
 };
-#endif

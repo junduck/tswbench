@@ -42,7 +42,7 @@ make_lag_ratio <- function(lag) {
   lag <- as.integer(lag)
   stopifnot(lag > 0L)
 
-  calc <- new(ocls_lag_ratio)
+  calc <- new(ocls_lag_ratio, lag)
   function(x) {
     calc$update(x)
   }
