@@ -137,13 +137,15 @@ double ocls_filter_rls_poly::value() {
 
 // ===== ocls_filter_rls_linear =====
 ocls_filter_rls_linear::ocls_filter_rls_linear(int width, double lambda, double sigma)
-  : rls(width, lambda, sigma),
+  : rls(width + 1, lambda, sigma),
     w(width),
     n(0){
+  buf.push_front(1.0);
 }
 
 double ocls_filter_rls_linear::update_one(double x) {
-  buf.push_front(x);
+  buf[0] = x;
+  buf.push_front(1.0);
   if (n < w) {
     // cumulative stage
     n += 1;

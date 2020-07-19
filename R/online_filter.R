@@ -70,7 +70,7 @@ make_filter_rls_poly <- function(order, lambda = 0.99, sigma = 1.0) {
   }
 }
 
-#' Create an online RLS filter for linear combination model
+#' Create an online RLS filter for MA model
 #'
 #' @param width width of the filter
 #' @param lambda forgetting factor

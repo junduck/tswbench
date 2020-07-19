@@ -2,7 +2,7 @@
 % Please edit documentation in R/online_filter.R
 \name{make_filter_rls_linear}
 \alias{make_filter_rls_linear}
-\title{Create an online RLS filter for linear combination model}
+\title{Create an online RLS filter for MA model}
 \usage{
 make_filter_rls_linear(width, lambda = 0.99, sigma = 1)
 }
@@ -17,5 +17,5 @@ make_filter_rls_linear(width, lambda = 0.99, sigma = 1)
 a stateful online function
 }
 \description{
-Create an online RLS filter for linear combination model
+Create an online RLS filter for MA model
 }
