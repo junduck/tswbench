@@ -17,6 +17,6 @@ resample_intraday_ashare(t, period, session = c("day", "morning", "afternoon"))
 a vector of POSIXct/ITime depending on t
 }
 \description{
-For A-share intraday only. 9:30 and 1:00 is sampled to reflect orders made
-in opening session and lunch break. Extended hour (3:00 - 3:30) is not included.
+For A-share intraday only. 9:30 and 13:00 is sampled to reflect orders made
+in opening session and lunch break. Extended hour (15:00 - 15:30) is not included.
 }

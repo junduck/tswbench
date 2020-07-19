@@ -3,9 +3,10 @@
 using namespace Rcpp;
 
 // ===== ocls_lag =====
-ocls_lag::ocls_lag(int lag)
+ocls_lag::ocls_lag(int lag, double na_fill)
   : w(lag),
-    n(0) {
+    n(0),
+    na_fill(na_fill) {
 }
 
 double ocls_lag::update_one(double x) {
@@ -35,9 +36,10 @@ double ocls_lag::value() {
 }
 
 // ===== ocls_lag_delta =====
-ocls_lag_delta::ocls_lag_delta(int lag)
+ocls_lag_delta::ocls_lag_delta(int lag, double na_fill)
   : w(lag),
-    n(0) {
+    n(0),
+    na_fill(na_fill) {
 }
 
 double ocls_lag_delta::update_one(double x) {
@@ -45,7 +47,7 @@ double ocls_lag_delta::update_one(double x) {
   buf.push_front(x);
   if (n < w) {
     n += 1;
-    y = NA_REAL;
+    y = na_fill;
   } else {
     y = x - buf.back();
     buf.pop_back();
@@ -67,9 +69,10 @@ double ocls_lag_delta::value() {
 }
 
 // ===== ocls_lag_ratio =====
-ocls_lag_ratio::ocls_lag_ratio(int lag)
+ocls_lag_ratio::ocls_lag_ratio(int lag, double na_fill)
   : w(lag),
-    n(0) {
+    n(0),
+    na_fill(na_fill) {
 }
 
 double ocls_lag_ratio::update_one(double x) {
@@ -77,7 +80,7 @@ double ocls_lag_ratio::update_one(double x) {
   buf.push_front(x);
   if (n < w) {
     n += 1;
-    y = NA_REAL;
+    y = na_fill;
   } else {
     y = x / buf.back();
     buf.pop_back();
@@ -148,21 +151,21 @@ RCPP_MODULE(ocls_lag){
   using namespace Rcpp;
 
   class_<ocls_lag>("ocls_lag")
-    .constructor<int>()
+    .constructor<int, double>()
     .method("update_one", &ocls_lag::update_one, "Update state by one value")
     .method("update", &ocls_lag::update, "Update state")
     .method("value", &ocls_lag::value, "Get last value")
     ;
 
   class_<ocls_lag_delta>("ocls_lag_delta")
-    .constructor<int>()
+    .constructor<int, double>()
     .method("update_one", &ocls_lag_delta::update_one, "Update state by one value")
     .method("update", &ocls_lag_delta::update, "Update state")
     .method("value", &ocls_lag_delta::value, "Get last value")
     ;
 
   class_<ocls_lag_ratio>("ocls_lag_ratio")
-    .constructor<int>()
+    .constructor<int, double>()
     .method("update_one", &ocls_lag_ratio::update_one, "Update state by one value")
     .method("update", &ocls_lag_ratio::update, "Update state")
     .method("value", &ocls_lag_ratio::value, "Get last value")

@@ -185,3 +185,18 @@ public:
   Rcpp::NumericVector update(Rcpp::NumericVector x);
   double value();
 };
+
+// ===== ocls_cumulative_zscore =====
+class ocls_cumulative_zscore {
+
+  double n, s2, m, sd, z, r;
+  double newpt, oldpt, d;
+  double signal;
+
+public:
+  ocls_cumulative_zscore(double zscore, double attenu);
+
+  double update_one(double x);
+  Rcpp::NumericVector update(Rcpp::NumericVector x);
+  double value();
+};

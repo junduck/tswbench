@@ -463,6 +463,45 @@ double ocls_moving_zscore::value() {
   return signal;
 }
 
+// ===== ocls_cumulative_zscore =====
+ocls_cumulative_zscore::ocls_cumulative_zscore(double zscore, double attenu)
+  : n(0.0),
+    z(zscore),
+    r(attenu) {
+  s2 = m = 0.0;
+  newpt = oldpt = 0.0;
+}
+
+double ocls_cumulative_zscore::update_one(double x) {
+  if (n > 2.0 && fabs(x - m) > z * sd) {
+    signal = (x - m) / sd;
+    newpt  = r * x + (1.0 - r) * oldpt;
+  } else {
+    signal = 0.0;
+    newpt  = x;
+  }
+  n  += 1.0;
+  d   = newpt - m;
+  m  += d / n;
+  s2 += (1.0 - 1.0 / n) * d * d;
+  sd  = sqrt(s2 / (n - 0.1));
+  oldpt = newpt;
+  return signal;
+}
+
+NumericVector ocls_cumulative_zscore::update(NumericVector x) {
+  auto npt = x.length();
+  auto y = NumericVector(npt);
+  for (auto i = 0; i < npt; ++i) {
+    y[i] = update_one(x[i]);
+  }
+  return y;
+}
+
+double ocls_cumulative_zscore::value() {
+  return signal;
+}
+
 RCPP_MODULE(ocls_stats) {
   using namespace Rcpp;
 
@@ -548,5 +587,12 @@ RCPP_MODULE(ocls_stats) {
     .method("update_one", &ocls_moving_zscore::update_one, "Update state by one value")
     .method("update", &ocls_moving_zscore::update, "Update state")
     .method("value", &ocls_moving_zscore::value, "Get last value")
+  ;
+
+  class_<ocls_cumulative_zscore>("ocls_cumulative_zscore")
+    .constructor<double, double>()
+    .method("update_one", &ocls_cumulative_zscore::update_one, "Update state by one value")
+    .method("update", &ocls_cumulative_zscore::update, "Update state")
+    .method("value", &ocls_cumulative_zscore::value, "Get last value")
   ;
 }

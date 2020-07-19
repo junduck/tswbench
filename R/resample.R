@@ -1,3 +1,26 @@
+#' Convert A-share intraday timestamps to seconds
+#'
+#' 9:30 is converted to 0th second, 13:00 is converted to 7201st second
+#'
+#' @param t a vector of timestamps
+#'
+#' @return a vector of integer, counted seconds of t
+#' @export
+#'
+ashare_intraday_tsec <- function(t) {
+
+  t <- data.table::as.ITime(t)
+  # align to 9:30
+  t <- t - 34200L
+  # afternoon session, align to 13:00 + 1 sec
+  idx2 <- t >= 12600L
+  if (any(idx2)) {
+    t[idx2] <- t[idx2] - 5399L
+  }
+
+  t
+}
+
 #' Generate resample time intervals by perios, generic version
 #'
 #' Calculate suitable time intervals for intraday data resampling. Trading hours
@@ -44,8 +67,8 @@ resample_intraday <- function(t, period, session) {
 
 #' Generate resample time intervals by period, A-share version
 #'
-#' For A-share intraday only. 9:30 and 1:00 is sampled to reflect orders made
-#' in opening session and lunch break. Extended hour (3:00 - 3:30) is not included.
+#' For A-share intraday only. 9:30 and 13:00 is sampled to reflect orders made
+#' in opening session and lunch break. Extended hour (15:00 - 15:30) is not included.
 #'
 #' @param t a timestamp, POSIXct and ITime are supported
 #' @param period resample time period in seconds

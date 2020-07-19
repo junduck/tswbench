@@ -28,6 +28,25 @@ make_cumulative_mean <- function(...) {
   }
 }
 
+#' Moving mean absolute error
+#'
+#' @param window moving window size
+#' @param ... not used
+#'
+#' @return a stateful online function
+#' @export
+#'
+make_moving_mae <- function(window, ...) {
+
+  window <- as.integer(window)
+  stopifnot(window >= 3L)
+
+  calc <- new(ocls_moving_mae, window)
+  function(x) {
+    calc$update(x)
+  }
+}
+
 #' @rdname make_moving_mean
 #' @export
 #'
@@ -53,7 +72,7 @@ make_cumulative_sd <- function(...) {
   }
 }
 
-#' Moving mean absolute error
+#' Online moving/cumulative volatility
 #'
 #' @param window moving window size
 #' @param ... not used
@@ -61,12 +80,23 @@ make_cumulative_sd <- function(...) {
 #' @return a stateful online function
 #' @export
 #'
-make_moving_mae <- function(window, ...) {
+make_moving_volatility <- function(window, ...) {
 
   window <- as.integer(window)
   stopifnot(window >= 3L)
 
-  calc <- new(ocls_moving_mae, window)
+  calc <- new(ocls_moving_volatility, window)
+  function(x) {
+    calc$update(x)
+  }
+}
+
+#' @rdname make_moving_volatility
+#' @export
+#'
+make_cumulative_volatility <- function(...) {
+
+  calc <- new(ocls_cumulative_volatility)
   function(x) {
     calc$update(x)
   }
@@ -149,9 +179,22 @@ make_cumulative_cov <- function(...) {
 make_moving_zscore <- function(window, zscore, attenu, ...) {
 
   window <- as.integer(window)
-  stopifnot(window >= 3L, zscore > 0.0, 0.0 <= attenu && attenu <= 1.0)
+  stopifnot(window >= 3L, zscore > 0.0, attenu >= 0.0 && attenu <= 1.0)
 
   calc <- new(ocls_moving_zscore, window, zscore, attenu)
+  function(x) {
+    calc$update(x)
+  }
+}
+
+#' @rdname make_moving_zscore
+#' @export
+#'
+make_cumulative_zscore <- function(zscore, attenu, ...) {
+
+  stopifnot(zscore > 0.0, attenu >= 0.0 && attenu <= 1.0)
+
+  calc <- new(ocls_cumulative_zscore, zscore, attenu)
   function(x) {
     calc$update(x)
   }

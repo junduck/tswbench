@@ -2,9 +2,12 @@
 % Please edit documentation in R/online_stats.R
 \name{make_moving_zscore}
 \alias{make_moving_zscore}
+\alias{make_cumulative_zscore}
 \title{Moving z-score algorithm for anomaly detection}
 \usage{
 make_moving_zscore(window, zscore, attenu, ...)
+
+make_cumulative_zscore(zscore, attenu, ...)
 }
 \arguments{
 \item{window}{moving window size}

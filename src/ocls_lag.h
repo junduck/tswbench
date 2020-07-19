@@ -7,9 +7,10 @@ class ocls_lag {
 
   int w, n;
   deque buf;
+  double na_fill;
 
 public:
-  ocls_lag(int lag);
+  ocls_lag(int lag, double na_fill);
 
   double update_one(double x);
   Rcpp::NumericVector update(Rcpp::NumericVector x);
@@ -21,9 +22,10 @@ class ocls_lag_delta {
 
   int w, n;
   deque buf;
+  double na_fill;
 
 public:
-  ocls_lag_delta(int lag);
+  ocls_lag_delta(int lag, double na_fill);
 
   double update_one(double x);
   Rcpp::NumericVector update(Rcpp::NumericVector x);
@@ -35,9 +37,10 @@ class ocls_lag_ratio {
 
   int w, n;
   deque buf;
+  double na_fill;
 
 public:
-  ocls_lag_ratio(int lag);
+  ocls_lag_ratio(int lag, double na_fill);
 
   double update_one(double x);
   Rcpp::NumericVector update(Rcpp::NumericVector x);
