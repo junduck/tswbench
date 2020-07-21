@@ -294,6 +294,56 @@ NumericVector ocls_moving_moment::value() {
   return NumericVector{m, s2 / n, s3 / n, s4 / n};
 }
 
+// ===== ocls_moving_stats =====
+ocls_moving_stats::ocls_moving_stats(int window, int order)
+  : o(order),
+    w(window),
+    n(0),
+    omm(window, order) {
+  adj_sd = adj_sk  = 0.0;
+}
+
+NumericVector ocls_moving_stats::update_one(double x) {
+  auto y = omm.update_one(x);
+  if (n < w) {
+    n += 1;
+    adj_sd = sqrt(double(n) / (n - 1));
+    // Adjusted Fisher-Pearson coefs of skewness, still BIASED
+    adj_sk = sqrt(double(n * (n - 1))) / (n - 2);
+  }
+  switch (o) {
+  case 4:
+    y[3]  = y[3] / pow(y[2], 2.0) - 3.0;
+  case 3:
+    y[2]  = adj_sk * y[2] / pow(y[1], 1.5);
+  case 2:
+    y[1]  = adj_sd * sqrt(y[1]);
+  }
+  return y;
+}
+
+NumericMatrix ocls_moving_stats::update(NumericVector x) {
+  auto npt = x.length();
+  auto y = NumericMatrix(npt, 4);
+  for (auto i = 0; i < npt; ++i) {
+    y(i, _) = update_one(x[i]);
+  }
+  return y;
+}
+
+NumericVector ocls_moving_stats::value() {
+  auto y = omm.value();
+  switch (o) {
+  case 4:
+    y[3]  = y[3] / pow(y[2], 2.0) - 3.0;
+  case 3:
+    y[2]  = adj_sk * y[2] / pow(y[1], 1.5);
+  case 2:
+    y[1]  = adj_sd * sqrt(y[1]);
+  }
+  return y;
+}
+
 // ===== ocls_cumulative_moment =====
 ocls_cumulative_moment::ocls_cumulative_moment(int order)
   : o(order),
@@ -332,6 +382,52 @@ NumericMatrix ocls_cumulative_moment::update(NumericVector x) {
 
 NumericVector ocls_cumulative_moment::value() {
   return NumericVector{m, s2 / n, s3 / n, s4 / n};
+}
+
+// ===== ocls_cumulative_stats =====
+ocls_cumulative_stats::ocls_cumulative_stats(int order)
+  : o(order),
+    n(0.0),
+    ocm(order) {
+  adj_sd = adj_sk  = 0.0;
+}
+
+NumericVector ocls_cumulative_stats::update_one(double x) {
+  auto y = ocm.update_one(x);
+  n += 1.0;
+  adj_sd = sqrt(n / (n - 1.0));
+  adj_sk = sqrt(n * (n - 1.0)) / (n - 2.0);
+  switch (o) {
+  case 4:
+    y[3]  = y[3] / pow(y[2], 2.0) - 3.0;
+  case 3:
+    y[2]  = adj_sk * y[2] / pow(y[1], 1.5);
+  case 2:
+    y[1]  = adj_sd * sqrt(y[1]);
+  }
+  return y;
+}
+
+NumericMatrix ocls_cumulative_stats::update(NumericVector x) {
+  auto npt = x.length();
+  auto y = NumericMatrix(npt, 4);
+  for (auto i = 0; i < npt; ++i) {
+    y(i, _) = update_one(x[i]);
+  }
+  return y;
+}
+
+NumericVector ocls_cumulative_stats::value() {
+  auto y = ocm.value();
+  switch (o) {
+  case 4:
+    y[3]  = y[3] / pow(y[2], 2.0) - 3.0;
+  case 3:
+    y[2]  = adj_sk * y[2] / pow(y[1], 1.5);
+  case 2:
+    y[1]  = adj_sd * sqrt(y[1]);
+  }
+  return y;
 }
 
 // ===== ocls_moving_cov =====
@@ -561,11 +657,25 @@ RCPP_MODULE(ocls_stats) {
     .method("value", &ocls_moving_moment::value, "Get last value")
   ;
 
+  class_<ocls_moving_stats>("ocls_moving_stats")
+    .constructor<int, int>()
+    .method("update_one", &ocls_moving_stats::update_one, "Update state by one value")
+    .method("update", &ocls_moving_stats::update, "Update state")
+    .method("value", &ocls_moving_stats::value, "Get last value")
+  ;
+
   class_<ocls_cumulative_moment>("ocls_cumulative_moment")
     .constructor<int>()
     .method("update_one", &ocls_cumulative_moment::update_one, "Update state by one value")
     .method("update", &ocls_cumulative_moment::update, "Update state")
     .method("value", &ocls_cumulative_moment::value, "Get last value")
+  ;
+
+  class_<ocls_cumulative_stats>("ocls_cumulative_stats")
+    .constructor<int>()
+    .method("update_one", &ocls_cumulative_stats::update_one, "Update state by one value")
+    .method("update", &ocls_cumulative_stats::update, "Update state")
+    .method("value", &ocls_cumulative_stats::value, "Get last value")
   ;
 
   class_<ocls_moving_cov>("ocls_moving_cov")

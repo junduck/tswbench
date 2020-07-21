@@ -122,6 +122,21 @@ public:
   Rcpp::NumericVector value();
 };
 
+// ===== ocls_moving_stats =====
+class ocls_moving_stats {
+
+  int o, w, n;
+  double adj_sd, adj_sk;
+  ocls_moving_moment omm;
+
+public:
+  ocls_moving_stats(int window, int order = 4);
+
+  Rcpp::NumericVector update_one(double x);
+  Rcpp::NumericMatrix update(Rcpp::NumericVector x);
+  Rcpp::NumericVector value();
+};
+
 // ===== ocls_cumulative_moment =====
 class ocls_cumulative_moment {
 
@@ -132,6 +147,21 @@ class ocls_cumulative_moment {
 
 public:
   ocls_cumulative_moment(int order = 4);
+
+  Rcpp::NumericVector update_one(double x);
+  Rcpp::NumericMatrix update(Rcpp::NumericVector x);
+  Rcpp::NumericVector value();
+};
+
+// ===== ocls_cumulative_stats =====
+class ocls_cumulative_stats {
+
+  int o;
+  double n, adj_sd, adj_sk;
+  ocls_cumulative_moment ocm;
+
+public:
+  ocls_cumulative_stats(int order = 4);
 
   Rcpp::NumericVector update_one(double x);
   Rcpp::NumericMatrix update(Rcpp::NumericVector x);

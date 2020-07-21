@@ -117,9 +117,24 @@ make_moving_moment <- function(window, order, ...) {
 
   window <- as.integer(window)
   order <- as.integer(order)
-  stopifnot(window >= 3L, 0L < order && order <= 4L)
+  stopifnot(window >= 3L, order > 0L && order <= 4L)
 
   calc <- new(ocls_moving_moment, window, order)
+  function(x) {
+    calc$update(x)
+  }
+}
+
+#' @rdname make_moving_moment
+#' @export
+#'
+make_moving_stats <- function(window, order, ...) {
+
+  window <- as.integer(window)
+  order <- as.integer(order)
+  stopifnot(window >= 3L, order > 0L && order <= 4L)
+
+  calc <- new(ocls_moving_stats, window, order)
   function(x) {
     calc$update(x)
   }
@@ -131,9 +146,23 @@ make_moving_moment <- function(window, order, ...) {
 make_cumulative_moment <- function(order, ...) {
 
   order <- as.integer(order)
-  stopifnot(0L < order && order <= 4L)
+  stopifnot(order > 0L && order <= 4L)
 
   calc <- new(ocls_cumulative_moment, order)
+  function(x) {
+    calc$update(x)
+  }
+}
+
+#' @rdname make_moving_moment
+#' @export
+#'
+make_cumulative_stats <- function(order, ...) {
+
+  order <- as.integer(order)
+  stopifnot(order > 0L && order <= 4L)
+
+  calc <- new(ocls_cumulative_stats, order)
   function(x) {
     calc$update(x)
   }

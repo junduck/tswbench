@@ -2,14 +2,20 @@
 % Please edit documentation in R/online_stats.R
 \name{make_moving_moment}
 \alias{make_moving_moment}
+\alias{make_moving_stats}
 \alias{make_cumulative_moment}
+\alias{make_cumulative_stats}
 \alias{make_moving_cov}
 \alias{make_cumulative_cov}
 \title{Online moving/cumulative statistics}
 \usage{
 make_moving_moment(window, order, ...)
 
+make_moving_stats(window, order, ...)
+
 make_cumulative_moment(order, ...)
+
+make_cumulative_stats(order, ...)
 
 make_moving_cov(window, ...)
 
