@@ -5,6 +5,7 @@ using namespace Rcpp;
 // ===== ocls_volclk_order =====
 ocls_volclk_order::ocls_volclk_order(double bin_vol)
   : bin(bin_vol),
+    totbin(0),
     init(false) {
   lead = lead_tnvr = open = high = low = close = 0.0;
 }
@@ -38,13 +39,14 @@ NumericVector ocls_volclk_order::update_one(double price, double volume) {
     open = high = low = price;
     lead_tnvr = lead * price;
   }
-  //Open, High, Low, Close, VWAP, nbin
-  return NumericVector{o, h, l, c, a, double(nbin)};
+  totbin += nbin;
+  //Open, High, Low, Close, VWAP, nbin, totbin
+  return NumericVector{o, h, l, c, a, double(nbin), double(totbin)};
 }
 
 NumericMatrix ocls_volclk_order::update(NumericVector price, NumericVector volume) {
   auto npt = price.length();
-  auto ans = NumericMatrix(npt, 6);
+  auto ans = NumericMatrix(npt, 7);
   for (auto i = 0; i < npt; ++i) {
     ans(i, _) = update_one(price[i], volume[i]);
   }
@@ -52,7 +54,7 @@ NumericMatrix ocls_volclk_order::update(NumericVector price, NumericVector volum
 }
 
 NumericVector ocls_volclk_order::value() {
-  return NumericVector{open, high, low, close, lead_tnvr / lead, 0.0};
+  return NumericVector{open, high, low, close, lead_tnvr / lead, 0.0, double(totbin)};
 }
 
 // ===== ocls_volclk_tick =====

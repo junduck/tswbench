@@ -17,17 +17,18 @@ make_volclk_order <- function(bin, return = c("l", "m")) {
          l = function(price, volume) {
            val <- calc$update(price, volume)
            list(
-             Open  = val[, 1],
-             High  = val[, 2],
-             Low   = val[, 3],
-             Close = val[, 4],
-             VWAP  = val[, 5],
-             Bins  = val[, 6]
+             Open    = val[, 1],
+             High    = val[, 2],
+             Low     = val[, 3],
+             Close   = val[, 4],
+             VWAP    = val[, 5],
+             Bins    = val[, 6],
+             TotBins = val[, 7]
            )
          },
          m = function(price, volume) {
            val <- calc$update(price, volume)
-           colnames(val) <- c("Open", "High", "Low", "Close", "VWAP", "Bins")
+           colnames(val) <- c("Open", "High", "Low", "Close", "VWAP", "Bins", "TotBins")
            val
          })
 }
@@ -51,17 +52,18 @@ make_volclk_tick <- function(bin, return = c("l", "m")) {
          l = function(price, volume) {
            val <- calc$update(price, volume)
            list(
-             Open  = val[, 1],
-             High  = val[, 2],
-             Low   = val[, 3],
-             Close = val[, 4],
-             VWAP  = val[, 5],
-             Bins  = val[, 6]
+             Open    = val[, 1],
+             High    = val[, 2],
+             Low     = val[, 3],
+             Close   = val[, 4],
+             VWAP    = val[, 5],
+             Bins    = val[, 6],
+             TotBins = val[, 7]
            )
          },
          m = function(price, volume) {
            val <- calc$update(price, volume)
-           colnames(val) <- c("Open", "High", "Low", "Close", "VWAP", "Bins")
+           colnames(val) <- c("Open", "High", "Low", "Close", "VWAP", "Bins", "TotBins")
            val
          })
 }

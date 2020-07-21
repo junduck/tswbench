@@ -6,6 +6,7 @@
 class ocls_volclk_order {
 
   bool init;
+  long totbin;
   double bin, lead, lead_tnvr;
   double open, high, low, close;
 
