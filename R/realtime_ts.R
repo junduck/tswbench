@@ -22,12 +22,12 @@ split_dict_values <- function(rec) {
 tushare_realtime_websocket <- function(topic, code, callback, api = TushareApi()) {
 
   if (!requireNamespace("websocket", quietly = TRUE) ||
+      !requireNamespace("later", quietly = TRUE) ||
       !requireNamespace("jsonlite", quietly = TRUE)) {
     stop("Package websocket and jsonlite are needed to create a Tushare realtime websocket", call. = FALSE)
   }
 
   token <- as.character(api)
-  t_ping <- 0.0
 
   #Tushare subscription WebSocket URL
   ws <- websocket::WebSocket$new("wss://ws.waditu.com/listening", autoConnect = FALSE)
@@ -44,19 +44,15 @@ tushare_realtime_websocket <- function(topic, code, callback, api = TushareApi()
 
   ws$onMessage(function(event) {
 
-    #Tushare subscription relies on a 30s keep-alive ping to stay connected
-    #This is a work-around since when can't create a thread sending this ping in R
-    t_now <- unclass(Sys.time())
-    if ((t_now - t_ping) > 30.0) {
-      payload <- '{"action":"ping"}'
-      ws$send(payload)
-      t_ping <<- t_now
-    }
-
     data <- jsonlite::fromJSON(event$data)
 
-    #If received data is pong, ignore.
+    #If received data is pong, schedule next ping.
     if (is.character(data$data) && (data$data == "pong")) {
+      # message(Sys.time(), ": RECV pong, schedule next ping.")
+      later::later(function() {
+        payload <- '{"action":"ping"}'
+        ws$send(payload)
+      }, delay = 20.0)
       return(TRUE)
     }
 
@@ -77,11 +73,35 @@ tushare_realtime_websocket <- function(topic, code, callback, api = TushareApi()
   ws
 }
 
-#' Ping Tushare websocket
+#' Start Tushare websocket
 #'
-#' Tushare websocket created by tushare_realtime_websocket() relies actively ping
-#' Tushare server on message arrival to keep connection alive. However, if no
-#' message arrives in 30 seconds user will have to ping the server manually.
+#' @param ws a Websocket created by tushare_realtime_websocket()
+#' @param timeout timeout
+#'
+#' @return TRUE
+#' @export
+#'
+tushare_realtime_start <- function(ws, timeout = 10.0) {
+
+  # Connect to Tushare websocket and wait util connection established
+  ws$connect()
+  later::run_now(1.0)
+  con <- ws$readyState()
+
+  # Force run_now()
+  t0 <- unclass(Sys.time())
+  while (!con) {
+    later::run_now(1.0)
+    con <- ws$readyState()
+    if (unclass(Sys.time()) - t0 > timeout) {
+      stop("Connect to Tushare websocket timed out.", call. = FALSE)
+    }
+  }
+
+  tushare_realtime_ping(ws)
+}
+
+#' Ping Tushare websocket
 #'
 #' @param ws a WebSocket
 #'

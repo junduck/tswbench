@@ -13,7 +13,5 @@ tushare_realtime_ping(ws)
 TRUE
 }
 \description{
-Tushare websocket created by tushare_realtime_websocket() relies actively ping
-Tushare server on message arrival to keep connection alive. However, if no
-message arrives in 30 seconds user will have to ping the server manually.
+Ping Tushare websocket
 }
