@@ -2,9 +2,15 @@
 % Please edit documentation in R/realtime_ts.R
 \name{tushare_realtime_start}
 \alias{tushare_realtime_start}
-\title{Start Tushare websocket}
+\alias{tushare_realtime_stop}
+\alias{tushare_realtime_ping}
+\title{Start/Stop/Ping Tushare websocket}
 \usage{
 tushare_realtime_start(ws, timeout = 10)
+
+tushare_realtime_stop(ws)
+
+tushare_realtime_ping(ws)
 }
 \arguments{
 \item{ws}{a Websocket created by tushare_realtime_websocket()}
@@ -15,5 +21,5 @@ tushare_realtime_start(ws, timeout = 10)
 TRUE
 }
 \description{
-Start Tushare websocket
+Start/Stop/Ping Tushare websocket
 }

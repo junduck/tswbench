@@ -39,33 +39,34 @@ tushare_realtime_websocket <- function(topic, code, callback, api = TushareApi()
       data   = list()
     )
     payload$data[[topic]] = code
-    ws$send(jsonlite::toJSON(payload))
+    event$target$send(jsonlite::toJSON(payload))
   })
 
   ws$onMessage(function(event) {
 
     data <- jsonlite::fromJSON(event$data)
 
+    #If status is not TRUE, throw error
+    if (!data$status) {
+      event$target$close()
+      stop(data$message, call. = FALSE)
+    }
+
     #If received data is pong, schedule next ping.
     if (is.character(data$data) && (data$data == "pong")) {
       # message(Sys.time(), ": RECV pong, schedule next ping.")
       later::later(function() {
-        payload <- '{"action":"ping"}'
-        ws$send(payload)
+        if (event$target$readyState() == 1L) {
+          payload <- '{"action":"ping"}'
+          event$target$send(payload)
+        }
       }, delay = 20.0)
-      return(TRUE)
+    } else {
+      #Pass received data to callback function
+      callback_data <- data$data
+      callback_data$record <- split_dict_values(callback_data$record)
+      do.call(callback, callback_data)
     }
-
-    #If status is not TRUE, throw error
-    if (!data$status) {
-      ws$close()
-      stop(data$message, call. = FALSE)
-    }
-
-    #Pass received data to callback function
-    callback_data <- data$data
-    callback_data$record <- split_dict_values(callback_data$record)
-    do.call(callback, callback_data)
 
     TRUE
   })
@@ -73,7 +74,7 @@ tushare_realtime_websocket <- function(topic, code, callback, api = TushareApi()
   ws
 }
 
-#' Start Tushare websocket
+#' Start/Stop/Ping Tushare websocket
 #'
 #' @param ws a Websocket created by tushare_realtime_websocket()
 #' @param timeout timeout
@@ -101,61 +102,113 @@ tushare_realtime_start <- function(ws, timeout = 10.0) {
   tushare_realtime_ping(ws)
 }
 
-#' Ping Tushare websocket
-#'
-#' @param ws a WebSocket
-#'
-#' @return TRUE
+#' @rdname tushare_realtime_start
 #' @export
 #'
-tushare_realtime_ping <- function(ws) {
+tushare_realtime_stop <- function(ws) {
 
-  payload <- '{"action":"ping"}'
-  ws$send(payload)
+  if (ws$readyState() == 1L) {
+    ws$close()
+  }
 
   TRUE
 }
 
-parse_hq_stk_tick <- function(record, today = Sys.Date(), tz = "Asia/Shanghai") {
+#' @rdname tushare_realtime_start
+#' @export
+#'
+tushare_realtime_ping <- function(ws) {
+
+  if (ws$readyState() == 1L) {
+    payload <- '{"action":"ping"}'
+    ws$send(payload)
+  }
+
+  TRUE
+}
+
+#' Generate a record parser for Tushare realtime tick data
+#'
+#' @param api a tsapi object
+#'
+#' @return a parser function
+#' @export
+#'
+tushare_realtime_tick_parser <- function(api = TushareApi()) {
+
+  today = as.character(Sys.Date())
+  tzone = get_tz(api)
+
+  function(record) {
+    parse_hq_stk_tick(record = record, today = today, tz = tzone)
+  }
+}
+
+parse_hq_stk_tick <- function(record, today, tz) {
 
   t_now <- Sys.time()
   t_now <- lubridate::with_tz(Sys.time(), tzone = tz)
 
-  t_rec <- paste(as.character(today), record[3])
-  t_rec <- lubridate::parse_date_time2(t_rec, orders = "%Y-%m-%d %H:%M:%OS", tz = tz)
+  t_rec <- paste0(today, record[3])
+  # Parse as UTC then force_tz to avoid .mklt (SLOW)
+  t_rec <- lubridate::force_tz(
+    lubridate::parse_date_time2(t_rec, orders = "YmdHMOS"),
+    tzone = tz
+  )
 
+  rec_numval <- as.numeric(record[4:31])
   ans <- list(Code     = record[1],
               Name     = record[2],
               Time     = t_rec,
               TimeRecv = t_now,
-              Price    = as.numeric(record[4]),
-              PreClose = as.numeric(record[5]),
-              Open     = as.numeric(record[6]),
-              High     = as.numeric(record[7]),
-              Low      = as.numeric(record[8]),
-              Close    = as.numeric(record[9]),
-              Vol      = as.integer(record[10]),
-              Tnvr     = as.numeric(record[11]),
-              Ask_P1   = as.numeric(record[12]),
-              Ask_V1   = as.integer(record[13]),
-              Ask_P2   = as.numeric(record[14]),
-              Ask_V2   = as.integer(record[15]),
-              Ask_P3   = as.numeric(record[16]),
-              Ask_V3   = as.integer(record[17]),
-              Ask_P4   = as.numeric(record[18]),
-              Ask_V4   = as.integer(record[19]),
-              Ask_P5   = as.numeric(record[20]),
-              Ask_V5   = as.integer(record[21]),
-              Bid_P1   = as.numeric(record[22]),
-              Bid_V1   = as.integer(record[23]),
-              Bid_P2   = as.numeric(record[24]),
-              Bid_V2   = as.integer(record[25]),
-              Bid_P3   = as.numeric(record[26]),
-              Bid_V3   = as.integer(record[27]),
-              Bid_P4   = as.numeric(record[28]),
-              Bid_V4   = as.integer(record[29]),
-              Bid_P5   = as.numeric(record[30]),
-              Bid_V5   = as.integer(record[31]))
+              Price    = rec_numval[ 1],
+              PreClose = rec_numval[ 2],
+              Open     = rec_numval[ 3],
+              High     = rec_numval[ 4],
+              Low      = rec_numval[ 5],
+              Close    = rec_numval[ 6],
+              Vol      = rec_numval[ 7],
+              Tnvr     = rec_numval[ 8],
+              Ask_P1   = rec_numval[ 9],
+              Ask_V1   = rec_numval[10],
+              Ask_P2   = rec_numval[11],
+              Ask_V2   = rec_numval[12],
+              Ask_P3   = rec_numval[13],
+              Ask_V3   = rec_numval[14],
+              Ask_P4   = rec_numval[15],
+              Ask_V4   = rec_numval[16],
+              Ask_P5   = rec_numval[17],
+              Ask_V5   = rec_numval[18],
+              Bid_P1   = rec_numval[19],
+              Bid_V1   = rec_numval[20],
+              Bid_P2   = rec_numval[21],
+              Bid_V2   = rec_numval[22],
+              Bid_P3   = rec_numval[23],
+              Bid_V3   = rec_numval[24],
+              Bid_P4   = rec_numval[25],
+              Bid_V4   = rec_numval[26],
+              Bid_P5   = rec_numval[27],
+              Bid_V5   = rec_numval[28])
 
   ans
+}
+
+callback_zmqpub <- function(bind = "tcp://*:6789") {
+
+  ctx <- rzmq::init.context(1L)
+  pub <- rzmq::init.socket(ctx, "ZMQ_PUB")
+  res <- rzmq::bind.socket(pub, bind)
+  if (!res) {
+    rm(pub)
+    rm(ctx)
+    stop("Error binding to address ", bind, call. = FALSE)
+  }
+
+  function(record) {
+    res <- rzmq::send.socket(pub, record)
+    if (!res) {
+      stop("Error publishing message.", call. = FALSE)
+    }
+    TRUE
+  }
 }
