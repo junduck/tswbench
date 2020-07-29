@@ -77,8 +77,13 @@ select_from <- function(con, tbl, what = "*", ...) {
   tbl  <- quote_sql_id(con, tbl)
   q <- sprintf('SELECT %s FROM %s', paste0(what, collapse = ','), tbl)
 
-  where <- data.table::CJ(..., unique = TRUE)
-  nwhere <- nrow(where)
+  if (...length()) {
+    where <- data.table::CJ(..., unique = TRUE)
+    nwhere <- nrow(where)
+  } else {
+    nwhere <- 0L
+  }
+
   if (nwhere) {
     #construct where clause
     var <- seq_along(where)
