@@ -111,6 +111,18 @@ sina_realtime_loop <- function(db = get_srt_db(), today = Sys.Date(), api = Tush
   flist <- codes <- api$fund_basic(status = "L", market = "E")
   fcode <- sina_ashare_code(code = flist$ts_code, type = "fund")
   codes <- c(scode, fcode)
+  icode <- c("sh000001", "sh000002", "sh000003", "sh000008", "sh000009", "sh000010",
+             "sh000011", "sh000012", "sh000016", "sh000017", "sh000300", "sh000688",
+             "sz399001", "sz399002", "sz399003", "sz399004", "sz399005", "sz399006",
+             "sz399100", "sz399101", "sz399106", "sz399107", "sz399108", "sz399333", "sz399606",
+             # Because of my preference
+             # SZ Cap - Beta - Vol
+             "sz399404", "sz399405", "sz399406", "sz399407", "sz399408", "sz399409",
+             # SH 180/380 - Beta
+             "sh000135", "sh000136", "sh000137", "sh000138",
+             # Conv bonds
+             "sh000139", "sz399307")
+  codes <- c(scode, fcode, icode)
   message(Sys.time(), " Querying ", length(codes), " codes")
 
   today <- data.table::as.IDate(today)
