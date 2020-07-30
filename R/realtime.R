@@ -52,7 +52,7 @@ sina_realtime_quote_data <- realtime_js_str_var(baseurl = "http://hq.sinajs.cn/"
                                                 rand_var = "rn",
                                                 code_var = "list",
                                                 encode = "GB18030",
-                                                max_batch = 800L,
+                                                max_batch = 750L,
                                                 split = ",",
                                                 keep_cols = seq_len(32L))
 
