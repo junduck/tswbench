@@ -127,35 +127,53 @@ sina_realtime_loop <- function(db = get_srt_db(), today = Sys.Date(), api = Tush
 
   today <- data.table::as.IDate(today)
 
-  t <- 0
+  report_window <- 20L
+  cnt <- 0L
+  mean_delta_t <- make_moving_min(report_window)
+  mdt <- 0.0
+  mean_insert <- make_moving_min(report_window)
+  mins <- 0.0
+
+  t <- unclass(Sys.time())
   while (TRUE) {
 
+    # Sleep between 11:32:00 and 12:58:00
     t_now <- itime_now(api = api)
-    #Sleep between 11:32:00 and 12:58:00
     if (t_now >= 41520L && t_now < 46680L) {
       t_sleep <- 46680L - t_now
       message(Sys.time(), " Sleeping for ", t_sleep, " seconds.")
       Sys.sleep(t_sleep)
     }
-    #Exit on 15:32:00
+    # Exit on 15:32:00
     if (t_now >= 55920L) {
       message(Sys.time(), " End of market day. Exiting.")
       break
     }
 
+    # Report
+    cnt <- (cnt + 1L) %/% report_window
+    if (cnt == 0L) {
+      message("----- ", Sys.time(), " -----")
+      message("Avg insert rate: ", mins)
+      message("Avg query time: ", mdt)
+    }
+
+    # Time delta
     delta <- unclass(Sys.time()) - t
     if (delta < 1.0) {
       Sys.sleep(1.0 - delta)
     }
-
     t <- unclass(Sys.time())
+    mdt <- mean_delta_t(delta)
+
+    # Data query
     tryCatch({
       dt <- sina_realtime_quote(sina_code = codes, api = api)
       if (nrow(dt)) {
         dt <- normalise_srt_data(dt = dt, api = api)
         dt <- dt[idate == today & Vol > 0]
         r  <- insert_to(con = con, tbl = "sina_realtime", dt = dt, conflict = "ignore")
-        message(Sys.time(), " Sina query: ", nrow(dt), " inserted: ", r)
+        mins <- mean_insert(r)
       }
     }, error = function(e) {
       #FIXME: if user interrupts R during curl_fetch_memory, it will trigger exception
@@ -163,6 +181,7 @@ sina_realtime_loop <- function(db = get_srt_db(), today = Sys.Date(), api = Tush
       #User may need to interrupt R multiple times to make this function stop.
       warning(Sys.time(), " ", toString(e))
     })
+
   }
 }
 
