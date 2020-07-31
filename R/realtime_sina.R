@@ -151,7 +151,7 @@ sina_realtime_loop <- function(db = get_srt_db(), today = Sys.Date(), api = Tush
     }
 
     # Report
-    cnt <- (cnt + 1L) %/% report_window
+    cnt <- (cnt + 1L) %% report_window
     if (cnt == 0L) {
       message("----- ", Sys.time(), " -----")
       message("Avg insert rate: ", mins)
