@@ -62,20 +62,20 @@ create_srt_db <- function(db = get_srt_db(), api = TushareApi()) {
 
   r <- create_table(con = con, name = "sina_realtime", dt = dt, create_index = FALSE)
   if (!r) {
-    stop("Failed to create table sina_realtime.")
+    stop("Failed to create table sina_realtime.", call. = FALSE)
   }
 
   r <- create_index(con = con,
                     name = "sina_realtime_index", tbl = "sina_realtime",
                     var = c("Code", "idate", "itime"), ASC = TRUE, unique = TRUE)
   if (!r) {
-    stop("Failed to create index sina_realtime_index.")
+    stop("Failed to create index sina_realtime_index.", call. = FALSE)
   }
   r <- create_index(con = con,
                     name = "sina_realtime_index_dt", tbl = "sina_realtime",
                     var = c("idate", "itime"), ASC = TRUE, unique = FALSE)
   if (!r) {
-    stop("Failed to create index sina_realtime_index_dt.")
+    stop("Failed to create index sina_realtime_index_dt.", call. = FALSE)
   }
 
   TRUE
@@ -102,7 +102,7 @@ sina_realtime_loop <- function(db = get_srt_db(), today = Sys.Date(), api = Tush
   con <- connect_srt_db(db = db)
   on.exit({DBI::dbDisconnect(con)})
 
-  #Normal sync should be safe enough for WAL
+  # Normal sync should be safe enough for WAL
   DBI::dbExecute(con, "PRAGMA synchronous = 1;")
 
   message(Sys.time(), " Request stock list from Tushare")
@@ -127,14 +127,15 @@ sina_realtime_loop <- function(db = get_srt_db(), today = Sys.Date(), api = Tush
 
   today <- data.table::as.IDate(today)
 
-  report_window <- 20L
+  report_window <- 30L
   cnt <- 0L
-  mean_delta_t <- make_moving_min(report_window)
-  mdt <- 0.0
-  mean_insert <- make_moving_min(report_window)
-  mins <- 0.0
+  mean_dt_m <- make_moving_mean(report_window)
+  mean_dt_c <- make_cumulative_mean()
+  max_dt_m <- make_moving_max(report_window)
+  mean_insert_m <- make_moving_min(report_window)
+  mean_insert_c <- make_cumulative_mean()
+  mdt_m <- mdt_c <- mxdt_m <- mins_m <- mins_c <- 0.0
 
-  t <- unclass(Sys.time())
   while (TRUE) {
 
     # Sleep between 11:32:00 and 12:58:00
@@ -150,30 +151,17 @@ sina_realtime_loop <- function(db = get_srt_db(), today = Sys.Date(), api = Tush
       break
     }
 
-    # Report
-    cnt <- (cnt + 1L) %% report_window
-    if (cnt == 0L) {
-      message("----- ", Sys.time(), " -----")
-      message("Avg insert rate: ", mins)
-      message("Avg query time: ", mdt)
-    }
-
-    # Time delta
-    delta <- unclass(Sys.time()) - t
-    if (delta < 1.0) {
-      Sys.sleep(1.0 - delta)
-    }
-    t <- unclass(Sys.time())
-    mdt <- mean_delta_t(delta)
-
     # Data query
+    t <- unclass(Sys.time())
+    r <- 0
     tryCatch({
       dt <- sina_realtime_quote(sina_code = codes, api = api)
       if (nrow(dt)) {
-        dt <- normalise_srt_data(dt = dt, api = api)
         dt <- dt[idate == today & Vol > 0]
-        r  <- insert_to(con = con, tbl = "sina_realtime", dt = dt, conflict = "ignore")
-        mins <- mean_insert(r)
+        if (nrow(dt)) {
+          dt <- normalise_srt_data(dt = dt, api = api)
+          r  <- insert_to(con = con, tbl = "sina_realtime", dt = dt, conflict = "ignore")
+        }
       }
     }, error = function(e) {
       #FIXME: if user interrupts R during curl_fetch_memory, it will trigger exception
@@ -181,6 +169,27 @@ sina_realtime_loop <- function(db = get_srt_db(), today = Sys.Date(), api = Tush
       #User may need to interrupt R multiple times to make this function stop.
       warning(Sys.time(), " ", toString(e))
     })
+
+    # Timing stats
+    delta_t <- unclass(Sys.time()) - t
+    rate <- r / delta_t
+    mdt_m <- mean_dt_m(delta_t)
+    mdt_c <- mean_dt_c(delta_t)
+    mxdt_m <- max_dt_m(delta_t)
+    mins_m <- mean_insert_m(rate)
+    mins_c <- mean_insert_c(rate)
+
+    # Report
+    cnt <- (cnt + 1L) %% report_window
+    if (cnt == 0L) {
+      message("----- ", Sys.time(), " -----")
+      message("Recent avg query time: ", mdt_m, " max: ", mxdt_m, " cumulative: ", mdt_c)
+      message("Recent avg insert rate: ", mins_m, " cumulative: ", mins_c)
+    }
+
+    if (delta_t < 1.0) {
+      Sys.sleep(1.0 - delta_t)
+    }
 
   }
 }
