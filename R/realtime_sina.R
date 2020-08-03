@@ -156,12 +156,10 @@ sina_realtime_loop <- function(db = get_srt_db(), today = Sys.Date(), api = Tush
     r <- 0
     tryCatch({
       dt <- sina_realtime_quote(sina_code = codes, api = api)
+      dt <- normalise_srt_data(dt = dt, api = api)
+      dt <- dt[idate == today & Vol > 0]
       if (nrow(dt)) {
-        dt <- dt[idate == today & Vol > 0]
-        if (nrow(dt)) {
-          dt <- normalise_srt_data(dt = dt, api = api)
-          r  <- insert_to(con = con, tbl = "sina_realtime", dt = dt, conflict = "ignore")
-        }
+        r  <- insert_to(con = con, tbl = "sina_realtime", dt = dt, conflict = "ignore")
       }
     }, error = function(e) {
       #FIXME: if user interrupts R during curl_fetch_memory, it will trigger exception
