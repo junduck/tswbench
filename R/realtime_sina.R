@@ -132,7 +132,7 @@ sina_realtime_loop <- function(db = get_srt_db(), today = Sys.Date(), api = Tush
   mean_dt_m <- make_moving_mean(report_window)
   mean_dt_c <- make_cumulative_mean()
   max_dt_m <- make_moving_max(report_window)
-  mean_insert_m <- make_moving_min(report_window)
+  mean_insert_m <- make_moving_mean(report_window)
   mean_insert_c <- make_cumulative_mean()
   mdt_m <- mdt_c <- mxdt_m <- mins_m <- mins_c <- 0.0
 
