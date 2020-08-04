@@ -132,17 +132,21 @@ select_from_where <- function(con, tbl, what = "*", where = "") {
 #' @return number of rows inserted
 #' @export
 #'
-insert_to <- function(con, tbl, dt, conflict = c("replace", "ignore", "default")) {
+insert_to <- function(con, tbl, dt, conflict = c("default", "replace", "ignore", "do_update", "do_nothing")) {
 
   tbl <- quote_sql_id(con, tbl)
   var <- quote_sql_id(con, names(dt))
-  val <- rep('?', length(var))
+  val <- paste0("$", seq_along(var))
 
   conflict <- match.arg(conflict)
   q_template <- switch(conflict,
-                       replace = "INSERT OR REPLACE INTO %s\n (%s)\n VALUES\n (%s)",
-                       ignore  = "INSERT OR IGNORE INTO %s\n (%s)\n VALUES\n (%s)",
-                       default = "INSERT INTO %s\n (%s)\n VALUES\n (%s)")
+                       default = "INSERT INTO %s (%s) VALUES (%s)",
+                       # SQLite
+                       replace = "INSERT OR REPLACE INTO %s (%s) VALUES (%s)",
+                       ignore  = "INSERT OR IGNORE INTO %s (%s) VALUES (%s)",
+                       # Postgres
+                       do_update  = "INSERT INTO %s (%s) VALUES (%s) ON CONFLICT DO UPDATE",
+                       do_nothing = "INSERT INTO %s (%s) VALUES (%s) ON CONFLICT DO NOTHING")
   q <- DBI::SQL(sprintf(q_template, tbl, paste0(var, collapse = ", "), paste0(val, collapse = ", ")))
 
   r <- tryCatch({
