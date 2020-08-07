@@ -236,7 +236,7 @@ create_table <- function(con, name, dt, create_index = FALSE) {
 
   dt <- dt[0L, , drop = FALSE]
   r <- tryCatch({
-    DBI::dbWriteTable(con, name, dt[0])
+    DBI::dbWriteTable(con, name, dt)
     TRUE
   }, error = function(e) {
     warning(toString(e), call. = FALSE)
