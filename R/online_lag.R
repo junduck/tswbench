@@ -73,7 +73,6 @@ make_lag_delta_moving_sum <- function(window, lag) {
 #' @return
 #' @export
 #'
-#' @examples
 lag_delta <- function(x, lag, na_fill = NA) {
 
   f <- make_lag_delta(lag = lag, na_fill = na_fill)

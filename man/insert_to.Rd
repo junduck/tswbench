@@ -4,7 +4,12 @@
 \alias{insert_to}
 \title{Insert data to an SQL connection}
 \usage{
-insert_to(con, tbl, dt, conflict = c("replace", "ignore", "default"))
+insert_to(
+  con,
+  tbl,
+  dt,
+  conflict = c("default", "replace", "ignore", "do_update", "do_nothing")
+)
 }
 \arguments{
 \item{con}{an SQL connection}

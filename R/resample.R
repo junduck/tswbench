@@ -1,4 +1,4 @@
-#' Convert A-share intraday timestamps to seconds
+#' Convert A-share intraday timestamps to seconds traded
 #'
 #' 9:30 is converted to 0th second, 13:00 is converted to 7201st second
 #'
@@ -7,7 +7,7 @@
 #' @return a vector of integer, counted seconds of t
 #' @export
 #'
-ashare_intraday_tsec <- function(t) {
+tsec_intraday_ashare <- function(t) {
 
   t <- data.table::as.ITime(t)
   # align to 9:30
@@ -21,12 +21,11 @@ ashare_intraday_tsec <- function(t) {
   t
 }
 
-#' Generate resample time intervals by perios, generic version
+#' Calculate suitable time intervals for intraday resampling
 #'
-#' Calculate suitable time intervals for intraday data resampling. Trading hours
-#' are defined in session, a list of integer vectors, each defining a trading
-#' session by 6 integers: session start hour, minute, second, session end hour,
-#' minute, second.
+#' Trading hours are defined in session, a list of integer vectors, each defining
+#' a trading session by 6 integers: session start hour, minute, second, session end
+#' hour, minute, second.
 #'
 #' @param t a timestamp, POSIXct and ITime are supported
 #' @param period resample time period in seconds
@@ -35,7 +34,7 @@ ashare_intraday_tsec <- function(t) {
 #' @return a vector of POSIXct/ITime depending on t
 #' @export
 #'
-resample_intraday <- function(t, period, session) {
+trsmp_intraday <- function(t, period, session) {
 
   by <- as.integer(period)
 
@@ -65,7 +64,7 @@ resample_intraday <- function(t, period, session) {
   }
 }
 
-#' Generate resample time intervals by period, A-share version
+#' Calculate suitable time intervals for intraday resampling, A-share version
 #'
 #' For A-share intraday only. 9:30 and 13:00 is sampled to reflect orders made
 #' in opening session and lunch break. Extended hour (15:00 - 15:30) is not included.
@@ -77,7 +76,7 @@ resample_intraday <- function(t, period, session) {
 #' @return a vector of POSIXct/ITime depending on t
 #' @export
 #'
-resample_intraday_ashare <- function(t, period, session = c("day", "morning", "afternoon")) {
+trsmp_intraday_ashare <- function(t, period, session = c("day", "morning", "afternoon")) {
 
   session = match.arg(session)
 
@@ -100,7 +99,7 @@ resample_intraday_ashare <- function(t, period, session = c("day", "morning", "a
            afternoon = data.table::as.ITime(intv + 12600L))
   } else {
     tl1 <- tl2 <- as.POSIXlt(t[[1L]])
-    tz <- attr(tl1, "tzone")
+    tz <- attr(t, "tzone")
     tl1$hour <- 9 ; tl1$min <- 30; tl1$sec <- 0
     tl2$hour <- 11; tl2$min <- 30; tl2$sec <- 0
     intv <- seq(unclass(as.POSIXct(tl1)),
@@ -113,34 +112,34 @@ resample_intraday_ashare <- function(t, period, session = c("day", "morning", "a
   }
 }
 
-#' Group time by time intervals
+#' Group variable by intervals, left open
 #'
 #' @param t a vector of POSIXct/ITime
 #' @param intv time intervals to group
-#' @param grp_id wheter to return group id or grouped time
+#' @param grp_id wheter to return group id or grouped value
 #'
 #' @return a vector of group id or POSIXct/ITime
 #' @export
 #'
-group_by_interval <- function(t, intv, grp_id = TRUE) {
+grp_interval <- function(x, intv, grp_id = TRUE) {
 
-  t_grps <- findInterval(t, intv, left.open = TRUE)
+  x_grpid <- findInterval(x, intv, left.open = TRUE)
   if (grp_id) {
-    t_grps
+    x_grpid
   } else {
     n <- length(intv)
-    t_grps <- t_grps + 1L
-    if (any(t_grps > n)) {
-      intv <- c(intv, data.table::last(t))
+    x_grpid <- x_grpid + 1L
+    if (any(x_grpid > n)) {
+      intv <- c(intv, data.table::last(x))
     }
-    intv[t_grps]
+    intv[x_grpid]
   }
 }
 
-group_by_period <- function(t, period, grp_id = TRUE) {
+grp_period <- function(t, period, grp_id = TRUE) {
 
-  intv <- resample_intraday_ashare(t, period = period, session = "day")
-  group_by_interval(t = t, intv = intv, grp_id = grp_id)
+  intv <- trsmp_intraday_ashare(t, period = period, session = "day")
+  grp_interval(x = t, intv = intv, grp_id = grp_id)
 }
 
 #' Resample A-share OHLC data
@@ -170,10 +169,13 @@ resample_ohlc_ashare <- function(dt, period, align_time = FALSE) {
   }
 }
 
+#' Resample OHLC variance 1:
+#'
+#' Handles data of same date.
 resample_ohlc_ashare1 <- function(dt, period, align_time) {
 
   data.table::setkeyv(dt, c("Code", "Date", "Time"))
-  intv <- resample_intraday_ashare(dt$Time, period = period, session = "day")
+  intv <- trsmp_intraday_ashare(dt$Time, period = period, session = "day")
 
   if (is.null(dt$VWAP)) {
     dt[, `:=`(cum_Vol = cumsum(Vol), cum_Tnvr = cumsum(Tnvr)), by = c("Code", "Date")]
@@ -184,7 +186,7 @@ resample_ohlc_ashare1 <- function(dt, period, align_time) {
   }
 
   if (align_time) {
-    dt[, t_grps := group_by_interval(Time, intv = intv, grp_id = FALSE), by = c("Code", "Date")]
+    dt[, t_grps := grp_interval(Time, intv = intv, grp_id = FALSE), by = c("Code", "Date")]
     x <- dt[, list(Open  = first(Open),
                    High  = max(High),
                    Low   = min(Low),
@@ -194,7 +196,7 @@ resample_ohlc_ashare1 <- function(dt, period, align_time) {
                    VWAP  = last(VWAP)), by = c("Code", "Date", "t_grps")]
     data.table::setnames(x, "t_grps", "Time")
   } else {
-    dt[, t_grps := group_by_interval(Time, intv = intv, grp_id = TRUE), by = c("Code", "Date")]
+    dt[, t_grps := grp_interval(Time, intv = intv, grp_id = TRUE), by = c("Code", "Date")]
     x <- dt[, list(Time  = last(Time),
                    Open  = first(Open),
                    High  = max(High),
@@ -211,6 +213,9 @@ resample_ohlc_ashare1 <- function(dt, period, align_time) {
   x
 }
 
+#' Resample OHLC variance 2:
+#'
+#' Handles data of different dates.
 resample_ohlc_ashare2 <- function(dt, period, align_time) {
 
   data.table::setkeyv(dt, c("Code", "Date", "Time"))
@@ -224,7 +229,7 @@ resample_ohlc_ashare2 <- function(dt, period, align_time) {
   }
 
   if (align_time) {
-    t_grps <- dt[, .(Time = group_by_period(Time, period = period, grp_id = FALSE)), by = c("Code", "Date")]
+    t_grps <- dt[, .(Time = grp_period(Time, period = period, grp_id = FALSE)), by = c("Code", "Date")]
     x <- dt[, list(Open  = first(Open),
                    High  = max(High),
                    Low   = min(Low),
@@ -233,7 +238,7 @@ resample_ohlc_ashare2 <- function(dt, period, align_time) {
                    Tnvr  = sum(Tnvr),
                    VWAP  = last(VWAP)), by = t_grps]
   } else {
-    t_grps <- dt[, .(TimeGrps = group_by_period(Time, period = period, grp_id = TRUE)), by = c("Code", "Date")]
+    t_grps <- dt[, .(TimeGrps = grp_period(Time, period = period, grp_id = TRUE)), by = c("Code", "Date")]
     x <- dt[, list(Time  = last(Time),
                    Open  = first(Open),
                    High  = max(High),
