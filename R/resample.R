@@ -21,7 +21,7 @@ tsec_intraday_ashare <- function(t) {
   t
 }
 
-#' Calculate suitable time intervals for intraday resampling
+#' Calculate suitable time buckets/intervals for intraday resampling
 #'
 #' Trading hours are defined in session, a list of integer vectors, each defining
 #' a trading session by 6 integers: session start hour, minute, second, session end
@@ -34,7 +34,7 @@ tsec_intraday_ashare <- function(t) {
 #' @return a vector of POSIXct/ITime depending on t
 #' @export
 #'
-trsmp_intraday <- function(t, period, session) {
+tbucket_intraday <- function(t, period, session) {
 
   by <- as.integer(period)
 
@@ -64,7 +64,7 @@ trsmp_intraday <- function(t, period, session) {
   }
 }
 
-#' Calculate suitable time intervals for intraday resampling, A-share version
+#' Calculate suitable time buckets/intervals for intraday resampling, A-share version
 #'
 #' For A-share intraday only. 9:30 and 13:00 is sampled to reflect orders made
 #' in opening session and lunch break. Extended hour (15:00 - 15:30) is not included.
@@ -76,7 +76,7 @@ trsmp_intraday <- function(t, period, session) {
 #' @return a vector of POSIXct/ITime depending on t
 #' @export
 #'
-trsmp_intraday_ashare <- function(t, period, session = c("day", "morning", "afternoon")) {
+tbucket_intraday_ashare <- function(t, period, session = c("day", "morning", "afternoon")) {
 
   session = match.arg(session)
 
@@ -138,7 +138,7 @@ grp_interval <- function(x, intv, grp_id = TRUE) {
 
 grp_period <- function(t, period, grp_id = TRUE) {
 
-  intv <- trsmp_intraday_ashare(t, period = period, session = "day")
+  intv <- tbucket_intraday_ashare(t, period = period, session = "day")
   grp_interval(x = t, intv = intv, grp_id = grp_id)
 }
 
@@ -175,7 +175,7 @@ resample_ohlc_ashare <- function(dt, period, align_time = FALSE) {
 resample_ohlc_ashare1 <- function(dt, period, align_time) {
 
   data.table::setkeyv(dt, c("Code", "Date", "Time"))
-  intv <- trsmp_intraday_ashare(dt$Time, period = period, session = "day")
+  intv <- tbucket_intraday_ashare(dt$Time, period = period, session = "day")
 
   if (is.null(dt$VWAP)) {
     dt[, `:=`(cum_Vol = cumsum(Vol), cum_Tnvr = cumsum(Tnvr)), by = c("Code", "Date")]
