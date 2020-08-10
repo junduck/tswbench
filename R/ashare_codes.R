@@ -122,3 +122,47 @@ sina_ashare_code <- function(code, type = c("stock", "index", "fund", "conv_bond
   ans[parsed_idx] <- paste0(tolower(parsed$exchange[parsed_idx]), ans[parsed_idx])
   ans
 }
+
+#' Query all A-share codes from www.shdjt.com
+#'
+#' @return a data.table
+#' @export
+#'
+shdjt_ashare_code <- function() {
+
+  url <- "http://www.shdjt.com/js/lib/astock.js"
+  handle <- curl::new_handle()
+
+  v <- curl_get_plaintext(url = url, handle = handle, encoding = "UTF-8") %>%
+    stringr::str_match(., pattern = stringr::regex('"([^"].*?)"')) %>%
+    magrittr::extract(1L, 2L) %>%
+    stringr::str_split(., pattern = stringr::fixed("~"), simplify = TRUE)
+  v <- v[nzchar(v)] %>%
+    stringr::str_split_fixed(., pattern = stringr::fixed("`"), n = 3L)
+
+  v2 <- v[, 2L] %>%
+    stringi::stri_reverse(.) %>%
+    stringr::str_split_fixed(., pattern = stringr::fixed("."), n = 2L)
+
+  Code   <- v[, 1L]
+  Name   <- stringi::stri_reverse(v2[, 1L])
+  Type   <- stringi::stri_reverse(v2[, 2L])
+  Pinyin <- v[, 3L]
+
+  idx <- nzchar(Type)
+  tmp <- Name[idx]
+  Name[idx] <- Type[idx]
+  Type[idx] <- tmp
+
+  dt <- data.table::data.table(Code = Code,
+                               Name = Name,
+                               Type = Type,
+                               Pinyin = Pinyin,
+                               Rawcode = Code)
+  dt[Type == "",                          Code := norm_ashare_code(Code, "stock")]
+  dt[Type == "基金",                      Code := norm_ashare_code(Code, "fund")]
+  dt[Type == "深指数" | Type == "沪指数", Code := norm_ashare_code(Code, "index")]
+
+  data.table::setkeyv(dt, c("Type", "Code"))
+  dt
+}
