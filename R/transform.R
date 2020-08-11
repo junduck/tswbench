@@ -65,7 +65,7 @@ transform_ohlc <- function(dt, vol_acc) {
                       Close = last(Price),
                       Vol   = sum(tmp_vol),
                       Tnvr  = sum(tmp_tnvr)),
-               by = c("Code", "Date", "Time")][Vol > 0.0]
+               by = c("Code", "Date", "Time")][Vol != 0L]
     # Remove temporary columns
     dt[, `:=`(tmp_vol = NULL, tmp_tnvr = NULL)]
   } else {
