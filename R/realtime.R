@@ -81,19 +81,53 @@ tencent_realtime_quote_cols <- c(
   "MktId", "Name", "Code", "Price", "PreClose", "Open", "Vol", "Bid_Vol", "Ask_Vol",
   "Bid_P1", "Bid_V1", "Bid_P2", "Bid_V2", "Bid_P3", "Bid_V3", "Bid_P4", "Bid_V4", "Bid_P5", "Bid_V5",
   "Ask_P1", "Ask_V1", "Ask_P2", "Ask_V2", "Ask_P3", "Ask_V3", "Ask_P4", "Ask_V4", "Ask_P5", "Ask_V5",
-  "RecentOrder", "Time", "Change", "ChangePct", "High", "Low",
-  "PriceVolTnvr", "Vol_Duplicate", "TnvrDisp", "TnvrRatio", "PE", "V41_Unknow", "High_Duplicate",
+  "Detail", "Time", "Change", "ChangePct", "High", "Low",
+  "PriceVolTnvr", "Vol_Duplicate", "TnvrDisp", "TnvrPct", "PE", "V41_Unknow_Status", "High_Duplicate",
   "Low_Duplicate", "AmpPct", "FreeFloat", "MktCap", "PB", "HighLimit", "LowLimit",
   "OrderVolRatio", "OrderValSpread", "VWAP", "PE_Dynamic", "PE_Static", "V55_Unknow", "V56_Unknow",
   "V57_Unknow", "Tnvr", "V59_Unknow", "V60_Unknow", "V61_Unknow", "MktTag", "V63_Unknow",
   "V64_Unknow", "V65_Unknow", "V66_Unknow", "V67_Unknow"
 )
 
-tencent_realtime_quote_data <- realtime_js_str_var(baseurl = "http://qt.gtimg.cn/",
-                                                   rand_var = "r",
+tencent_realtime_quote_parsed <- c(
+  # Meta
+  "Name", "Code",
+  # Quote
+  "Open", "PreClose", "Price", "High", "Low", "Vol", "Bid_Vol", "Ask_Vol", "Tnvr", "TnvrPct",
+  "HighLimit", "LowLimit", "Change", "ChangePct", "AmpPct", "VWAP",
+  # Bid/Ask
+  "Bid_P1", "Bid_V1", "Bid_P2", "Bid_V2", "Bid_P3", "Bid_V3", "Bid_P4", "Bid_V4", "Bid_P5", "Bid_V5",
+  "Ask_P1", "Ask_V1", "Ask_P2", "Ask_V2", "Ask_P3", "Ask_V3", "Ask_P4", "Ask_V4", "Ask_P5", "Ask_V5",
+  # Fundamental
+  "MktCap", "FreeFloat", "PE", "PE_Dynamic", "PE_Static", "PB",
+  # Timestamp
+  "Time",
+  # Placeholder
+  NULL
+)
+
+# Regarding to number unit:
+# Vol: lot (100 shares)
+# Tnvr: 100k
+# *Pct: %
+tencent_realtime_quote_num <- c(
+  # Quote
+  "Open", "PreClose", "Price", "High", "Low", "Vol", "Bid_Vol", "Ask_Vol", "Tnvr", "TnvrPct",
+  "HighLimit", "LowLimit", "Change", "ChangePct", "AmpPct", "VWAP",
+  # Bid/Ask
+  "Bid_P1", "Bid_V1", "Bid_P2", "Bid_V2", "Bid_P3", "Bid_V3", "Bid_P4", "Bid_V4", "Bid_P5", "Bid_V5",
+  "Ask_P1", "Ask_V1", "Ask_P2", "Ask_V2", "Ask_P3", "Ask_V3", "Ask_P4", "Ask_V4", "Ask_P5", "Ask_V5",
+  # Fundamental
+  "MktCap", "FreeFloat", "PE", "PE_Dynamic", "PE_Static", "PB",
+  # Placeholder
+  NULL
+)
+
+tencent_realtime_quote_data <- realtime_js_str_var(baseurl = "http://qt.gtimg.cn/utf8",
+                                                   rand_var = "_",
                                                    code_var = "q",
-                                                   encode = "GBK",
-                                                   max_batch = 800L,
+                                                   encode = "UTF-8",
+                                                   max_batch = 750L,
                                                    split = "~",
                                                    keep_cols = seq_len(67L))
 
@@ -111,32 +145,33 @@ tencent_realtime_quote <- function(tencent_code, api = TushareApi()) {
 
   dt <- tencent_realtime_quote_data(tencent_code)
   data.table::setnames(dt, tencent_realtime_quote_cols)
+  dt[, (tencent_realtime_quote_num) := lapply(.SD, as.numeric), .SDcols = tencent_realtime_quote_num]
   parse_datetime <- datetime_parser(api)
   dt[, Time := parse_datetime(Time)]
+  dt[, tencent_code := tencent_code]
 
-  dt
+  # Only return parsed columns
+  dt[, tencent_realtime_quote_parsed, with = FALSE]
 }
 
 tencent_realtime_mf_cols <- c(
   "tencent_code",
   "main_buy", "main_sale", "main_net", "main_ratio",
   "chive_buy", "chive_sale", "chive_net", "chive_ratio", "tot_buy",
-  "V11_Unknow", "V12_Unknow", "Name", "Date", "Hist1", "Hist2", "Hist3", "Hist4",
-  "V19_Unknow", "V20_Unknow", "V21_Unknow"
-)
+  "V11_Unknow", "V12_Unknow", "Name", "Date", "Hist1", "Hist2", "Hist3", "Hist4")
 
 tencent_realtime_mf_num_cols <- c(
   "main_buy", "main_sale", "main_net", "main_ratio",
   "chive_buy", "chive_sale", "chive_net", "chive_ratio", "tot_buy"
 )
 
-tencent_realtime_mf_data <- realtime_js_str_var(baseurl = "http://qt.gtimg.cn/",
-                                                rand_var = "r",
+tencent_realtime_mf_data <- realtime_js_str_var(baseurl = "http://qt.gtimg.cn/utf8",
+                                                rand_var = "_",
                                                 code_var = "q",
-                                                encode = "GBK",
-                                                max_batch = 600L,
+                                                encode = "UTF-8",
+                                                max_batch = 500L,
                                                 split = "~",
-                                                keep_cols = seq_len(21L))
+                                                keep_cols = seq_len(18L))
 
 #' Query realtime moneyflow data from Tencent
 #'
