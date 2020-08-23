@@ -6,7 +6,6 @@ get_tz <- function(api) attr(api, "tz")
 
 chk_number   <- function(x) stringr::str_detect(x, "^[0-9]*$")
 chk_number_n <- function(x, n) stringr::str_detect(x, sprintf("^[0-9]{%d}$", n))
-chk_sina     <- function(x) stringr::str_detect(x, "(^sh|^sz)[0-9]{6}$")
 
 as_POSIXct <- function(x, tz) {
 
@@ -16,13 +15,15 @@ as_POSIXct <- function(x, tz) {
   } else if (is.character(x)) {
     #try full dttm format
     ans <- suppressWarnings({
-      lubridate::parse_date_time2(x, orders = "%Y%m%d%H%M%OS", tz = tz)
+      lubridate::force_tz(time = lubridate::parse_date_time2(x, orders = "%Y%m%d%H%M%OS", tz = "UTC"),
+                          tzone = tz)
     })
     #try intraday dttm format
     na_idx <- is.na(ans)
     if (any(na_idx)) {
       ans[na_idx] <- suppressWarnings({
-        lubridate::parse_date_time2(x[na_idx], orders = "%H%M%OS", tz = tz)
+        lubridate::force_tz(time = lubridate::parse_date_time2(x[na_idx], orders = "%H%M%OS", tz = "UTC"),
+                            tzone = tz)
       })
     }
   } else {
@@ -48,8 +49,9 @@ as_logical <- function(x) {
 date_parser <- function(api) {
 
   switch(get_dm(api),
-         POSIXct = function(x) as_POSIXct(x, tz = get_tz(api)),
          Date    = lubridate::as_date,
+         POSIXct = function(x) as_POSIXct(x, tz = get_tz(api)),
+         IDate   = function(x) data.table::as.IDate(as_POSIXct(x, tz = get_tz(api))),
          as.character
   )
 }
@@ -58,6 +60,7 @@ datetime_parser <- function(api) {
 
   switch(get_tm(api),
          POSIXct = function(x) as_POSIXct(x, tz = get_tz(api)),
+         ITime   = function(x) data.table::as.ITime(as_POSIXct(x, tz = get_tz(api))),
          as.character)
 }
 

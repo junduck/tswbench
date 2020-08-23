@@ -129,8 +129,8 @@ TusRequest <- function(api_name, ..., fields = c(""), token = GetToken(), timeou
 #' @export
 #'
 TushareApi <- function(api_token = GetToken(),
-                       time_mode = c("POSIXct", "char"),
-                       date_mode = c("Date", "POSIXct", "char"),
+                       time_mode = c("POSIXct", "ITime", "char"),
+                       date_mode = c("Date", "POSIXct", "IDate", "char"),
                        logi_mode = c("logical", "char"),
                        tz = "Asia/Shanghai") {
 
