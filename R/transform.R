@@ -93,7 +93,7 @@ transform_ohlc <- function(dt, vol_acc) {
 #' Code, Date, Time, Price, Volume (Vol), Turnover (Tnvr)
 #'
 #' Output data contains these columns:
-#' Code, Date, Time, Open, High, Low, Close, Vol, Tnvr, VWAP, Avg
+#' Code, Date, Price, Vol, Tnvr
 #'
 #' @param dt tick data or order book data
 #' @param vol_acc whether volume data is accumulated, auto detected if not supplied

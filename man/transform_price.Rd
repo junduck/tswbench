@@ -20,5 +20,5 @@ Code, Date, Time, Price, Volume (Vol), Turnover (Tnvr)
 }
 \details{
 Output data contains these columns:
-Code, Date, Time, Open, High, Low, Close, Vol, Tnvr, VWAP, Avg
+Code, Date, Price, Vol, Tnvr
 }

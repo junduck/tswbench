@@ -4,9 +4,16 @@
 \alias{sina_realtime_loop}
 \title{Run Sina realtime data loop}
 \usage{
-sina_realtime_loop(db = get_srt_db(), today = Sys.Date(), api = TushareApi())
+sina_realtime_loop(
+  codes = default_srt_codes(),
+  db = get_srt_db(),
+  today = idate_now(),
+  api = TushareApi()
+)
 }
 \arguments{
+\item{codes}{codes to query}
+
 \item{db}{file path to database}
 
 \item{today}{date of today}
