@@ -40,14 +40,13 @@ realtime_js_str_var <- function(baseurl, rand_var, code_var, encode, max_batch, 
   function(code) {
     handle = curl::new_handle()
     code_part <- split(code, seq_along(code) %/% max_batch)
-    req_ans <- lapply(code_part, function(codes) {
+    req_ans <- sapply(code_part, function(codes) {
       req_url <- sprintf(url, unclass(Sys.time()) * 1000, paste0(codes, collapse = ","))
       curl_get_plaintext(req_url, handle, encode)
-    })
+    }, USE.NAMES = FALSE)
     data <- req_ans %>%
-      do.call(c, .) %>%
       stringr::str_match_all(., pattern = ptn) %>%
-      magrittr::extract2(1L)
+      do.call(rbind, .)
     dt <- data.table::tstrsplit(data[, 3L], split = split, fixed = TRUE, keep = keep_cols)
     data.table::setDT(dt)
     data.table::setnames(dt, cols)
