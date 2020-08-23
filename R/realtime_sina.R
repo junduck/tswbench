@@ -1,8 +1,24 @@
-itime_now <- function(api) {
+#' Return current time/date as ITime/IDate
+#'
+#' @param api a tsapi object
+#'
+#' @return ITime/IDate
+#' @export
+#'
+itime_now <- function(api = TushareApi()) {
+
   data.table::as.ITime(lubridate::with_tz(Sys.time(), tzone = get_tz(api)))
 }
 
-normalise_srt_data <- function(dt, api) {
+#' @rdname itime_now
+#' @export
+#'
+idate_now <- function() {
+
+  data.table::as.IDate(Sys.Date())
+}
+
+norm_srt_data <- function(dt, api) {
 
   se   <- toupper(stringr::str_sub(dt$sina_code, 1L, 2L))
   code <- stringr::str_extract(dt$sina_code, "[0-9].+$")
@@ -10,7 +26,7 @@ normalise_srt_data <- function(dt, api) {
   dt[, Code  := paste0(code, ".", se)]
   dt[, idate := data.table::as.IDate(Time)]
   dt[, itime := data.table::as.ITime(Time)]
-  dt[, irecv := itime_now(api)]
+  dt[, irecv := itime_now(api = api)]
 
   dt
 }
@@ -58,10 +74,11 @@ create_srt_db <- function(db = get_srt_db(), api = TushareApi()) {
   DBI::dbExecute(con, "PRAGMA journal_mode=WAL;")
 
   dt <- sina_realtime_quote(sina_code = "sz000001", api = api)
-  dt <- normalise_srt_data(dt = dt, api = api)
+  dt <- norm_srt_data(dt = dt, api = api)
 
   r <- create_table(con = con, name = "sina_realtime", dt = dt, create_index = FALSE)
   if (!r) {
+    on.exit(file.remove(db), add = TRUE)
     stop("Failed to create table sina_realtime.", call. = FALSE)
   }
 
@@ -69,16 +86,50 @@ create_srt_db <- function(db = get_srt_db(), api = TushareApi()) {
                     name = "sina_realtime_index", tbl = "sina_realtime",
                     var = c("Code", "idate", "itime"), ASC = TRUE, unique = TRUE)
   if (!r) {
+    on.exit(file.remove(db), add = TRUE)
     stop("Failed to create index sina_realtime_index.", call. = FALSE)
   }
+
   r <- create_index(con = con,
                     name = "sina_realtime_index_dt", tbl = "sina_realtime",
                     var = c("idate", "itime"), ASC = TRUE, unique = FALSE)
   if (!r) {
+    on.exit(file.remove(db), add = TRUE)
     stop("Failed to create index sina_realtime_index_dt.", call. = FALSE)
   }
 
   TRUE
+}
+
+#' Query default Sina realtime codes
+#'
+#' @param stock whether to include stocks
+#' @param fund whether to include funds
+#' @param index whether to include indices
+#'
+#' @return a character vector
+#' @export
+#'
+default_srt_codes <- function(stock = TRUE, fund = TRUE, index = TRUE) {
+
+  idx <- shdjt_ashare_code()
+  # Remove unrecognised types, a.k.a TypeCN "板块"
+  idx <- idx[!is.na(Type)]
+  if (!stock) {
+    idx <- idx[Type != "stock"]
+  }
+  if (!fund) {
+    idx <- idx[Type != "fund"]
+  }
+  if (!index) {
+    idx <- idx[Type != "index"]
+  }
+  if (!nrow(idx)) {
+    stop("Failed to fetch codes.", call. = FALSE)
+  }
+
+  # Convert to Sina code format
+  sina_ashare_code(idx$Code)
 }
 
 #' Run Sina realtime data loop
@@ -87,6 +138,7 @@ create_srt_db <- function(db = get_srt_db(), api = TushareApi()) {
 #' database as provided by db argument. Since WAL is used for the database,
 #' please make sure that the file is not on a network location.
 #'
+#' @param codes codes to query
 #' @param db file path to database
 #' @param today date of today
 #' @param api a tsapi object
@@ -94,7 +146,7 @@ create_srt_db <- function(db = get_srt_db(), api = TushareApi()) {
 #' @return this function loops indefinately and does not return
 #' @export
 #'
-sina_realtime_loop <- function(db = get_srt_db(), today = Sys.Date(), api = TushareApi()) {
+sina_realtime_loop <- function(codes = default_srt_codes(), db = get_srt_db(), today = idate_now(), api = TushareApi()) {
 
   if (!file.exists(db)) {
     create_srt_db(db = db, api = api)
@@ -105,27 +157,9 @@ sina_realtime_loop <- function(db = get_srt_db(), today = Sys.Date(), api = Tush
   # Normal sync should be safe enough for WAL
   DBI::dbExecute(con, "PRAGMA synchronous = 1;")
 
-  message(Sys.time(), " Request stock list from Tushare")
-  slist <- api$stock_basic()
-  scode <- sina_ashare_code(code = slist$ts_code, type = "stock")
-  flist <- codes <- api$fund_basic(status = "L", market = "E")
-  fcode <- sina_ashare_code(code = flist$ts_code, type = "fund")
-  codes <- c(scode, fcode)
-  icode <- c("sh000001", "sh000002", "sh000003", "sh000008", "sh000009", "sh000010",
-             "sh000011", "sh000012", "sh000016", "sh000017", "sh000300", "sh000688",
-             "sz399001", "sz399002", "sz399003", "sz399004", "sz399005", "sz399006",
-             "sz399100", "sz399101", "sz399106", "sz399107", "sz399108", "sz399333", "sz399606",
-             # Because of my preference
-             # SZ Cap - Beta - Vol
-             "sz399404", "sz399405", "sz399406", "sz399407", "sz399408", "sz399409",
-             # SH 180/380 - Beta
-             "sh000135", "sh000136", "sh000137", "sh000138",
-             # Conv bonds
-             "sh000139", "sz399307")
-  codes <- c(scode, fcode, icode)
-  message(Sys.time(), " Querying ", length(codes), " codes")
-
-  today <- data.table::as.IDate(today)
+  if (lubridate::is.Date(today)) {
+    today <- data.table::as.IDate(today)
+  }
 
   report_window <- 30L
   cnt <- 0L
@@ -136,6 +170,7 @@ sina_realtime_loop <- function(db = get_srt_db(), today = Sys.Date(), api = Tush
   mean_insert_c <- make_cumulative_mean()
   mdt_m <- mdt_c <- mxdt_m <- mins_m <- mins_c <- 0.0
 
+  message(Sys.time(), " Querying ", length(codes), " codes")
   while (TRUE) {
 
     # Sleep between 11:32:00 and 12:58:00
@@ -156,7 +191,7 @@ sina_realtime_loop <- function(db = get_srt_db(), today = Sys.Date(), api = Tush
     r <- 0
     tryCatch({
       dt <- sina_realtime_quote(sina_code = codes, api = api)
-      dt <- normalise_srt_data(dt = dt, api = api)
+      dt <- norm_srt_data(dt = dt, api = api)
       dt <- dt[idate == today & Vol > 0]
       if (nrow(dt)) {
         r  <- insert_to(con = con, tbl = "sina_realtime", dt = dt, conflict = "ignore")
@@ -165,7 +200,7 @@ sina_realtime_loop <- function(db = get_srt_db(), today = Sys.Date(), api = Tush
       #FIXME: if user interrupts R during curl_fetch_memory, it will trigger exception
       #and be captured by tryCatch() showing a warning. Thus not properly interrupted.
       #User may need to interrupt R multiple times to make this function stop.
-      warning(Sys.time(), " ", toString(e))
+      message(Sys.time(), " Error: ", toString(e))
     })
 
     # Timing stats
@@ -213,7 +248,7 @@ sina_realtime_loader <- function(db = get_srt_db(), today = Sys.Date(), api = Tu
   today <- data.table::as.IDate(today)
   irecv <- 0L
 
-  function(dt_bind = NULL) {
+  function() {
 
     con <- connect_srt_db(db = db)
     on.exit(DBI::dbDisconnect(con))
@@ -227,16 +262,8 @@ sina_realtime_loader <- function(db = get_srt_db(), today = Sys.Date(), api = Tu
         itime = data.table::as.ITime(itime),
         irecv = data.table::as.ITime(irecv)
       )]
-      if (!is.null(dt_bind)) {
-        dt <- data.table::rbindlist(list(dt_bind, dt))
-      }
       data.table::setkeyv(dt, c("Code", "idate", "itime"))
       irecv <<- max(dt$irecv)
-    } else {
-      #No new data, however if dt_bind valid, return dt_bind instead
-      if (!is.null(dt_bind)) {
-        dt <- dt_bind
-      }
     }
 
     dt
