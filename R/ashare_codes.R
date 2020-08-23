@@ -156,12 +156,21 @@ shdjt_ashare_code <- function() {
 
   dt <- data.table::data.table(Code = Code,
                                Name = Name,
-                               Type = Type,
+                               Type = NA_character_,
+                               TypeCN = Type,
                                Pinyin = Pinyin,
                                Rawcode = Code)
-  dt[Type == "",                          Code := norm_ashare_code(Code, "stock")]
-  dt[Type == "基金",                      Code := norm_ashare_code(Code, "fund")]
-  dt[Type == "深指数" | Type == "沪指数", Code := norm_ashare_code(Code, "index")]
+
+  # special case: codes start with zz
+  dt[startsWith(Rawcode, "zz"), TypeCN := "中证"]
+
+  dt[TypeCN == "",       `:=`(Type = "stock",
+                              Code = norm_ashare_code(Code, "stock"))]
+  dt[TypeCN == "基金",   `:=`(Type = "fund",
+                              Code = norm_ashare_code(Code, "fund"))]
+  dt[TypeCN == "深指数" |
+     TypeCN == "沪指数", `:=`(Type = "index",
+                              Code = norm_ashare_code(Code, "index"))]
 
   data.table::setkeyv(dt, c("Type", "Code"))
   dt
