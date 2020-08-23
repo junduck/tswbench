@@ -6,44 +6,71 @@ curl_get_plaintext <- function(url, handle, encoding) {
   stringr::str_conv(req$content, encoding = encoding)
 }
 
-realtime_js_str_var <- function(baseurl, rand_var, code_var, encode, max_batch, split, keep_cols) {
+#' Query function generator
+#'
+#' Query values using HTTP GET. Expected returned values are Javascript assignments
+#' of var_prefix_var_name = "string value"
+#'
+#' string values are split and parsed as tabular data.
+#'
+#' @param baseurl base URL
+#' @param rand_var random variable name
+#' @param code_var code variable name
+#' @param encode content encoding
+#' @param max_batch max number of codes per batch
+#' @param var_prefix Javascript assignment variable prefix
+#' @param var_name variable column name
+#' @param split Javascript assignment value delimiter
+#' @param cols column names of the returned data.table
+#'
+#' @return a function
+realtime_js_str_var <- function(baseurl, rand_var, code_var, encode, max_batch, var_prefix, var_name, split, cols) {
 
   if (endsWith(baseurl, "/")) {
     url <- paste0(baseurl, rand_var, "=%.0f&", code_var, "=%s")
   } else {
     url <- paste0(baseurl, "/", rand_var, "=%.0f&", code_var, "=%s")
   }
+
+  # Match js str var assignment: [var_prefix]var_name = "string value"
+  ptn <- sprintf('%s(.*?)\\s*=\\s*"(.*?)"', var_prefix)
+
+  keep_cols <- seq_along(cols)
+
   function(code) {
     handle = curl::new_handle()
     code_part <- split(code, seq_along(code) %/% max_batch)
-    data <- lapply(code_part, function(codes) {
+    req_ans <- lapply(code_part, function(codes) {
       req_url <- sprintf(url, unclass(Sys.time()) * 1000, paste0(codes, collapse = ","))
-      req_ans <- curl_get_plaintext(req_url, handle, encode) %>%
-        stringr::str_match_all(., pattern = '"(.*?)"') %>%
-        magrittr::extract2(1L)
-      req_ans[, 2L]
+      curl_get_plaintext(req_url, handle, encode)
     })
-    dt <- data.table::tstrsplit(do.call(c, data), split = split, fixed = TRUE, keep = keep_cols)
+    data <- req_ans %>%
+      do.call(c, .) %>%
+      stringr::str_match_all(., pattern = ptn) %>%
+      magrittr::extract2(1L)
+    dt <- data.table::tstrsplit(data[, 3L], split = split, fixed = TRUE, keep = keep_cols)
     data.table::setDT(dt)
+    data.table::setnames(dt, cols)
+    data.table::set(dt, j = var_name, value = data[, 2L])
   }
 }
 
 sina_realtime_quote_cols <- c(
-  #meta
+  # meta
   "Name",
-  #ohlc
+  # ohlc
   "Open", "PreClose", "Price", "High", "Low", "Bid", "Ask", "Vol", "Tnvr",
-  #bid and ask
+  # bid and ask
   "Bid_V1", "Bid_P1", "Bid_V2", "Bid_P2", "Bid_V3", "Bid_P3", "Bid_V4", "Bid_P4", "Bid_V5", "Bid_P5",
   "Ask_V1", "Ask_P1", "Ask_V2", "Ask_P2", "Ask_V3", "Ask_P3", "Ask_V4", "Ask_P4", "Ask_V5", "Ask_P5",
-  #timestamps
+  # timestamps
   "date_str", "time_str"
 )
 
 sina_realtime_quote_num_cols <- c(
-  #ohlc
+  # ohlc
   "Open", "PreClose", "Price", "High", "Low", "Bid", "Ask", "Vol", "Tnvr",
-  #bid and ask
+  # bid and ask
   "Bid_V1", "Bid_P1", "Bid_V2", "Bid_P2", "Bid_V3", "Bid_P3", "Bid_V4", "Bid_P4", "Bid_V5", "Bid_P5",
   "Ask_V1", "Ask_P1", "Ask_V2", "Ask_P2", "Ask_V3", "Ask_P3", "Ask_V4", "Ask_P4", "Ask_V5", "Ask_P5"
 )
@@ -53,8 +80,10 @@ sina_realtime_quote_data <- realtime_js_str_var(baseurl = "http://hq.sinajs.cn/"
                                                 code_var = "list",
                                                 encode = "GB18030",
                                                 max_batch = 750L,
+                                                var_prefix = "hq_str_",
+                                                var_name = "sina_code",
                                                 split = ",",
-                                                keep_cols = seq_len(32L))
+                                                cols = sina_realtime_quote_cols)
 
 #' Query realtime quotes from Sina
 #'
@@ -67,17 +96,15 @@ sina_realtime_quote_data <- realtime_js_str_var(baseurl = "http://hq.sinajs.cn/"
 sina_realtime_quote <- function(sina_code, api = TushareApi()) {
 
   dt <- sina_realtime_quote_data(sina_code)
-  data.table::setnames(dt, sina_realtime_quote_cols)
   dt[, (sina_realtime_quote_num_cols) := lapply(.SD, as.numeric), .SDcols = sina_realtime_quote_num_cols]
   parse_datetime <- datetime_parser(api)
   dt[, Time := parse_datetime(paste0(date_str, time_str))]
-  dt[, sina_code := sina_code]
   dt[, c("date_str", "time_str") := NULL]
 
   dt
 }
 
-tencent_realtime_quote_cols <- c(
+tencent_realtime_quote_cols_all <- c(
   "MktId", "Name", "Code", "Price", "PreClose", "Open", "Vol", "Bid_Vol", "Ask_Vol",
   "Bid_P1", "Bid_V1", "Bid_P2", "Bid_V2", "Bid_P3", "Bid_V3", "Bid_P4", "Bid_V4", "Bid_P5", "Bid_V5",
   "Ask_P1", "Ask_V1", "Ask_P2", "Ask_V2", "Ask_P3", "Ask_V3", "Ask_P4", "Ask_V4", "Ask_P5", "Ask_V5",
@@ -88,6 +115,9 @@ tencent_realtime_quote_cols <- c(
   "V57_Unknow", "Tnvr", "V59_Unknow", "V60_Unknow", "V61_Unknow", "MktTag", "V63_Unknow",
   "V64_Unknow", "V65_Unknow", "V66_Unknow", "V67_Unknow"
 )
+
+# Keep till MktTag
+tencent_realtime_quote_cols <- tencent_realtime_quote_cols_all[seq_len(62L)]
 
 tencent_realtime_quote_parsed <- c(
   # Meta
@@ -102,6 +132,8 @@ tencent_realtime_quote_parsed <- c(
   "MktCap", "FreeFloat", "PE", "PE_Dynamic", "PE_Static", "PB",
   # Timestamp
   "Time",
+  # misc
+  "MktTag", "tencent_code",
   # Placeholder
   NULL
 )
@@ -128,8 +160,10 @@ tencent_realtime_quote_data <- realtime_js_str_var(baseurl = "http://qt.gtimg.cn
                                                    code_var = "q",
                                                    encode = "UTF-8",
                                                    max_batch = 750L,
+                                                   var_prefix = "v_",
+                                                   var_name = "tencent_code",
                                                    split = "~",
-                                                   keep_cols = seq_len(67L))
+                                                   cols = tencent_realtime_quote_cols)
 
 #' Query realtime quotes from Tencent
 #'
@@ -144,18 +178,16 @@ tencent_realtime_quote_data <- realtime_js_str_var(baseurl = "http://qt.gtimg.cn
 tencent_realtime_quote <- function(tencent_code, api = TushareApi()) {
 
   dt <- tencent_realtime_quote_data(tencent_code)
-  data.table::setnames(dt, tencent_realtime_quote_cols)
   dt[, (tencent_realtime_quote_num) := lapply(.SD, as.numeric), .SDcols = tencent_realtime_quote_num]
   parse_datetime <- datetime_parser(api)
   dt[, Time := parse_datetime(Time)]
-  dt[, tencent_code := tencent_code]
 
   # Only return parsed columns
   dt[, tencent_realtime_quote_parsed, with = FALSE]
 }
 
 tencent_realtime_mf_cols <- c(
-  "tencent_code",
+  "code",
   "main_buy", "main_sale", "main_net", "main_ratio",
   "chive_buy", "chive_sale", "chive_net", "chive_ratio", "tot_buy",
   "V11_Unknow", "V12_Unknow", "Name", "Date", "Hist1", "Hist2", "Hist3", "Hist4")
@@ -170,10 +202,15 @@ tencent_realtime_mf_data <- realtime_js_str_var(baseurl = "http://qt.gtimg.cn/ut
                                                 code_var = "q",
                                                 encode = "UTF-8",
                                                 max_batch = 500L,
+                                                var_prefix = "v_ff_",
+                                                var_name = "tencent_code",
                                                 split = "~",
-                                                keep_cols = seq_len(18L))
+                                                cols = tencent_realtime_mf_cols)
 
 #' Query realtime moneyflow data from Tencent
+#'
+#' There is no timestamp in the returned data, so this moneyflow data can't be
+#' used reliably as time-series
 #'
 #' @param tencent_code Tencent codes to query
 #' @param api an tsapi object
@@ -184,7 +221,6 @@ tencent_realtime_mf_data <- realtime_js_str_var(baseurl = "http://qt.gtimg.cn/ut
 tencent_realtime_moneyflow <- function(tencent_code, api = TushareApi()) {
 
   dt <- tencent_realtime_mf_data(paste0("ff_", tencent_code))
-  data.table::setnames(dt, tencent_realtime_mf_cols)
   dt[, (tencent_realtime_mf_num_cols) := lapply(.SD, as.numeric), .SDcol = tencent_realtime_mf_num_cols]
   parse_date <- date_parser(api)
   dt[, Date := parse_date(Date)]
