@@ -1,3 +1,23 @@
+#' Return current time/date as ITime/IDate
+#'
+#' @param api a tsapi object
+#'
+#' @return ITime/IDate
+#' @export
+#'
+itime_now <- function(api = TushareApi()) {
+
+  data.table::as.ITime(lubridate::with_tz(Sys.time(), tzone = get_tz(api)))
+}
+
+#' @rdname itime_now
+#' @export
+#'
+idate_now <- function() {
+
+  data.table::as.IDate(Sys.Date())
+}
+
 norm_rt_dt <- function(dt, code_col, time_col, api) {
 
   # Add normalised code
@@ -61,18 +81,22 @@ create_rt_db <- function(query_func, ref_code, code_col, time_col,
     stop(msg, call. = FALSE)
   }
 
-  r <- create_index(con = con, name = idx_dttm, tbl = tbl_name,
-                    var = c("idate", "itime"), ASC = TRUE, unique = FALSE)
-  if (!r) {
-    msg <- sprintf("Failed to create index %s on %s.", idx_dttm, tbl_name)
-    warning(msg, call. = FALSE)
+  if (!is.null(idx_dttm)) {
+    r <- create_index(con = con, name = idx_dttm, tbl = tbl_name,
+                      var = c("idate", "itime"), ASC = TRUE, unique = FALSE)
+    if (!r) {
+      msg <- sprintf("Failed to create index %s on %s.", idx_dttm, tbl_name)
+      warning(msg, call. = FALSE)
+    }
   }
 
-  r <- create_index(con = con, name = idx_recv, tbl = tbl_name,
-                    var = c("idate", "irecv"), ASC = TRUE, unique = FALSE)
-  if (!r) {
-    msg <- sprintf("Failed to create index %s on %s.", idx_recv, tbl_name)
-    warning(msg, call. = FALSE)
+  if (!is.null(idx_recv)) {
+    r <- create_index(con = con, name = idx_recv, tbl = tbl_name,
+                      var = c("idate", "irecv"), ASC = TRUE, unique = FALSE)
+    if (!r) {
+      msg <- sprintf("Failed to create index %s on %s.", idx_recv, tbl_name)
+      warning(msg, call. = FALSE)
+    }
   }
 
   TRUE
@@ -131,7 +155,7 @@ rt_exit_timer <- function(t_now) {
 create_rt_loop <- function(query_func = sina_realtime_quote,
                            ref_code   = "sz000001",
                            # data structure
-                           code_col   = "Code",
+                           code_col   = "sina_code",
                            time_col   = "Time",
                            # database
                            db         = get_rt_db(),
