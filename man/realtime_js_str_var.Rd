@@ -40,5 +40,8 @@ a function
 }
 \description{
 Query values using HTTP GET. Expected returned values are Javascript assignments
-of \]var_prefix\]var_name = "string value"
+of var_prefix_var_name = "string value"
+}
+\details{
+string values are split and parsed as tabular data.
 }

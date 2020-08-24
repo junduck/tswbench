@@ -15,5 +15,6 @@ tencent_realtime_moneyflow(tencent_code, api = TushareApi())
 data.table
 }
 \description{
-Query realtime moneyflow data from Tencent
+There is no timestamp in the returned data, so this moneyflow data can't be
+used reliably as time-series
 }
