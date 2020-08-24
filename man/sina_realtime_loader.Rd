@@ -4,7 +4,11 @@
 \alias{sina_realtime_loader}
 \title{Generate a Sina realtime data loader function}
 \usage{
-sina_realtime_loader(db = get_srt_db(), today = Sys.Date(), api = TushareApi())
+sina_realtime_loader(
+  db = get_srt_db(),
+  today = idate_now(),
+  api = TushareApi()
+)
 }
 \arguments{
 \item{db}{path to database file}
@@ -17,8 +21,5 @@ sina_realtime_loader(db = get_srt_db(), today = Sys.Date(), api = TushareApi())
 a load function
 }
 \description{
-The generated function reads today's incremental data loaded to db. It also
-takes an optional argument dt_bind, if supplied with a data.table/data.frame,
-the load rbind old dt_bind data to newly loaded data, constructing all-day
-data
+Generate a Sina realtime data loader function
 }

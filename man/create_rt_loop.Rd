@@ -7,7 +7,7 @@
 create_rt_loop(
   query_func = sina_realtime_quote,
   ref_code = "sz000001",
-  code_col = "Code",
+  code_col = "sina_code",
   time_col = "Time",
   db = get_rt_db(),
   tbl_name = "rtdt",
