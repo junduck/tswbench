@@ -177,7 +177,7 @@ resample_ohlc_ashare1 <- function(dt, period, align_time) {
   data.table::setkeyv(dt, c("Code", "Date", "Time"))
   intv <- tbucket_intraday_ashare(dt$Time, period = period, session = "day")
 
-  if (is.null(dt$VWAP)) {
+  if (is.null(dt[["VWAP"]])) {
     dt[, `:=`(cum_Vol = cumsum(Vol), cum_Tnvr = cumsum(Tnvr)), by = c("Code", "Date")]
     dt[, `:=`(VWAP = cum_Tnvr / cum_Vol)]
     on.exit({
@@ -220,7 +220,7 @@ resample_ohlc_ashare2 <- function(dt, period, align_time) {
 
   data.table::setkeyv(dt, c("Code", "Date", "Time"))
 
-  if (is.null(dt$VWAP)) {
+  if (is.null(dt[["VWAP"]])) {
     dt[, `:=`(cum_Vol = cumsum(Vol), cum_Tnvr = cumsum(Tnvr)), by = c("Code", "Date")]
     dt[, `:=`(VWAP = cum_Tnvr / cum_Vol)]
     on.exit({

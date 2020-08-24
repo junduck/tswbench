@@ -8,7 +8,7 @@ detect_acc <- function(dt) {
   n <- length(codes) %/% 100L + 1L
   codes <- sample(codes, n)
 
-  if (is.null(dt$Vol)) {
+  if (is.null(dt[["Vol"]])) {
     test <- dt[Code %chin% codes, .(unsorted = is.unsorted(Volume)), by = c("Code", "Date")]
   } else {
     test <- dt[Code %chin% codes, .(unsorted = is.unsorted(Vol)), by = c("Code", "Date")]
@@ -45,7 +45,7 @@ transform_ohlc <- function(dt, vol_acc) {
 
   # TODO: GForce does not work with expr like sum(get(vol_col)), for performance
   # we have to hard-code supported columns, not the most elegant way but works
-  if (is.null(dt$Vol)) {
+  if (is.null(dt[["Vol"]])) {
     # Volume and Turnover
     data.table::setnames(dt, old = c("Volume", "Turnover"), new = c("Vol", "Tnvr"))
     on.exit({
@@ -107,7 +107,7 @@ transform_price <- function(dt, vol_acc) {
     vol_acc <- detect_acc(dt = dt)
   }
 
-  if (is.null(dt$Vol)) {
+  if (is.null(dt[["Vol"]])) {
     # Volume and Turnover
     data.table::setnames(dt, old = c("Volume", "Turnover"), new = c("Vol", "Tnvr"))
     on.exit({
