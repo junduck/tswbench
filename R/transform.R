@@ -79,10 +79,10 @@ transform_ohlc <- function(dt, vol_acc) {
   }
 
   data.table::setkeyv(ohlc, c("Code", "Date", "Time"))
-  # Potential cumsum integer overflow, cast to integer64 first
-  ohlc[, Vol := bit64::as.integer64(Vol)][, `:=`(VWAP = cumsum(Tnvr) / cumsum(Vol),
-                                                 Avg = Tnvr / Vol),
-                                          by = c("Code", "Date")]
+  # Potential cumsum integer overflow, cast to numeric first
+  ohlc[, Vol := as.numeric(Vol)][, `:=`(VWAP = cumsum(Tnvr) / cumsum(Vol),
+                                        Avg = Tnvr / Vol),
+                                 by = c("Code", "Date")]
 
   ohlc
 }
@@ -121,13 +121,13 @@ transform_price <- function(dt, vol_acc) {
     dt[, `:=`(tmp_vol  = Vol  - data.table::shift(Vol,  n = 1L, fill = 0),
               tmp_tnvr = Tnvr - data.table::shift(Tnvr, n = 1L, fill = 0)),
        by = c("Code", "Date")]
-    price <- dt[, list(Vol  = sum(bit64::as.integer64(tmp_vol)),
+    price <- dt[, list(Vol  = sum(as.numeric(tmp_vol)),
                        Tnvr = sum(tmp_tnvr)),
                 by = c("Code", "Date", "Price")]
     # Remove temporary columns
     dt[, `:=`(tmp_vol = NULL, tmp_tnvr = NULL)]
   } else {
-    price <- dt[, list(Vol  = sum(bit64::as.integer64(Vol)),
+    price <- dt[, list(Vol  = sum(as.numeric(Vol)),
                        Tnvr = sum(Tnvr)),
                 by = c("Code", "Date", "Price")]
   }
