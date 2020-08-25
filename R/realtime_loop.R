@@ -59,7 +59,7 @@ connect_rt_db <- function(db = get_rt_db()) {
 create_rt_db <- function(query_func, ref_code, code_col, time_col,
                          db, tbl_name, idx_unique, idx_dttm, idx_recv, api) {
 
-  con <- connect_srt_db(db = db)
+  con <- connect_rt_db(db = db)
   on.exit(DBI::dbDisconnect(con))
   DBI::dbExecute(con, "PRAGMA journal_mode=WAL;")
 
@@ -300,7 +300,7 @@ create_rt_loader <- function(db       = get_rt_db(),
   irecv <- 0L
   function() {
 
-    con <- connect_srt_db(db = db)
+    con <- connect_rt_db(db = db)
     on.exit(DBI::dbDisconnect(con))
 
     where_clause <- sprintf("`idate` = %d AND `irecv` > %d", today, irecv)
