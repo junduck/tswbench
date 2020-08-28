@@ -74,3 +74,32 @@ make_moving_gastwirth <- function(window) {
     0.3 * y[, 1] + 0.4 * y[, 2] + 0.3 * y[, 3]
   }
 }
+
+#' Online quantile estimation based on P-Square algorithm
+#'
+#' @param probs
+#'
+#' @return a stateful online function
+#' @export
+#'
+make_cumulative_psquare <- function(probs) {
+
+  calc <- new(ocls_cumulative_psquare, probs)
+  function(x) {
+    calc$update(x)
+  }
+}
+
+#' Online quantile estimation based on KLL algorithm
+#'
+#'
+#' @return a stateful online function
+#' @export
+#'
+make_cumulative_quantile <- function(k = 128, c = 2.0 / 3.0, lazy = TRUE) {
+
+  calc <- new(ocls_cumulative_quantile, k, c, lazy)
+  function(x) {
+    calc$update(x)
+  }
+}

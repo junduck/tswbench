@@ -2,6 +2,8 @@
 
 #include "ocls_common.h"
 #include "skiplist.h"
+#include "psquare.h"
+#include "kll.h"
 
 // ===== ocls_moving_sort =====
 class ocls_moving_sort {
@@ -49,4 +51,31 @@ public:
   Rcpp::NumericVector update_one(double x);
   Rcpp::NumericMatrix update(Rcpp::NumericVector x);
   Rcpp::NumericVector value();
+};
+
+// ===== ocls_cumulative_psquare =====
+class ocls_cumulative_psquare {
+
+  int nq;
+  std::vector<psquare> psq;
+
+public:
+  ocls_cumulative_psquare(Rcpp::NumericVector q);
+
+  Rcpp::NumericVector update_one(double x);
+  Rcpp::NumericMatrix update(Rcpp::NumericVector x);
+  Rcpp::NumericVector value();
+};
+
+// ===== ocls_cumulative_quantile =====
+class ocls_cumulative_quantile {
+
+  KLL kll;
+
+public:
+  ocls_cumulative_quantile(int k, double c, bool lazy);
+
+  Rcpp::NumericMatrix update_one(double x);
+  Rcpp::NumericMatrix update(Rcpp::NumericVector x);
+  Rcpp::NumericMatrix value();
 };

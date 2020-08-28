@@ -129,6 +129,64 @@ NumericVector ocls_moving_quantile::value() {
   return y;
 }
 
+// ===== ocls_cumulative_psquare =====
+ocls_cumulative_psquare::ocls_cumulative_psquare(NumericVector q)
+  : nq(q.length()) {
+  for (auto i = 0; i < nq; ++i) {
+    psq.push_back(psquare(q[i]));
+  }
+}
+
+NumericVector ocls_cumulative_psquare::update_one(double x) {
+  for (auto i = 0; i < nq; ++i) {
+    psq[i].insert(x);
+  }
+  return value();
+}
+
+NumericMatrix ocls_cumulative_psquare::update(NumericVector x) {
+  auto npt = x.length();
+  auto y = NumericMatrix(npt, nq);
+  for (auto i = 0; i < npt; ++i) {
+    y(i, _) = update_one(x[i]);
+  }
+  return y;
+}
+
+NumericVector ocls_cumulative_psquare::value() {
+  auto y = NumericVector(nq);
+  for (auto i = 0; i < nq; ++i) {
+    y[i] = psq[i].value();
+  }
+  return y;
+}
+
+// ===== ocls_cumulative_quantile =====
+ocls_cumulative_quantile::ocls_cumulative_quantile(int k, double c, bool lazy)
+  : kll(k, c, lazy) {
+}
+
+NumericMatrix ocls_cumulative_quantile::update_one(double x) {
+  kll.insert(x);
+  return value();
+}
+
+NumericMatrix ocls_cumulative_quantile::update(NumericVector x) {
+  for (auto x_elem : x) {
+    kll.insert(x_elem);
+  }
+  return value();
+}
+
+NumericMatrix ocls_cumulative_quantile::value() {
+  auto quantiles = kll.cdf();
+  auto npts = quantiles.first.size();
+  NumericMatrix ans(npts, 2);
+  ans(_, 0) = as<NumericVector>(wrap(quantiles.first));
+  ans(_, 1) = as<NumericVector>(wrap(quantiles.second));
+  return ans;
+}
+
 RCPP_MODULE(ocls_order){
   using namespace Rcpp;
 
@@ -153,5 +211,19 @@ RCPP_MODULE(ocls_order){
     .method("update_one", &ocls_moving_quantile::update_one, "Update state by one value")
     .method("update", &ocls_moving_quantile::update, "Update state")
     .method("value", &ocls_moving_quantile::value, "Get last value")
+    ;
+
+  class_<ocls_cumulative_psquare>("ocls_cumulative_psquare")
+    .constructor<NumericVector>()
+    .method("update_one", &ocls_cumulative_psquare::update_one, "Update state by one value")
+    .method("update", &ocls_cumulative_psquare::update, "Update state")
+    .method("value", &ocls_cumulative_psquare::value, "Get last value")
+    ;
+
+  class_<ocls_cumulative_quantile>("ocls_cumulative_quantile")
+    .constructor<int, double, bool>()
+    .method("update_one", &ocls_cumulative_quantile::update_one, "Update state by one value")
+    .method("update", &ocls_cumulative_quantile::update, "Update state")
+    .method("value", &ocls_cumulative_quantile::value, "Get last value")
     ;
 }
