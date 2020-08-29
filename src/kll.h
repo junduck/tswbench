@@ -6,6 +6,7 @@
 #include <algorithm>
 
 // Karnin, Z., Lang, K., & Liberty, E. (2016, October). Optimal quantile approximation in streams. In 2016 ieee 57th annual symposium on foundations of computer science (focs) (pp. 71-78). IEEE.
+template <class T, class C = std::less<T>>
 class KLL
 {
 
@@ -13,7 +14,7 @@ class KLL
   double _c;
   bool _lazy;
 
-  std::vector<std::vector<double>> compact;
+  std::vector<std::vector<T>> compact;
 
   int capacity(int lv) const
   {
@@ -51,7 +52,7 @@ class KLL
         {
           grow();
         }
-        std::sort(compact[lv].begin(), compact[lv].end());
+        std::sort(compact[lv].begin(), compact[lv].end(), C());
         // save last element
         auto last_pop = false;
         auto last = compact[lv].back();
@@ -89,12 +90,12 @@ public:
         max_size(0),
         _c(c),
         _lazy(lazy),
-        compact{}
+        compact({})
   {
     grow();
   }
 
-  void insert(double x)
+  void insert(T x)
   {
     compact[0].push_back(x);
     if (++_size >= max_size)
@@ -128,12 +129,12 @@ public:
     return _size;
   }
 
-  std::pair<std::vector<double>, std::vector<double>> cdf() const
+  std::pair<std::vector<T>, std::vector<double>> cdf() const
   {
     // collect values and weights
     int lv = 0;
     double cum_w, tot_w = 0.0;
-    std::vector<std::pair<double, double>> weighted;
+    std::vector<std::pair<T, double>> weighted;
     for (const auto &cpt : compact)
     {
       const double w = 1 << lv;
@@ -144,10 +145,13 @@ public:
       }
       ++lv;
     }
-    std::sort(weighted.begin(), weighted.end());
+    std::sort(weighted.begin(), weighted.end(), [](const auto& lhs, const auto& rhs) {
+      return C()(lhs.first, rhs.first);
+    });
 
     // calculate cumulative density
-    std::vector<double> vals, dens;
+    std::vector<T> vals;
+    std::vector<double> dens;
     for (const auto &item : weighted)
     {
       cum_w += item.second;

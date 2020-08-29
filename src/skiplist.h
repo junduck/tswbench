@@ -3,7 +3,7 @@
 #include <cmath>
 #include <vector>
 
-template <class T, class Compare = std::less<T>>
+template <class T, class C = std::less<T>>
 class IndexableSkiplist
 {
 
@@ -19,7 +19,7 @@ class IndexableSkiplist
     std::vector<size_t> w;
 
     SkiplistNode(T value, int depth, int maxlevel)
-        : v(std::move(value)),
+        : v(value),
           d(depth),
           f(maxlevel, nullptr),
           w(maxlevel, 0)
@@ -33,13 +33,11 @@ class IndexableSkiplist
   // reused working vars
   std::vector<SkiplistNode *> found;
 
-  Compare lt;
-
   int random_depth()
   {
     int depth = 1;
     // flip coins
-    while (rand() % 2 && depth < mxlv)
+    while (std::rand() % 2 && depth < mxlv)
     {
       ++depth;
     }
@@ -52,7 +50,6 @@ public:
         _cap(window),
         mxlv(1 + int(log(window))),
         found(mxlv, nullptr),
-        lt(),
         head(new SkiplistNode(T(), mxlv, mxlv))
   {
   }
@@ -72,7 +69,6 @@ public:
         _cap(other._cap),
         mxlv(other.mxlv),
         found(mxlv, nullptr),
-        lt(),
         head(other.head)
   {
     other.head = nullptr;
@@ -104,7 +100,6 @@ public:
     swap(lhs.mxlv, rhs.mxlv);
     swap(lhs.head, rhs.head);
     swap(lhs.found, rhs.found);
-    swap(lhs.lt, rhs.lt);
   }
 
   T operator[](size_t i)
@@ -136,7 +131,7 @@ public:
     auto node = head;
     for (auto lv = mxlv - 1; lv >= 0; --lv)
     {
-      while (node->f[lv] != nullptr && lt(node->f[lv]->v, value))
+      while (node->f[lv] != nullptr && C()(node->f[lv]->v, value))
       {
         dist[lv] += node->w[lv];
         node = node->f[lv];
@@ -184,13 +179,13 @@ public:
     auto node = head;
     for (auto lv = mxlv - 1; lv >= 0; --lv)
     {
-      while (node->f[lv] != nullptr && lt(node->f[lv]->v, value))
+      while (node->f[lv] != nullptr && C()(node->f[lv]->v, value))
       {
         node = node->f[lv];
       }
       found[lv] = node;
     }
-    if (found[0]->f[0] == nullptr || lt(value, found[0]->f[0]->v))
+    if (found[0]->f[0] == nullptr || C()(value, found[0]->f[0]->v))
     {
       // not found, just return
       return;

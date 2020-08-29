@@ -70,7 +70,7 @@ public:
 // ===== ocls_cumulative_quantile =====
 class ocls_cumulative_quantile {
 
-  KLL kll;
+  KLL<double> kll;
 
 public:
   ocls_cumulative_quantile(int k, double c, bool lazy);
