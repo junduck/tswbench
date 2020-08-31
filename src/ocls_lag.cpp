@@ -14,7 +14,7 @@ double ocls_lag::update_one(double x) {
   buf.push_front(x);
   if (n < w) {
     n += 1;
-    y = NA_REAL;
+    y = na_fill;
   } else {
     y = buf.back();
     buf.pop_back();

@@ -4,7 +4,7 @@
 \alias{make_cumulative_quantile}
 \title{Online quantile estimation based on KLL algorithm}
 \usage{
-make_cumulative_quantile(k = 128, c = 2/3, lazy = TRUE)
+make_cumulative_quantile(probs, k = 128L)
 }
 \value{
 a stateful online function
