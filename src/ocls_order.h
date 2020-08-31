@@ -16,7 +16,7 @@ public:
   ocls_moving_sort(int window);
 
   double get_index(int idx);
-  Rcpp::NumericVector as_vector();
+  Rcpp::NumericVector to_vector();
   void update_one(double x);
   void update(Rcpp::NumericVector x);
   Rcpp::NumericVector value();
@@ -78,4 +78,6 @@ public:
   Rcpp::NumericMatrix update_one(double x);
   Rcpp::NumericMatrix update(Rcpp::NumericVector x);
   Rcpp::NumericMatrix value();
+  void insert(Rcpp::NumericVector x);
+  Rcpp::NumericVector quantile(Rcpp::NumericVector probs);
 };

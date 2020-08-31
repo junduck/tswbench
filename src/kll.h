@@ -1,25 +1,25 @@
 #pragma once
 
-#include <vector>
-#include <utility>
-#include <cmath>
-#include <algorithm>
+#include <vector> //std::vector
+#include <cmath> //std::ceil, std::pow
+#include <functional> //std::less
+#include <algorithm> // std::sort
 
 // Karnin, Z., Lang, K., & Liberty, E. (2016, October). Optimal quantile approximation in streams. In 2016 ieee 57th annual symposium on foundations of computer science (focs) (pp. 71-78). IEEE.
 template <class T, class C = std::less<T>>
 class KLL
 {
 
-  int _k, _size, max_size;
+  size_t _k, _size, _max_size;
   double _c;
   bool _lazy;
 
   std::vector<std::vector<T>> compact;
 
-  int capacity(int lv) const
+  size_t capacity(size_t lv) const
   {
     auto d = compact.size() - lv - 1;
-    return static_cast<int>(std::ceil(std::pow(_c, d) * _k) + 1);
+    return static_cast<size_t>(std::ceil(std::pow(_c, d) * _k) + 1);
   }
 
   void update_size()
@@ -31,20 +31,25 @@ class KLL
     }
   }
 
+  void update_max_size()
+  {
+    _max_size = 0;
+    for (size_t lv = 0; lv < compact.size(); ++lv)
+    {
+      _max_size += capacity(lv);
+    }
+  }
+
   void grow()
   {
     compact.push_back({});
-    max_size = 0;
-    for (auto lv = 0; lv < compact.size(); ++lv)
-    {
-      max_size += capacity(lv);
-    }
+    update_max_size();
   }
 
   void compress()
   {
     auto maxlv = compact.size();
-    for (auto lv = 0; lv < maxlv; ++lv)
+    for (size_t lv = 0; lv < maxlv; ++lv)
     {
       if (compact[lv].size() >= capacity(lv))
       {
@@ -62,8 +67,8 @@ class KLL
           compact[lv].pop_back();
         }
         // compact to next level
-        auto offset = std::rand() % 2 ? 1 : 0;
-        for (auto i = offset; i < compact[lv].size(); i += 2)
+        size_t offset = std::rand() % 2 ? 1 : 0;
+        for (size_t i = offset; i < compact[lv].size(); i += 2)
         {
           compact[lv + 1].push_back(compact[lv][i]);
         }
@@ -83,11 +88,33 @@ class KLL
     }
   }
 
+  static size_t bin_search_vdbl(const std::vector<double> &v, double x, size_t l, size_t r)
+  {
+    size_t m;
+    while (l <= r)
+    {
+      m = l + (r - l) / 2;
+      if (v[m] == x)
+      {
+        break;
+      }
+      else if (v[m] < x)
+      {
+        l = m + 1;
+      }
+      else
+      {
+        r = m - 1;
+      }
+    }
+    return m;
+  }
+
 public:
-  KLL(int k, double c = 2.0 / 3.0, bool lazy = true)
+  KLL(size_t k, double c = 2.0 / 3.0, bool lazy = true)
       : _k(k),
         _size(0),
-        max_size(0),
+        _max_size(0),
         _c(c),
         _lazy(lazy),
         compact({})
@@ -95,10 +122,24 @@ public:
     grow();
   }
 
+  KLL(size_t k, double c, bool lazy, std::vector<std::vector<T>> from_state)
+      : _k(k),
+        _c(c),
+        _lazy(lazy),
+        compact(from_state)
+  {
+    update_size();
+    update_max_size();
+  }
+
+  std::vector<std::vector<T>> state() const {
+    return compact;
+  }
+
   void insert(T x)
   {
     compact[0].push_back(x);
-    if (++_size >= max_size)
+    if (++_size >= _max_size)
     {
       compress();
     }
@@ -106,33 +147,33 @@ public:
 
   void merge(const KLL &rhs)
   {
-    // grow to match size
+    // grow to match size, _max_size is updated
     while (compact.size() < rhs.compact.size())
     {
       grow();
     }
     // concatenate compactors
-    for (auto lv = 0; lv < rhs.compact.size(); ++lv)
+    for (size_t lv = 0; lv < rhs.compact.size(); ++lv)
     {
       compact[lv].insert(compact[lv].end(), rhs.compact[lv].begin(), rhs.compact[lv].end());
     }
-    // compress
+    // compress, _size is updated
     update_size();
-    while (_size >= max_size)
+    while (_size >= _max_size)
     {
       compress();
     }
   }
 
-  int size() const
+  size_t size() const
   {
     return _size;
   }
 
-  std::pair<std::vector<T>, std::vector<double>> cdf() const
+  std::pair<std::vector<T>, std::vector<double>> pmf() const
   {
     // collect values and weights
-    int lv = 0;
+    size_t lv = 0;
     double cum_w, tot_w = 0.0;
     std::vector<std::pair<T, double>> weighted;
     for (const auto &cpt : compact)
@@ -145,20 +186,47 @@ public:
       }
       ++lv;
     }
-    std::sort(weighted.begin(), weighted.end(), [](const auto& lhs, const auto& rhs) {
+    std::sort(weighted.begin(), weighted.end(), [](const auto &lhs, const auto &rhs) {
       return C()(lhs.first, rhs.first);
     });
 
-    // calculate cumulative density
+    // prob mass distr
     std::vector<T> vals;
     std::vector<double> dens;
     for (const auto &item : weighted)
     {
-      cum_w += item.second;
       vals.push_back(item.first);
-      dens.push_back(cum_w / tot_w);
+      dens.push_back(item.second / tot_w);
     }
 
     return std::make_pair(std::move(vals), std::move(dens));
+  }
+
+  std::pair<std::vector<T>, std::vector<double>> cdf() const
+  {
+    auto p = pmf();
+    double cp = 0.0;
+    for (size_t i = 0; i < p.second.size(); ++i)
+    {
+      cp += p.second[i];
+      p.second[i] = cp;
+    }
+    return p;
+  }
+
+  std::vector<T> quantile(const std::vector<double> &probs) const
+  {
+    // quantiles
+    std::vector<T> q;
+    q.reserve(probs.size());
+
+    auto qvals = cdf();
+    size_t len = qvals.first.size();
+    for (const auto &p : probs)
+    {
+      const auto idx = bin_search_vdbl(qvals.second, p, 0, len - 1);
+      q.push_back(qvals.first[idx]);
+    }
+    return q;
   }
 };

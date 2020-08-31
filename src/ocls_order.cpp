@@ -13,8 +13,8 @@ double ocls_moving_sort::get_index(int idx) {
   return skiplist[idx];
 }
 
-NumericVector ocls_moving_sort::as_vector() {
-  return wrap(skiplist.as_vector());
+NumericVector ocls_moving_sort::to_vector() {
+  return wrap(skiplist.to_vector());
 }
 
 void ocls_moving_sort::update_one(double x) {
@@ -30,13 +30,13 @@ void ocls_moving_sort::update_one(double x) {
 
 void ocls_moving_sort::update(NumericVector x) {
   auto npt = x.length();
-  for (auto i = 0; i < npt; ++i) {
+  for (decltype(npt) i = 0; i < npt; ++i) {
     update_one(x[i]);
   }
 }
 
 NumericVector ocls_moving_sort::value() {
-  return as_vector();
+  return to_vector();
 }
 
 // ===== ocls_moving_median =====
@@ -69,7 +69,7 @@ double ocls_moving_median::update_one(double x) {
 NumericVector ocls_moving_median::update(NumericVector x) {
   auto npt = x.length();
   auto y = NumericVector(npt);
-  for (auto i = 0; i < npt; ++i) {
+  for (decltype(npt) i = 0; i < npt; ++i) {
     y[i] = update_one(x[i]);
   }
   return y;
@@ -113,7 +113,7 @@ NumericVector ocls_moving_quantile::update_one(double x) {
 NumericMatrix ocls_moving_quantile::update(NumericVector x) {
   auto npt = x.length();
   auto y = NumericMatrix(npt, nidx);
-  for (auto i = 0; i < npt; ++i) {
+  for (decltype(npt) i = 0; i < npt; ++i) {
     y(i, _) = update_one(x[i]);
   }
   return y;
@@ -147,7 +147,7 @@ NumericVector ocls_cumulative_psquare::update_one(double x) {
 NumericMatrix ocls_cumulative_psquare::update(NumericVector x) {
   auto npt = x.length();
   auto y = NumericMatrix(npt, nq);
-  for (auto i = 0; i < npt; ++i) {
+  for (decltype(npt) i = 0; i < npt; ++i) {
     y(i, _) = update_one(x[i]);
   }
   return y;
@@ -187,13 +187,26 @@ NumericMatrix ocls_cumulative_quantile::value() {
   return ans;
 }
 
+void ocls_cumulative_quantile::insert(NumericVector x) {
+  auto npt = x.length();
+  for (decltype(npt) i = 0; i < npt; ++i) {
+    kll.insert(x[i]);
+  }
+}
+
+NumericVector ocls_cumulative_quantile::quantile(NumericVector probs) {
+
+  auto ans = kll.quantile(as<std::vector<double>>(probs));
+  return wrap(ans);
+}
+
 RCPP_MODULE(ocls_order){
   using namespace Rcpp;
 
   class_<ocls_moving_sort>("ocls_moving_sort")
     .constructor<int>()
     .method("get_index", &ocls_moving_sort::get_index, "Get element at index")
-    .method("as_vector", &ocls_moving_sort::as_vector, "Get all elements")
+    .method("to_vector", &ocls_moving_sort::to_vector, "Get all elements")
     .method("update_one", &ocls_moving_sort::update_one, "Update state by one value")
     .method("update", &ocls_moving_sort::update, "Update state")
     .method("value", &ocls_moving_sort::value, "Get last value")
@@ -225,5 +238,6 @@ RCPP_MODULE(ocls_order){
     .method("update_one", &ocls_cumulative_quantile::update_one, "Update state by one value")
     .method("update", &ocls_cumulative_quantile::update, "Update state")
     .method("value", &ocls_cumulative_quantile::value, "Get last value")
+    .method("quantile", &ocls_cumulative_quantile::quantile, "Get quantile")
     ;
 }

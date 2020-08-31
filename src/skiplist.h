@@ -1,7 +1,8 @@
 #pragma once
 
-#include <cmath>
-#include <vector>
+#include <vector> //std::vector
+#include <cmath> //std::log2
+#include <functional> //std::less
 
 template <class T, class C = std::less<T>>
 class IndexableSkiplist
@@ -12,13 +13,13 @@ class IndexableSkiplist
     // value
     T v;
     // depth
-    int d;
+    size_t d;
     // forward pointers
     std::vector<SkiplistNode *> f;
     // widths
     std::vector<size_t> w;
 
-    SkiplistNode(T value, int depth, int maxlevel)
+    SkiplistNode(T value, size_t depth, size_t maxlevel)
         : v(value),
           d(depth),
           f(maxlevel, nullptr),
@@ -27,17 +28,16 @@ class IndexableSkiplist
     }
   };
 
-  size_t _size;
-  int _cap, mxlv;
+  size_t _size, _cap, _mxlv;
   SkiplistNode *head;
   // reused working vars
   std::vector<SkiplistNode *> found;
 
-  int random_depth()
+  size_t random_depth() const
   {
-    int depth = 1;
+    size_t depth = 1;
     // flip coins
-    while (std::rand() % 2 && depth < mxlv)
+    while (std::rand() % 2 && depth < _mxlv)
     {
       ++depth;
     }
@@ -45,33 +45,56 @@ class IndexableSkiplist
   }
 
 public:
-  IndexableSkiplist(int window)
+  IndexableSkiplist(size_t window)
       : _size(0),
         _cap(window),
-        mxlv(1 + int(log(window))),
-        found(mxlv, nullptr),
-        head(new SkiplistNode(T(), mxlv, mxlv))
+        _mxlv(1 + static_cast<size_t>(std::log2(window))),
+        found(_mxlv, nullptr),
+        head(new SkiplistNode(T(), _mxlv, _mxlv))
   {
   }
 
   IndexableSkiplist(const IndexableSkiplist &other)
       : IndexableSkiplist(other._cap)
   {
-    auto next = other.head->f[0];
-    while (next != nullptr)
-    {
-      insert(next->v);
-    }
+    merge(other);
   }
 
   IndexableSkiplist(IndexableSkiplist &&other)
       : _size(other._size),
         _cap(other._cap),
-        mxlv(other.mxlv),
-        found(mxlv, nullptr),
+        _mxlv(other._mxlv),
+        found(_mxlv, nullptr),
         head(other.head)
   {
     other.head = nullptr;
+  }
+
+  IndexableSkiplist(size_t window, std::vector<T> from_state)
+      : IndexableSkiplist(window)
+  {
+    for (const auto &val : from_state)
+    {
+      insert(val);
+    }
+  }
+
+  std::vector<T> state() const
+  {
+    std::vector<T> s;
+    s.reserve(_size);
+    auto node = head->f[0];
+    while (node != nullptr)
+    {
+      s.push_back(node->v);
+      node = node->f[0];
+    }
+    return s;
+  }
+
+  std::vector<T> to_vector() const
+  {
+    return state();
   }
 
   ~IndexableSkiplist()
@@ -97,21 +120,17 @@ public:
 
     swap(lhs._size, rhs._size);
     swap(lhs._cap, rhs._cap);
-    swap(lhs.mxlv, rhs.mxlv);
+    swap(lhs._mxlv, rhs._mxlv);
     swap(lhs.head, rhs.head);
     swap(lhs.found, rhs.found);
   }
 
-  T operator[](size_t i)
+  T operator[](size_t i) const
   {
-    if (i < 0 || i >= _size)
-    {
-      throw std::out_of_range("Index out of range.");
-    }
-
+    // Do not check _size, if i is out of bound, just return last node found
     auto idx = i + 1;
     auto node = head;
-    for (auto lv = mxlv - 1; lv >= 0; --lv)
+    for (size_t lv = _mxlv; lv--; )
     {
       while (node->f[lv] != nullptr && idx >= node->w[lv])
       {
@@ -126,10 +145,10 @@ public:
   void insert(T value)
   {
     // traversed distance each level
-    std::vector<size_t> dist(mxlv, 0);
+    std::vector<size_t> dist(_mxlv, 0);
     // find first node where node->f[0]->v >= value, insert before node->f[0]
     auto node = head;
-    for (auto lv = mxlv - 1; lv >= 0; --lv)
+    for (size_t lv = _mxlv; lv--; )
     {
       while (node->f[lv] != nullptr && C()(node->f[lv]->v, value))
       {
@@ -141,8 +160,8 @@ public:
 
     auto depth = random_depth();
     size_t width = 0;
-    SkiplistNode *newnode = new SkiplistNode(value, depth, mxlv);
-    for (auto lv = 0; lv < depth; ++lv)
+    SkiplistNode *newnode = new SkiplistNode(value, depth, _mxlv);
+    for (size_t lv = 0; lv < depth; ++lv)
     {
       auto prev = found[lv];
       // create link
@@ -154,7 +173,7 @@ public:
       width += dist[lv];
     }
     // adjust widths for skipped levels
-    for (auto lv = depth; lv < mxlv; ++lv)
+    for (size_t lv = depth; lv < _mxlv; ++lv)
     {
       found[lv]->w[lv] += 1;
     }
@@ -165,7 +184,7 @@ public:
   void merge(const IndexableSkiplist &rhs)
   {
     // naiive merge of Skiplist
-    auto node = rhs.head;
+    auto node = rhs.head->f[0];
     while (node != nullptr)
     {
       insert(node->v);
@@ -177,7 +196,7 @@ public:
   {
     // find first node where node->f[0]->v >= value, remove node->f[0] if equal
     auto node = head;
-    for (auto lv = mxlv - 1; lv >= 0; --lv)
+    for (size_t lv = _mxlv; lv--; )
     {
       while (node->f[lv] != nullptr && C()(node->f[lv]->v, value))
       {
@@ -193,7 +212,7 @@ public:
 
     node = found[0]->f[0];
     auto depth = node->d;
-    for (auto lv = 0; lv < depth; ++lv)
+    for (size_t lv = 0; lv < depth; ++lv)
     {
       auto prev = found[lv];
       // adjust width
@@ -202,7 +221,7 @@ public:
       prev->f[lv] = prev->f[lv]->f[lv];
     }
     // adjust width for skipped levels
-    for (auto lv = depth; lv < mxlv; ++lv)
+    for (size_t lv = depth; lv < _mxlv; ++lv)
     {
       found[lv]->w[lv] -= 1;
     }
@@ -224,17 +243,5 @@ public:
   bool empty() const
   {
     return _size == 0;
-  }
-
-  std::vector<T> as_vector() const
-  {
-    auto ans = std::vector<T>(_size);
-    auto node = head->f[0];
-    for (auto i = 0; i < _size; ++i)
-    {
-      ans[i] = node->v;
-      node = node->f[0];
-    }
-    return ans;
   }
 };

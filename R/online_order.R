@@ -90,16 +90,25 @@ make_cumulative_psquare <- function(probs) {
   }
 }
 
+make_kll <- function(k = 128L, c = 2.0 / 3.0, lazy = TRUE) {
+
+  stopifnot(k > 0L && c > 0.0)
+  new(ocls_cumulative_quantile, as.integer(k), c, lazy)
+}
+
 #' Online quantile estimation based on KLL algorithm
-#'
 #'
 #' @return a stateful online function
 #' @export
 #'
-make_cumulative_quantile <- function(k = 128, c = 2.0 / 3.0, lazy = TRUE) {
+make_cumulative_quantile <- function(probs, k = 128L) {
 
-  calc <- new(ocls_cumulative_quantile, k, c, lazy)
+  stopifnot(k > 0L)
+  stopifnot(length(probs) > 0L && all(probs >= 0.0 && probs <= 1.0))
+
+  calc <- new(ocls_cumulative_quantile, as.integer(k), 2.0 / 3.0, TRUE)
   function(x) {
     calc$update(x)
+    calc$quantile(probs)
   }
 }

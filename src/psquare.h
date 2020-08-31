@@ -1,8 +1,8 @@
 #pragma once
 
-#include <cmath>
-#include <vector>
-#include <algorithm>
+#include <vector> // std::vector
+#include <cmath> // NAN
+#include <algorithm> // std::sort
 
 // Jain, R., & Chlamtac, I. (1985). The P2 algorithm for dynamic calculation of quantiles and histograms without storing observations. Communications of the ACM, 28(10), 1076-1085.
 class psquare
@@ -12,13 +12,27 @@ class psquare
   std::vector<double> height, mpos, dpos, incr;
 
 public:
-  psquare(double p) : init(false),
-                      height(),
-                      mpos({1.0, 2.0, 3.0, 4.0, 5.0}),
-                      dpos({1.0, 1.0 + 2.0 * p, 1.0 + 4.0 * p, 3.0 + 2.0 * p, 5.0}),
-                      incr({0.0, p / 2.0, p, (1.0 + p) / 2.0, 1.0})
+  psquare(double p)
+      : init(false),
+        height(),
+        mpos({1.0, 2.0, 3.0, 4.0, 5.0}),
+        dpos({1.0, 1.0 + 2.0 * p, 1.0 + 4.0 * p, 3.0 + 2.0 * p, 5.0}),
+        incr({0.0, p / 2.0, p, (1.0 + p) / 2.0, 1.0})
 
   {
+  }
+
+  psquare(double p, std::vector<std::vector<double>> from_state)
+      : init(from_state[0].size() == 5),
+        height(from_state[0]),
+        mpos(from_state[1]),
+        dpos(from_state[2]),
+        incr({0.0, p / 2.0, p, (1.0 + p) / 2.0, 1.0})
+  {
+  }
+
+  std::vector<std::vector<double>> state() const {
+    return {height, mpos, dpos};
   }
 
   void insert(double x)
@@ -72,15 +86,15 @@ public:
       for (auto i = 1; i < 4; ++i)
       {
         // delta desire position
-        const double delta_dpos = dpos[i]     - mpos[i];
+        const double delta_dpos = dpos[i] - mpos[i];
         if ((delta_dpos >= 1.0 && mpos[i + 1] - mpos[i] > 1.0) || (delta_dpos <= -1.0 && mpos[i - 1] - mpos[i] < -1.0))
         {
           const double sgn = delta_dpos < 0 ? -1.0 : 1.0;
           const int isgn = static_cast<int>(sgn);
           // try parabolic
           auto t1 = sgn / (mpos[i + 1] - mpos[i - 1]);
-          auto t2 = (mpos[i]     - mpos[i - 1] + sgn) * (height[i + 1] - height[i])     / (mpos[i + 1] - mpos[i]);
-          auto t3 = (mpos[i + 1] - mpos[i]     - sgn) * (height[i]     - height[i - 1]) / (mpos[i]     - mpos[i - 1]);
+          auto t2 = (mpos[i] - mpos[i - 1] + sgn) * (height[i + 1] - height[i]) / (mpos[i + 1] - mpos[i]);
+          auto t3 = (mpos[i + 1] - mpos[i] - sgn) * (height[i] - height[i - 1]) / (mpos[i] - mpos[i - 1]);
           auto adj = height[i] + t1 * (t2 + t3);
           if (height[i - 1] < adj && height[i + 1] > adj)
           {
@@ -89,7 +103,7 @@ public:
           else
           {
             // linear
-            height[i] += sgn * (height[i + isgn] - height[i]) / (mpos[i + isgn] - mpos[i])  ;
+            height[i] += sgn * (height[i + isgn] - height[i]) / (mpos[i + isgn] - mpos[i]);
           }
           // update pos
           mpos[i] += sgn;
@@ -98,11 +112,14 @@ public:
     }
   }
 
-  double value()
+  double value() const
   {
-    if (height.size() > 2) {
+    if (height.size() > 2)
+    {
       return height[2];
-    } else {
+    }
+    else
+    {
       return NAN;
     }
   }
