@@ -23,14 +23,14 @@ NumericVector ocls_ema::update(NumericVector x) {
   auto npt = x.length();
   auto y = NumericVector(npt);
   if (init) {
-    for (auto i = 0; i < npt; ++i) {
+    for (decltype(npt) i = 0; i < npt; ++i) {
       ema += (x[i] - ema) * alpha;
       y[i] = ema;
     }
   } else {
     y[0] = ema = x[0];
     init = true;
-    for (auto i = 1; i < npt; ++i) {
+    for (decltype(npt) i = 1; i < npt; ++i) {
       ema += (x[i] - ema) * alpha;
       y[i] = ema;
     }
@@ -64,7 +64,7 @@ NumericVector ocls_dema::update(NumericVector x) {
   auto npt = x.length();
   auto y = NumericVector(npt);
   if (init) {
-    for (auto i = 0; i < npt; ++i) {
+    for (decltype(npt) i = 0; i < npt; ++i) {
       ema  += (x[i] - ema)  * alpha;
       ema2 += (ema  - ema2) * alpha;
       y[i] = ema2;
@@ -72,7 +72,7 @@ NumericVector ocls_dema::update(NumericVector x) {
   } else {
     y[0] = ema = ema2 = x[0];
     init = true;
-    for (auto i = 1; i < npt; ++i) {
+    for (decltype(npt) i = 1; i < npt; ++i) {
       ema  += (x[i] - ema)  * alpha;
       ema2 += (ema  - ema2) * alpha;
       y[i] = ema2;
@@ -108,7 +108,7 @@ NumericVector ocls_tema::update(NumericVector x) {
   auto npt = x.length();
   auto y = NumericVector(npt);
   if (init) {
-    for (auto i = 0; i < npt; ++i) {
+    for (decltype(npt) i = 0; i < npt; ++i) {
       ema  += (x[i] - ema)  * alpha;
       ema2 += (ema  - ema2) * alpha;
       ema3 += (ema2 - ema3) * alpha;
@@ -117,7 +117,7 @@ NumericVector ocls_tema::update(NumericVector x) {
   } else {
     y[0] = ema = ema2 = ema3 = x[0];
     init = true;
-    for (auto i = 1; i < npt; ++i) {
+    for (decltype(npt) i = 1; i < npt; ++i) {
       ema  += (x[i] - ema)  * alpha;
       ema2 += (ema  - ema2) * alpha;
       ema3 += (ema2 - ema3) * alpha;
@@ -155,7 +155,7 @@ double ocls_zlema::update_one(double x) {
 NumericVector ocls_zlema::update(NumericVector x) {
   auto npt = x.length();
   auto y = NumericVector(npt);
-  for (auto i = 0; i < npt; ++i) {
+  for (decltype(npt) i = 0; i < npt; ++i) {
     y[i] = update_one(x[i]);
   }
   return y;
@@ -187,14 +187,14 @@ NumericVector ocls_wilders::update(NumericVector x) {
   auto npt = x.length();
   auto y = NumericVector(npt);
   if (init) {
-    for (auto i = 0; i < npt; ++i) {
+    for (decltype(npt) i = 0; i < npt; ++i) {
       wilders += (x[i] - wilders) * alpha;
       y[i] = wilders;
     }
   } else {
     y[0] = wilders = x[0];
     init = true;
-    for (auto i = 1; i < npt; ++i) {
+    for (decltype(npt) i = 1; i < npt; ++i) {
       wilders += (x[i] - wilders) * alpha;
       y[i] = wilders;
     }
@@ -230,7 +230,7 @@ double ocls_sma::update_one(double x) {
 NumericVector ocls_sma::update(NumericVector x) {
   auto npt = x.length();
   auto y = NumericVector(npt);
-  for (auto i = 0; i < npt; ++i) {
+  for (decltype(npt) i = 0; i < npt; ++i) {
     y[i] = update_one(x[i]);
   }
   return y;
@@ -268,7 +268,7 @@ double ocls_wma::update_one(double x) {
 NumericVector ocls_wma::update(NumericVector x) {
   auto npt = x.length();
   auto y = NumericVector(npt);
-  for (auto i = 0; i < npt; ++i) {
+  for (decltype(npt) i = 0; i < npt; ++i) {
     y[i] = update_one(x[i]);
   }
   return y;
@@ -298,7 +298,7 @@ double ocls_hma::update_one(double x) {
 NumericVector ocls_hma::update(NumericVector x) {
   auto npt = x.length();
   auto y = NumericVector(npt);
-  for (auto i = 0; i < npt; ++i) {
+  for (decltype(npt) i = 0; i < npt; ++i) {
     y[i] = update_one(x[i]);
   }
   return y;
@@ -348,7 +348,7 @@ double ocls_kama::update_one(double x) {
 NumericVector ocls_kama::update(NumericVector x) {
   auto npt = x.length();
   auto y = NumericVector(npt);
-  for (auto i = 0; i < npt; ++i) {
+  for (decltype(npt) i = 0; i < npt; ++i) {
     y[i] = update_one(x[i]);
   }
   return y;
@@ -388,7 +388,7 @@ double ocls_vwma::update_one(double p, double v) {
 NumericVector ocls_vwma::update(NumericVector p, NumericVector v) {
   auto npt = p.length();
   auto y = NumericVector(npt);
-  for (auto i = 0; i < npt; ++i) {
+  for (decltype(npt) i = 0; i < npt; ++i) {
     y[i] = update_one(p[i], v[i]);
   }
   return y;
@@ -460,7 +460,7 @@ double ocls_vidya::update_one(double x) {
 NumericVector ocls_vidya::update(NumericVector x) {
   auto npt = x.length();
   auto y = NumericVector(npt);
-  for (auto i = 0; i < npt; ++i) {
+  for (decltype(npt) i = 0; i < npt; ++i) {
     y[i] = update_one(x[i]);
   }
   return y;

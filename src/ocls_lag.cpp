@@ -25,7 +25,7 @@ double ocls_lag::update_one(double x) {
 NumericVector ocls_lag::update(NumericVector x) {
   auto npt = x.length();
   auto y = NumericVector(npt);
-  for (auto i = 0; i < npt; ++i) {
+  for (decltype(npt) i = 0; i < npt; ++i) {
     y[i] = update_one(x[i]);
   }
   return y;
@@ -58,7 +58,7 @@ double ocls_lag_delta::update_one(double x) {
 NumericVector ocls_lag_delta::update(NumericVector x) {
   auto npt = x.length();
   auto y = NumericVector(npt);
-  for (auto i = 0; i < npt; ++i) {
+  for (decltype(npt) i = 0; i < npt; ++i) {
     y[i] = update_one(x[i]);
   }
   return y;
@@ -91,7 +91,7 @@ double ocls_lag_ratio::update_one(double x) {
 NumericVector ocls_lag_ratio::update(NumericVector x) {
   auto npt = x.length();
   auto y = NumericVector(npt);
-  for (auto i = 0; i < npt; ++i) {
+  for (decltype(npt) i = 0; i < npt; ++i) {
     y[i] = update_one(x[i]);
   }
   return y;
@@ -137,7 +137,7 @@ double ocls_lag_delta_moving_sum::update_one(double x) {
 NumericVector ocls_lag_delta_moving_sum::update(NumericVector x) {
   auto npt = x.length();
   auto y = NumericVector(npt);
-  for (auto i = 0; i < npt; ++i) {
+  for (decltype(npt) i = 0; i < npt; ++i) {
     y[i] = update_one(x[i]);
   }
   return y;

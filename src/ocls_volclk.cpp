@@ -47,7 +47,7 @@ NumericVector ocls_volclk_order::update_one(double price, double volume) {
 NumericMatrix ocls_volclk_order::update(NumericVector price, NumericVector volume) {
   auto npt = price.length();
   auto ans = NumericMatrix(npt, 7);
-  for (auto i = 0; i < npt; ++i) {
+  for (decltype(npt) i = 0; i < npt; ++i) {
     ans(i, _) = update_one(price[i], volume[i]);
   }
   return ans;
@@ -76,7 +76,7 @@ NumericVector ocls_volclk_tick::update_one(double price, double volume) {
 NumericMatrix ocls_volclk_tick::update(NumericVector price, NumericVector volume) {
   auto npt = price.length();
   auto ans = NumericMatrix(npt, 7);
-  for (auto i = 0; i < npt; ++i) {
+  for (decltype(npt) i = 0; i < npt; ++i) {
     ans(i, _) = update_one(price[i], volume[i]);
   }
   return ans;

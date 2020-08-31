@@ -36,7 +36,7 @@ double ocls_moving_min::update_one(double x) {
 NumericVector ocls_moving_min::update(NumericVector x) {
   auto npt = x.length();
   auto y = NumericVector(npt);
-  for (auto i = 0; i < npt; ++i) {
+  for (decltype(npt) i = 0; i < npt; ++i) {
     y[i] = update_one(x[i]);
   }
   return y;
@@ -80,7 +80,7 @@ double ocls_moving_max::update_one(double x) {
 NumericVector ocls_moving_max::update(NumericVector x) {
   auto npt = x.length();
   auto y = NumericVector(npt);
-  for (auto i = 0; i < npt; ++i) {
+  for (decltype(npt) i = 0; i < npt; ++i) {
     y[i] = update_one(x[i]);
   }
   return y;
@@ -131,7 +131,7 @@ int ocls_moving_argmin::update_one(double x) {
 IntegerVector ocls_moving_argmin::update(NumericVector x) {
   auto npt = x.length();
   auto y = IntegerVector(npt);
-  for (auto i = 0; i < npt; ++i) {
+  for (decltype(npt) i = 0; i < npt; ++i) {
     y[i] = update_one(x[i]);
   }
   return y;
@@ -181,7 +181,7 @@ int ocls_moving_argmax::update_one(double x) {
 IntegerVector ocls_moving_argmax::update(NumericVector x) {
   auto npt = x.length();
   auto y = IntegerVector(npt);
-  for (auto i = 0; i < npt; ++i) {
+  for (decltype(npt) i = 0; i < npt; ++i) {
     y[i] = update_one(x[i]);
   }
   return y;

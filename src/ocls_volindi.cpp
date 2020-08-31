@@ -28,7 +28,7 @@ double ocls_obv::update_one(double close, double volume) {
 NumericVector ocls_obv::update(NumericVector close, NumericVector volume) {
   auto npt = close.length();
   auto y = NumericVector(npt);
-  for (auto i = 0; i < npt; ++i) {
+  for (decltype(npt) i = 0; i < npt; ++i) {
     y[i] = update_one(close[i], volume[i]);
   }
   return y;
@@ -65,7 +65,7 @@ NumericVector ocls_pnvi::update_one(double close, double volume) {
 NumericMatrix ocls_pnvi::update(NumericVector close, NumericVector volume) {
   auto npt = close.length();
   auto ans = NumericMatrix(npt, 2);
-  for (auto i = 0; i < npt; ++i) {
+  for (decltype(npt) i = 0; i < npt; ++i) {
     ans(i, _) = update_one(close[i], volume[i]);
   }
   return ans;
@@ -118,7 +118,7 @@ double ocls_mfi::update_one(double price, double volume) {
 NumericVector ocls_mfi::update(NumericVector price, NumericVector volume) {
   auto npt = price.length();
   auto y = NumericVector(npt);
-  for (auto i = 0; i < npt; ++i) {
+  for (decltype(npt) i = 0; i < npt; ++i) {
     y[i] = update_one(price[i], volume[i]);
   }
   return y;

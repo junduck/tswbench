@@ -26,7 +26,7 @@ double ocls_moving_mean::update_one(double x) {
 NumericVector ocls_moving_mean::update(NumericVector x) {
   auto npt = x.length();
   auto y = NumericVector(npt);
-  for (auto i = 0; i < npt; ++i) {
+  for (decltype(npt) i = 0; i < npt; ++i) {
     y[i] = update_one(x[i]);
   }
   return y;
@@ -50,7 +50,7 @@ double ocls_cumulative_mean::update_one(double x) {
 NumericVector ocls_cumulative_mean::update(NumericVector x) {
   auto npt = x.length();
   auto y = NumericVector(npt);
-  for (auto i = 0; i < npt; ++i) {
+  for (decltype(npt) i = 0; i < npt; ++i) {
     y[i] = update_one(x[i]);
   }
   return y;
@@ -90,7 +90,7 @@ double ocls_moving_mae::update_one(double x) {
 NumericVector ocls_moving_mae::update(NumericVector x) {
   auto npt = x.length();
   auto y = NumericVector(npt);
-  for (auto i = 0; i < npt; ++i) {
+  for (decltype(npt) i = 0; i < npt; ++i) {
     y[i] = update_one(x[i]);
   }
   return y;
@@ -129,7 +129,7 @@ double ocls_moving_sd::update_one(double x) {
 NumericVector ocls_moving_sd::update(NumericVector x) {
   auto npt = x.length();
   auto y = NumericVector(npt);
-  for (auto i = 0; i < npt; ++i) {
+  for (decltype(npt) i = 0; i < npt; ++i) {
     y[i] = update_one(x[i]);
   }
   return y;
@@ -157,7 +157,7 @@ double ocls_cumulative_sd::update_one(double x) {
 NumericVector ocls_cumulative_sd::update(NumericVector x) {
   auto npt = x.length();
   auto y = NumericVector(npt);
-  for (auto i = 0; i < npt; ++i) {
+  for (decltype(npt) i = 0; i < npt; ++i) {
     y[i] = update_one(x[i]);
   }
   return y;
@@ -196,7 +196,7 @@ double ocls_moving_volatility::update_one(double x) {
 NumericVector ocls_moving_volatility::update(NumericVector x) {
   auto npt = x.length();
   auto y = NumericVector(npt);
-  for (auto i = 0; i < npt; ++i) {
+  for (decltype(npt) i = 0; i < npt; ++i) {
     y[i] = update_one(x[i]);
   }
   return y;
@@ -225,7 +225,7 @@ NumericVector ocls_cumulative_volatility::update(NumericVector x) {
   auto npt = x.length();
   auto y = NumericVector(npt);
   double d_2;
-  for (auto i = 0; i < npt; ++i) {
+  for (decltype(npt) i = 0; i < npt; ++i) {
     y[i] = update_one(x[i]);
   }
   return y;
@@ -284,7 +284,7 @@ NumericVector ocls_moving_moment::update_one(double x) {
 NumericMatrix ocls_moving_moment::update(NumericVector x) {
   auto npt = x.length();
   auto y = NumericMatrix(npt, 4);
-  for (auto i = 0; i < npt; ++i) {
+  for (decltype(npt) i = 0; i < npt; ++i) {
     y(i, _) = update_one(x[i]);
   }
   return y;
@@ -325,7 +325,7 @@ NumericVector ocls_moving_stats::update_one(double x) {
 NumericMatrix ocls_moving_stats::update(NumericVector x) {
   auto npt = x.length();
   auto y = NumericMatrix(npt, 4);
-  for (auto i = 0; i < npt; ++i) {
+  for (decltype(npt) i = 0; i < npt; ++i) {
     y(i, _) = update_one(x[i]);
   }
   return y;
@@ -374,7 +374,7 @@ NumericVector ocls_cumulative_moment::update_one(double x) {
 NumericMatrix ocls_cumulative_moment::update(NumericVector x) {
   auto npt = x.length();
   auto y = NumericMatrix(npt, 4);
-  for (auto i = 0; i < npt; ++i) {
+  for (decltype(npt) i = 0; i < npt; ++i) {
     y(i, _) = update_one(x[i]);
   }
   return y;
@@ -411,7 +411,7 @@ NumericVector ocls_cumulative_stats::update_one(double x) {
 NumericMatrix ocls_cumulative_stats::update(NumericVector x) {
   auto npt = x.length();
   auto y = NumericMatrix(npt, 4);
-  for (auto i = 0; i < npt; ++i) {
+  for (decltype(npt) i = 0; i < npt; ++i) {
     y(i, _) = update_one(x[i]);
   }
   return y;
@@ -465,7 +465,7 @@ double ocls_moving_cov::update_one(double x, double y) {
 NumericVector ocls_moving_cov::update(NumericVector x, NumericVector y) {
   auto npt = x.length();
   auto z = NumericVector(npt);
-  for (auto i = 0; i < npt; ++i) {
+  for (decltype(npt) i = 0; i < npt; ++i) {
     z[i] = update_one(x[i], y[i]);
   }
   return z;
@@ -494,7 +494,7 @@ double ocls_cumulative_cov::update_one(double x, double y) {
 NumericVector ocls_cumulative_cov::update(NumericVector x, NumericVector y) {
   auto npt = x.length();
   auto ans = NumericVector(npt);
-  for (auto i = 0; i < npt; ++i) {
+  for (decltype(npt) i = 0; i < npt; ++i) {
     ans[i] = update_one(x[i], y[i]);
   }
   return ans;
@@ -549,7 +549,7 @@ double ocls_moving_zscore::update_one(double x) {
 NumericVector ocls_moving_zscore::update(NumericVector x) {
   auto npt = x.length();
   auto y = NumericVector(npt);
-  for (auto i = 0; i < npt; ++i) {
+  for (decltype(npt) i = 0; i < npt; ++i) {
     y[i] = update_one(x[i]);
   }
   return y;
@@ -588,7 +588,7 @@ double ocls_cumulative_zscore::update_one(double x) {
 NumericVector ocls_cumulative_zscore::update(NumericVector x) {
   auto npt = x.length();
   auto y = NumericVector(npt);
-  for (auto i = 0; i < npt; ++i) {
+  for (decltype(npt) i = 0; i < npt; ++i) {
     y[i] = update_one(x[i]);
   }
   return y;

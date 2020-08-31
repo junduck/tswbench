@@ -125,7 +125,7 @@ double ocls_filter_rls_poly::update_one(double x) {
 NumericVector ocls_filter_rls_poly::update(NumericVector x) {
   auto npt = x.length();
   auto y = NumericVector(npt);
-  for (auto i = 0; i < npt; ++i) {
+  for (decltype(npt) i = 0; i < npt; ++i) {
     y[i] = update_one(x[i]);
   }
   return y;
@@ -165,7 +165,7 @@ double ocls_filter_rls_linear::update_one(double x) {
 NumericVector ocls_filter_rls_linear::update(NumericVector x) {
   auto npt = x.length();
   auto y = NumericVector(npt);
-  for (auto i = 0; i < npt; ++i) {
+  for (decltype(npt) i = 0; i < npt; ++i) {
     y[i] = update_one(x[i]);
   }
   return y;
