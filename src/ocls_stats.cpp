@@ -313,7 +313,7 @@ NumericVector ocls_moving_stats::update_one(double x) {
   }
   switch (o) {
   case 4:
-    y[3]  = y[3] / pow(y[2], 2.0) - 3.0;
+    y[3]  = y[3] / pow(y[1], 2.0) - 3.0;
   case 3:
     y[2]  = adj_sk * y[2] / pow(y[1], 1.5);
   case 2:
