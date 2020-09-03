@@ -1,49 +1,14 @@
 #pragma once
 
-#include <vector> //std::vector
-#include <cmath> //std::log2
-#include <functional> //std::less
+#include <type_traits> // std::enable_if, std::is_default_constructible
+#include <vector>      //std::vector
+#include <cmath>       //std::log2
+#include <functional>  //std::less
+#include <stdexcept>   //std::out_of_range
 
-template <class T, class C = std::less<T>>
+template <class T, class C = std::less<T>, typename std::enable_if<std::is_default_constructible<T>::value>::type * = nullptr>
 class IndexableSkiplist
 {
-
-  struct SkiplistNode
-  {
-    // value
-    T v;
-    // depth
-    size_t d;
-    // forward pointers
-    std::vector<SkiplistNode *> f;
-    // widths
-    std::vector<size_t> w;
-
-    SkiplistNode(T value, size_t depth, size_t maxlevel)
-        : v(value),
-          d(depth),
-          f(maxlevel, nullptr),
-          w(maxlevel, 0)
-    {
-    }
-  };
-
-  size_t _size, _cap, _mxlv;
-  SkiplistNode *head;
-  // reused working vars
-  std::vector<SkiplistNode *> found;
-
-  size_t random_depth() const
-  {
-    size_t depth = 1;
-    // flip coins
-    while (std::rand() % 2 && depth < _mxlv)
-    {
-      ++depth;
-    }
-    return depth;
-  }
-
 public:
   IndexableSkiplist(size_t window)
       : _size(0),
@@ -125,39 +90,62 @@ public:
     swap(lhs.found, rhs.found);
   }
 
+  T at(size_t i) const
+  {
+    if (!i < _size)
+    {
+      throw std::out_of_range("Index out of range.");
+    }
+    return this->operator[](i);
+  }
+
   T operator[](size_t i) const
   {
-    // Do not check _size, if i is out of bound, just return last node found
-    auto idx = i + 1;
+    // total span, including head
+    auto span = i + 1;
     auto node = head;
     for (size_t lv = _mxlv; lv--; )
     {
-      while (node->f[lv] != nullptr && idx >= node->w[lv])
+      while (node->f[lv] != nullptr && span >= node->w[lv])
       {
-        idx -= node->w[lv];
+        span -= node->w[lv];
         node = node->f[lv];
       }
     }
-
     return node->v;
   }
 
-  void insert(T value)
+  size_t rank(T value) const
   {
-    // traversed distance each level
-    std::vector<size_t> dist(_mxlv, 0);
-    // find first node where node->f[0]->v >= value, insert before node->f[0]
+    // find first node where node->f[0]->v >= value, return node->f[0]'s total span
+    size_t rank = 0;
     auto node = head;
     for (size_t lv = _mxlv; lv--; )
     {
       while (node->f[lv] != nullptr && C()(node->f[lv]->v, value))
       {
-        dist[lv] += node->w[lv];
+        rank += node->w[lv];
+        node = node->f[lv];
+      }
+    }
+    return rank;
+  }
+
+  void insert(T value) {
+    // traversed distance on each level
+    std::vector<size_t> span(_mxlv, 0);
+    // find first node where node->f[0]->v >= value
+    auto node = head;
+    for (size_t lv = _mxlv; lv--; )
+    {
+      while (node->f[lv] != nullptr && C()(node->f[lv]->v, value))
+      {
+        span[lv] += node->w[lv];
         node = node->f[lv];
       }
       found[lv] = node;
     }
-
+    // insert between node and node->f[0]
     auto depth = random_depth();
     size_t width = 0;
     SkiplistNode *newnode = new SkiplistNode(value, depth, _mxlv);
@@ -170,7 +158,7 @@ public:
       // adjust width
       newnode->w[lv] = prev->w[lv] - width;
       prev->w[lv] = width + 1L;
-      width += dist[lv];
+      width += span[lv];
     }
     // adjust widths for skipped levels
     for (size_t lv = depth; lv < _mxlv; ++lv)
@@ -243,5 +231,42 @@ public:
   bool empty() const
   {
     return _size == 0;
+  }
+
+private:
+  struct SkiplistNode
+  {
+    // value
+    T v;
+    // depth
+    size_t d;
+    // forward pointers
+    std::vector<SkiplistNode *> f;
+    // widths
+    std::vector<size_t> w;
+
+    SkiplistNode(T value, size_t depth, size_t maxlevel)
+        : v(value),
+          d(depth),
+          f(maxlevel, nullptr),
+          w(maxlevel, 0)
+    {
+    }
+  };
+
+  size_t _size, _cap, _mxlv;
+  SkiplistNode *head;
+  // reused working vars
+  std::vector<SkiplistNode *> found;
+
+  size_t random_depth() const
+  {
+    size_t depth = 1;
+    // flip coins
+    while (std::rand() % 2 && depth < _mxlv)
+    {
+      ++depth;
+    }
+    return depth;
   }
 };
