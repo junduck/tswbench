@@ -8,7 +8,8 @@ insert_to(
   con,
   tbl,
   dt,
-  conflict = c("default", "replace", "ignore", "do_update", "do_nothing")
+  conflict = c("default", "replace", "ignore"),
+  constraint = data.table::key(dt)
 )
 }
 \arguments{
@@ -19,6 +20,8 @@ insert_to(
 \item{dt}{data to insert}
 
 \item{conflict}{how to deal with conflict}
+
+\item{constraint}{constrained columns, only used when conflict == "replace" and connection is to a PostgreSQL database}
 }
 \value{
 number of rows inserted
