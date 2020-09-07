@@ -25,7 +25,7 @@ public:
     merge(other);
   }
 
-  IndexableSkiplist(IndexableSkiplist &&other)
+  IndexableSkiplist(IndexableSkiplist &&other) noexcept
       : _size(other._size),
         _cap(other._cap),
         _mxlv(other._mxlv),
@@ -64,12 +64,15 @@ public:
 
   ~IndexableSkiplist()
   {
-    auto next = head;
+    for (auto &it : found)
+    {
+      it = nullptr;
+    }
     while (head != nullptr)
     {
-      next = head->f[0];
-      delete head;
-      head = next;
+      auto node = head;
+      head = head->f[0];
+      delete node;
     }
   }
 
@@ -79,7 +82,7 @@ public:
     return *this;
   }
 
-  friend void swap(IndexableSkiplist &lhs, IndexableSkiplist &rhs)
+  friend void swap(IndexableSkiplist &lhs, IndexableSkiplist &rhs) noexcept
   {
     using std::swap;
 
@@ -92,7 +95,7 @@ public:
 
   T at(size_t i) const
   {
-    if (!i < _size)
+    if (i >= _size)
     {
       throw std::out_of_range("Index out of range.");
     }
@@ -104,7 +107,7 @@ public:
     // total span, including head
     auto span = i + 1;
     auto node = head;
-    for (size_t lv = _mxlv; lv--; )
+    for (size_t lv = _mxlv; lv--;)
     {
       while (node->f[lv] != nullptr && span >= node->w[lv])
       {
@@ -120,7 +123,7 @@ public:
     // find first node where node->f[0]->v >= value, return node->f[0]'s total span
     size_t rank = 0;
     auto node = head;
-    for (size_t lv = _mxlv; lv--; )
+    for (size_t lv = _mxlv; lv--;)
     {
       while (node->f[lv] != nullptr && C()(node->f[lv]->v, value))
       {
@@ -131,12 +134,13 @@ public:
     return rank;
   }
 
-  void insert(T value) {
+  size_t insert(T value)
+  {
     // traversed distance on each level
     std::vector<size_t> span(_mxlv, 0);
     // find first node where node->f[0]->v >= value
     auto node = head;
-    for (size_t lv = _mxlv; lv--; )
+    for (size_t lv = _mxlv; lv--;)
     {
       while (node->f[lv] != nullptr && C()(node->f[lv]->v, value))
       {
@@ -164,9 +168,10 @@ public:
     for (size_t lv = depth; lv < _mxlv; ++lv)
     {
       found[lv]->w[lv] += 1;
+      width += span[lv];
     }
-
     _size += 1;
+    return width;
   }
 
   void merge(const IndexableSkiplist &rhs)
@@ -184,7 +189,7 @@ public:
   {
     // find first node where node->f[0]->v >= value, remove node->f[0] if equal
     auto node = head;
-    for (size_t lv = _mxlv; lv--; )
+    for (size_t lv = _mxlv; lv--;)
     {
       while (node->f[lv] != nullptr && C()(node->f[lv]->v, value))
       {

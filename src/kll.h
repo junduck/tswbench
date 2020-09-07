@@ -1,9 +1,11 @@
 #pragma once
 
-#include <vector> //std::vector
-#include <cmath> //std::ceil, std::pow
-#include <functional> //std::less
-#include <algorithm> // std::sort
+#include <vector>     // std::vector
+#include <cmath>      // std::ceil, std::pow
+#include <functional> // std::less
+#include <algorithm>  // std::sort
+#include <utility>    // std::pair
+#include <numeric>    // std::partial_sum
 
 // Karnin, Z., Lang, K., & Liberty, E. (2016, October). Optimal quantile approximation in streams. In 2016 ieee 57th annual symposium on foundations of computer science (focs) (pp. 71-78). IEEE.
 template <class T, class C = std::less<T>>
@@ -53,7 +55,7 @@ class KLL
     {
       if (compact[lv].size() >= capacity(lv))
       {
-        if (lv + 1 >= maxlv)
+        if (lv + 1 == maxlv)
         {
           grow();
         }
@@ -122,18 +124,32 @@ public:
     grow();
   }
 
-  KLL(size_t k, double c, bool lazy, std::vector<std::vector<T>> from_state)
+  KLL(size_t k, double c, bool lazy, std::pair<std::vector<size_t>, std::vector<T>> from_state)
       : _k(k),
         _c(c),
-        _lazy(lazy),
-        compact(from_state)
+        _lazy(lazy)
   {
+    size_t cp_lv = from_state.first.size();
+    compact.reserve(cp_lv);
+    auto st_start = from_state.second.begin();
+    for (size_t i = 0; i < cp_lv; ++i) {
+      compact.emplace_back(std::vector<T>(st_start, st_start + from_state.first[i]));
+      st_start += from_state.first[i];
+    }
     update_size();
     update_max_size();
   }
 
-  std::vector<std::vector<T>> state() const {
-    return compact;
+  std::pair<std::vector<size_t>, std::vector<T>> state() const {
+    std::vector<size_t> cp_lv;
+    cp_lv.reserve(compact.size());
+    std::vector<T> cp;
+    cp.reserve(_size);
+    for (const auto &cpt : compact) {
+      cp_lv.push_back(cpt.size());
+      cp.insert(cp.end(), cpt.begin(), cpt.end());
+    }
+    return std::make_pair(std::move(cp_lv), std::move(cp));
   }
 
   void insert(T x)
@@ -205,12 +221,7 @@ public:
   std::pair<std::vector<T>, std::vector<double>> cdf() const
   {
     auto p = pmf();
-    double cp = 0.0;
-    for (size_t i = 0; i < p.second.size(); ++i)
-    {
-      cp += p.second[i];
-      p.second[i] = cp;
-    }
+    std::partial_sum(p.second.begin(), p.second.end(), p.second.begin());
     return p;
   }
 

@@ -1,7 +1,7 @@
 #pragma once
 
-#include <vector> // std::vector
-#include <cmath> // NAN
+#include <vector>    // std::vector
+#include <cmath>     // NAN
 #include <algorithm> // std::sort
 
 // Jain, R., & Chlamtac, I. (1985). The P2 algorithm for dynamic calculation of quantiles and histograms without storing observations. Communications of the ACM, 28(10), 1076-1085.
@@ -22,17 +22,28 @@ public:
   {
   }
 
-  psquare(double p, std::vector<std::vector<double>> from_state)
-      : init(from_state[0].size() == 5),
-        height(from_state[0]),
-        mpos(from_state[1]),
-        dpos(from_state[2]),
-        incr({0.0, p / 2.0, p, (1.0 + p) / 2.0, 1.0})
+  psquare(double p, std::vector<double> from_state)
+      : incr({0.0, p / 2.0, p, (1.0 + p) / 2.0, 1.0})
   {
+    size_t height_size = from_state.size() - 10;
+    init = height_size == 5;
+    auto it = from_state.begin();
+    height = std::vector<double>(it, it + height_size);
+    it += height_size;
+    mpos = std::vector<double>(it, it + 5);
+    it += 5;
+    dpos = std::vector<double>(it, it + 5);
   }
 
-  std::vector<std::vector<double>> state() const {
-    return {height, mpos, dpos};
+  std::vector<double> state() const
+  {
+    size_t size = height.size() + mpos.size() + dpos.size();
+    std::vector<double> st;
+    st.reserve(size);
+    st.insert(st.end(), height.begin(), height.end());
+    st.insert(st.end(), mpos.begin(), mpos.end());
+    st.insert(st.end(), dpos.begin(), dpos.end());
+    return st;
   }
 
   void insert(double x)
