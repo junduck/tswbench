@@ -233,6 +233,8 @@ create_rt_loop <- function(query_func = sina_realtime_quote,
       tryCatch({
         # Query and normalise
         dt <- query_func(codes, api = api)
+        # Remove invalid entries
+        dt <- stats::na.omit(dt, cols = c(code_col, time_col))
         norm_rt_dt(dt = dt, code_col = code_col, time_col = time_col, api = api)
         # Filter valid entries
         dt <- dt[idate == today]
