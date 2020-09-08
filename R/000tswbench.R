@@ -9,6 +9,8 @@
 #' @import stringr
 #' @import DBI
 #' @importFrom RSQLite SQLite
+#' @importFrom digest digest
+#' @importFrom stats na.omit
 loadModule("ocls_stats", TRUE)
 loadModule("ocls_minmax", TRUE)
 loadModule("ocls_ma", TRUE)
