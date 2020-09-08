@@ -66,7 +66,7 @@ default_srt_codes <- function(stock = TRUE, fund = TRUE, index = TRUE) {
   }
 
   # Convert to Sina code format
-  sina_ashare_code(idx$Code)
+  unique(sina_ashare_code(idx$Code))
 }
 
 #' Run Sina realtime data loop
