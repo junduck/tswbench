@@ -137,50 +137,58 @@ insert_to <- function(con, tbl, dt, conflict = c("default", "replace", "ignore")
 
   conflict <- match.arg(conflict)
   tbl_temp <- paste0(tbl, "_tmp_", digest::digest(dt, algo = "xxhash32"))
+
+  cols <- quote_sql_id(con, names(dt))
+  cols_sql <- paste0(cols, collapse = ", ")
+
+  verb_template <- ""
+  target_template <- "INTO %s(%s) SELECT %s FROM %s"
+  suffix_template <- ""
+
   if (methods::is(con, "SQLiteConnection")) {
     # SQLite
-    q_template <- switch(conflict,
-                         default = "INSERT INTO %s SELECT * FROM %s",
-                         replace = "INSERT OR REPLACE INTO %s SELECT * FROM %s",
-                         ignore  = "INSERT OR IGNORE INTO %s SELECT * FROM %s")
+    verb_template <- switch(conflict,
+                            default = "INSERT",
+                            replace = "INSERT OR REPLACE",
+                            ignore  = "INSERT OR IGNORE")
   } else if (methods::is(con, "PqConnection")) {
     # PostgreSQL
-    q_template <- switch(conflict,
-                         default = "INSERT INTO %s SELECT * FROM %s",
-                         replace = {
-                           if (is.null(constraint)) {
-                             stop("Unique/exclusion constraint is required to perform update.", call. = FALSE)
-                           }
-                           cols <- quote_sql_id(con, names(dt))
-                           replacement <- paste0(sprintf("%s = EXCLUDED.%s", cols, cols), collapse = ", ")
-                           constraint <- quote_sql_id(con, constraint)
-                           clause <- sprintf("ON CONFLICT (%s) DO UPDATE SET %s", paste0(constraint, collapse = ", "), replacement)
-                           paste("INSERT INTO %s SELECT * FROM %s", clause)
-                         },
-                         ignore  = "INSERT INTO %s SELECT * FROM %s ON CONFLICT DO NOTHING")
+    verb_template <- "INSERT"
+    suffix_template <- switch(conflict,
+                              default = "",
+                              replace = {
+                                if (is.null(constraint)) {
+                                  stop("Unique/exclusion constraint is required to perform update.", call. = FALSE)
+                                } else {
+                                  constraint <- quote_sql_id(con, constraint)
+                                }
+                                replacement <- paste0(sprintf("%s = EXCLUDED.%s", cols, cols), collapse = ", ")
+                                sprintf("ON CONFLICT (%s) DO UPDATE SET %s", paste0(constraint, collapse = ", "), replacement)
+                              },
+                              ignore = "ON CONFLICT DO NOTHING")
   } else if (methods::is(con, "MariaDBConnection")) {
     # MariaDB
-    q_template <- switch(conflict,
-                         default = "INSERT INTO %s SELECT * FROM %s",
-                         replace = "REPLACE INTO %s SELECT * FROM %s",
-                         ignore  = "INSERT IGNORE INTO %s SELECT * FROM %s")
+    verb_template <- switch(conflict,
+                            default = "INSERT",
+                            replace = "REPLACE",
+                            ignore  = "INSERT IGNORE")
   } else {
     # Other
     cls <- class(con)
-    q_template <- switch(conflict,
-                         default = "INSERT INTO %s SELECT * FROM %s",
-                         replace = stop("Don't know how to insert replace for ", cls, call. = FALSE),
-                         ignore  = stop("Don't know how to insert ignore for ", cls, call. = FALSE))
+    verb_template <- switch(conflict,
+                            default = "INSERT",
+                            replace = stop("Don't know how to insert replace for ", cls, call. = FALSE),
+                            ignore  = stop("Don't know how to insert ignore for ", cls, call. = FALSE))
   }
-  q <- sprintf(q_template, tbl, tbl_temp)
+  q_template <- paste(verb_template, target_template, suffix_template)
+  q <- sprintf(q_template, quote_sql_id(con, tbl), cols_sql, cols_sql, quote_sql_id(con, tbl_temp))
 
-  # Write to temp table
-  DBI::dbWriteTable(conn = con, name = tbl_temp, value = dt,
-                    overwrite = TRUE, temporary = TRUE, copy = TRUE)
-
-  # Insert from temp table
   r <- tryCatch({
     DBI::dbBegin(con)
+    # Write to temp table
+    DBI::dbWriteTable(conn = con, name = tbl_temp, value = dt,
+                      overwrite = TRUE, temporary = TRUE, copy = TRUE)
+    # Insert from temp table
     r <- DBI::dbExecute(con, q)
     DBI::dbCommit(con)
     r
