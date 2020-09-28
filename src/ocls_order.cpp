@@ -14,7 +14,8 @@ double ocls_moving_sort::get_index(int idx) {
 }
 
 NumericVector ocls_moving_sort::to_vector() {
-  return wrap(skiplist.to_vector());
+  NumericVector ans {skiplist.begin(), skiplist.end()};
+  return ans;
 }
 
 void ocls_moving_sort::update_one(double x) {

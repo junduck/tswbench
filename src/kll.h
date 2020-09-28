@@ -69,7 +69,7 @@ class KLL
           compact[lv].pop_back();
         }
         // compact to next level
-        size_t offset = std::rand() % 2 ? 1 : 0;
+        size_t offset = (std::rand() % 2) ? 1 : 0;
         for (size_t i = offset; i < compact[lv].size(); i += 2)
         {
           compact[lv + 1].push_back(compact[lv][i]);

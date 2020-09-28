@@ -1,10 +1,10 @@
 test_that("moving median", {
 
-  n = 10000
-  w = 300
+  n = 100000
+  w = 3000
 
   # moving median, odd window
-  w = 301
+  w = 3001
   x = runif(n)
   f = make_moving_median(window = w)
 
@@ -15,7 +15,7 @@ test_that("moving median", {
   expect_equal(delta, 0.0)
 
   # moving median, even window
-  w = 300
+  w = 3000
   x = runif(n)
   f = make_moving_median(window = w)
 
@@ -28,8 +28,8 @@ test_that("moving median", {
 
 test_that("moving sort", {
 
-  n = 10000
-  w = 2000
+  n = 100000
+  w = 20000
 
   x <- runif(n)
   f <- make_moving_sorted(window = w)
@@ -53,8 +53,8 @@ test_that("moving sort", {
 
 test_that("moving quantile", {
 
-  n = 10000
-  w = 120
+  n = 100000
+  w = 1200
 
   # moving quantile
   x <- runif(n)
@@ -62,7 +62,7 @@ test_that("moving quantile", {
   f <- make_moving_quantile(window = w, probs = probs)
 
   y <- f(x)
-  ym <- zoo::rollapply(x, 120, quantile, probs = probs, type = 3, fill = NA, align = "right")
+  ym <- zoo::rollapply(x, w, quantile, probs = probs, type = 3, fill = NA, align = "right")
 
   delta <- sum(abs(y - ym), na.rm = TRUE)
   expect_equal(delta, 0.0)
@@ -76,7 +76,7 @@ test_that("moving quantile", {
   f <- make_moving_gastwirth(window = w)
 
   y <- f(x)
-  ym <- zoo::rollapply(x, 120, gastwirth, fill = NA, align = "right")
+  ym <- zoo::rollapply(x, w, gastwirth, fill = NA, align = "right")
 
   delta <- sum(abs(y - ym), na.rm = TRUE)
   expect_equal(delta, 0.0)

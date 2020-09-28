@@ -1,82 +1,181 @@
 #pragma once
 
 #include <type_traits> // std::enable_if, std::is_default_constructible
-#include <vector>      //std::vector
-#include <cmath>       //std::log2
-#include <functional>  //std::less
-#include <stdexcept>   //std::out_of_range
+#include <vector>      // std::vector
+#include <cmath>       // std::log2
+#include <functional>  // std::less
+#include <stdexcept>   // std::out_of_range
+#include <iterator>    // std::input_iterator_tag
+#include <memory>      // std::allocator, std::allocator_traits
 
-template <class T, class C = std::less<T>, typename std::enable_if<std::is_default_constructible<T>::value>::type * = nullptr>
+template <class T, class C = std::less<T>, class A = std::allocator<T>, typename std::enable_if<std::is_default_constructible<T>::value>::type * = nullptr>
 class IndexableSkiplist
 {
-public:
-  IndexableSkiplist(size_t window)
-      : _size(0),
-        _cap(window),
-        _mxlv(1 + static_cast<size_t>(std::log2(window))),
-        found(_mxlv, nullptr),
-        head(new SkiplistNode(T(), _mxlv, _mxlv))
+private:
+  struct node_type;
+
+  struct level_type
   {
+    node_type *f;
+    size_t s;
+  };
+  using level_alloc_type = typename std::allocator_traits<A>::rebind_alloc<level_type>;
+
+  struct node_type
+  {
+    std::vector<level_type, level_alloc_type> skl;
+    T v;
+    node_type(T value, size_t depth)
+        : skl(depth, {nullptr, 0}),
+          v(value)
+    {
+    }
+  };
+  using node_alloc_type = typename std::allocator_traits<A>::rebind_alloc<node_type>;
+  using node_alloc_traits = typename std::allocator_traits<node_alloc_type>;
+
+  using fptr_type = std::vector<node_type *>;
+  using fspan_type = std::vector<size_t>;
+
+  node_alloc_type _alloc;
+  size_t _size, _mxlv;
+  node_type *_head;
+  fptr_type front;
+  fspan_type fspan;
+
+  size_t random_depth() const
+  {
+    size_t depth = 1;
+    // flip coins
+    while (std::rand() % 2)
+    {
+      ++depth;
+    }
+    return std::min(depth, _mxlv);
   }
 
-  IndexableSkiplist(const IndexableSkiplist &other)
-      : IndexableSkiplist(other._cap)
+  void remove_next(const fptr_type &fp)
+  {
+    auto node = fp[0]->skl[0].f;
+    auto depth = node->skl.size();
+    for (size_t lv = 0; lv < depth; ++lv)
+    {
+      fp[lv]->skl[lv].s += node->skl[lv].s - 1;
+      fp[lv]->skl[lv].f = node->skl[lv].f;
+    }
+    for (size_t lv = depth; lv < _mxlv; ++lv)
+    {
+      fp[lv]->skl[lv].s -= 1;
+    }
+    del_node(node);
+    _size -= 1;
+  }
+
+  node_type *new_node(T value, size_t depth)
+  {
+    auto node = node_alloc_traits::allocate(_alloc, 1);
+    if (node)
+    {
+      node_alloc_traits::construct(_alloc, node, value, depth);
+    }
+    else
+    {
+      throw std::bad_alloc();
+    }
+    return node;
+  }
+
+  void del_node(node_type *node)
+  {
+    node_alloc_traits::destroy(_alloc, node);
+    node_alloc_traits::deallocate(_alloc, node, 1);
+  }
+
+  void _move_skiplist(IndexableSkiplist &&other, std::true_type)
+  {
+    _alloc = std::move(other._alloc);
+    _size = other._size;
+    _mxlv = other._mxlv;
+    _head = other._head;
+    front = fptr_type(_mxlv, nullptr);
+    fspan = fspan_type(_mxlv, 0U);
+    other._head = nullptr;
+  }
+
+  void _move_skiplist(IndexableSkiplist &&other, std::false_type)
   {
     merge(other);
   }
 
-  IndexableSkiplist(IndexableSkiplist &&other) noexcept
-      : _size(other._size),
-        _cap(other._cap),
-        _mxlv(other._mxlv),
-        found(_mxlv, nullptr),
-        head(other.head)
+  friend void _swap_skiplist(IndexableSkiplist &lhs, IndexableSkiplist &rhs, std::true_type)
   {
-    other.head = nullptr;
+    std::swap(lhs._alloc, rhs._alloc);
+    std::swap(lhs._size, rhs._size);
+    std::swap(lhs._mxlv, rhs._mxlv);
+    std::swap(lhs._head, rhs._head);
+    std::swap(lhs.front, rhs.front);
+    std::swap(lhs.fspan, rhs.fspan);
   }
 
-  IndexableSkiplist(size_t window, std::vector<T> from_state)
-      : IndexableSkiplist(window)
+  // undefined behaviour??? if called from std::swap
+  friend void _swap_skiplist(IndexableSkiplist &lhs, IndexableSkiplist &rhs, std::false_type)
   {
-    for (const auto &val : from_state)
+    // _alloc is not swapped
+    std::swap(lhs._size, rhs._size);
+    std::swap(lhs._mxlv, rhs._mxlv);
+    std::swap(lhs._head, rhs._head);
+    std::swap(lhs.front, rhs.front);
+    std::swap(lhs.fspan, rhs.fspan);
+  }
+
+public:
+  explicit IndexableSkiplist(size_t target_size, const A &alloc = A())
+      : _alloc(node_alloc_type(alloc)),
+        _size(0),
+        _mxlv(1 + static_cast<size_t>(std::log2(target_size))),
+        _head(new_node(T(), _mxlv)),
+        front(_mxlv, nullptr),
+        fspan(_mxlv, 0)
+  {
+  }
+
+  // O(N log N): Insert (unsorted) elements from vector
+  IndexableSkiplist(size_t target_size, const std::vector<T> &from_vector, const A &alloc = A())
+      : IndexableSkiplist(target_size, alloc)
+  {
+    for (auto val : from_vector)
     {
       insert(val);
     }
   }
 
-  std::vector<T> state() const
-  {
-    std::vector<T> s;
-    s.reserve(_size);
-    auto node = head->f[0];
-    while (node != nullptr)
-    {
-      s.push_back(node->v);
-      node = node->f[0];
-    }
-    return s;
-  }
-
-  std::vector<T> to_vector() const
-  {
-    return state();
-  }
-
   ~IndexableSkiplist()
   {
-    for (auto &it : found)
+    while (_head != nullptr)
     {
-      it = nullptr;
-    }
-    while (head != nullptr)
-    {
-      auto node = head;
-      head = head->f[0];
-      delete node;
+      auto node = _head;
+      _head = _head->skl[0].f;
+      del_node(node);
     }
   }
 
-  IndexableSkiplist &operator=(IndexableSkiplist rhs)
+  // resource management
+
+  // O(N): Instead of copying, we initialise a dummy obj, then merge and swap
+  IndexableSkiplist(const IndexableSkiplist &other)
+      : IndexableSkiplist(1U, node_alloc_traits::select_on_container_copy_construction(other._alloc))
+  {
+    merge(other);
+  }
+
+  // O(1) if we can move, fallback to O(N) merge
+  IndexableSkiplist(IndexableSkiplist &&other) noexcept
+  {
+    constexpr bool movable = node_alloc_traits::is_always_equal::value || node_alloc_traits::propagate_on_container_move_assignment::value;
+    _move_skiplist(std::move(other), std::integral_constant<bool, movable>());
+  }
+
+  IndexableSkiplist &operator=(IndexableSkiplist rhs) noexcept
   {
     swap(*this, rhs);
     return *this;
@@ -85,13 +184,11 @@ public:
   friend void swap(IndexableSkiplist &lhs, IndexableSkiplist &rhs) noexcept
   {
     using std::swap;
-
-    swap(lhs._size, rhs._size);
-    swap(lhs._cap, rhs._cap);
-    swap(lhs._mxlv, rhs._mxlv);
-    swap(lhs.head, rhs.head);
-    swap(lhs.found, rhs.found);
+    constexpr bool swappable = node_alloc_traits::is_always_equal::value || node_alloc_traits::propagate_on_container_swap::value;
+    _swap_skiplist(lhs, rhs, std::integral_constant<bool, swappable>());
   }
+
+  // Implements: O(log N) search, insert, remove O(N + M) merge
 
   T at(size_t i) const
   {
@@ -104,15 +201,14 @@ public:
 
   T operator[](size_t i) const
   {
-    // total span, including head
     auto span = i + 1;
-    auto node = head;
+    auto node = _head;
     for (size_t lv = _mxlv; lv--;)
     {
-      while (node->f[lv] != nullptr && span >= node->w[lv])
+      while (node->skl[lv].f && span >= node->skl[lv].s)
       {
-        span -= node->w[lv];
-        node = node->f[lv];
+        span -= node->skl[lv].s;
+        node = node->skl[lv].f;
       }
     }
     return node->v;
@@ -120,15 +216,14 @@ public:
 
   size_t rank(T value) const
   {
-    // find first node where node->f[0]->v >= value, return node->f[0]'s total span
     size_t rank = 0;
-    auto node = head;
+    auto node = _head;
     for (size_t lv = _mxlv; lv--;)
     {
-      while (node->f[lv] != nullptr && C()(node->f[lv]->v, value))
+      while (node->skl[lv].f && C()(node->skl[lv].f->v, value))
       {
-        rank += node->w[lv];
-        node = node->f[lv];
+        rank += node->skl[lv].s;
+        node = node->skl[lv].f;
       }
     }
     return rank;
@@ -136,91 +231,106 @@ public:
 
   size_t insert(T value)
   {
-    // traversed distance on each level
-    std::vector<size_t> span(_mxlv, 0);
-    // find first node where node->f[0]->v >= value
-    auto node = head;
+    std::fill(fspan.begin(), fspan.end(), 0U);
+    auto node = _head;
     for (size_t lv = _mxlv; lv--;)
     {
-      while (node->f[lv] != nullptr && C()(node->f[lv]->v, value))
+      while (node->skl[lv].f && C()(node->skl[lv].f->v, value))
       {
-        span[lv] += node->w[lv];
-        node = node->f[lv];
+        fspan[lv] += node->skl[lv].s;
+        node = node->skl[lv].f;
       }
-      found[lv] = node;
+      front[lv] = node;
     }
-    // insert between node and node->f[0]
     auto depth = random_depth();
-    size_t width = 0;
-    SkiplistNode *newnode = new SkiplistNode(value, depth, _mxlv);
+    auto newnode = new_node(value, depth);
+    // backward traversed
+    size_t bspan = 0;
     for (size_t lv = 0; lv < depth; ++lv)
     {
-      auto prev = found[lv];
-      // create link
-      newnode->f[lv] = prev->f[lv];
-      prev->f[lv] = newnode;
-      // adjust width
-      newnode->w[lv] = prev->w[lv] - width;
-      prev->w[lv] = width + 1L;
-      width += span[lv];
+      auto prev = front[lv];
+      newnode->skl[lv].f = prev->skl[lv].f;
+      prev->skl[lv].f = newnode;
+      newnode->skl[lv].s = prev->skl[lv].s - bspan;
+      prev->skl[lv].s = bspan + 1;
+      bspan += fspan[lv];
     }
-    // adjust widths for skipped levels
     for (size_t lv = depth; lv < _mxlv; ++lv)
     {
-      found[lv]->w[lv] += 1;
-      width += span[lv];
+      front[lv]->skl[lv].s += 1;
+      bspan += fspan[lv];
     }
     _size += 1;
-    return width;
+    return bspan;
   }
 
-  void merge(const IndexableSkiplist &rhs)
+  void merge(const IndexableSkiplist &other)
   {
-    // naiive merge of Skiplist
-    auto node = rhs.head->f[0];
-    while (node != nullptr)
+    size_t new_tsize = std::max(std::max(this->target_size(), other.target_size()) - 1, this->_size + other._size);
+    IndexableSkiplist newlist(new_tsize, this->_alloc);
+    std::fill(newlist.front.begin(), newlist.front.end(), newlist._head);
+
+    auto nodeL = this->_head->skl[0].f;
+    auto nodeR = other._head->skl[0].f;
+    while (nodeL || nodeR)
     {
-      insert(node->v);
-      node = node->f[0];
+      if (!nodeL)
+      {
+        std::swap(nodeR, nodeL);
+      }
+      if (nodeR && C()(nodeR->v, nodeL->v))
+      {
+        std::swap(nodeR, nodeL);
+      }
+      auto depth = newlist.random_depth();
+      auto newnode = newlist.new_node(nodeL->v, depth);
+      for (size_t lv = 0; lv < _mxlv; ++lv)
+      {
+        newlist.front[lv]->skl[lv].s += 1;
+      }
+      for (size_t lv = 0; lv < depth; ++lv)
+      {
+        newlist.front[lv]->skl[lv].f = newnode;
+        newlist.front[lv] = newnode;
+      }
+      newlist._size += 1;
+      nodeL = nodeL->skl[0].f;
     }
+
+    // swap data only
+    _swap_skiplist(*this, newlist, std::integral_constant<bool, false>());
   }
 
   void remove(T value)
   {
-    // find first node where node->f[0]->v >= value, remove node->f[0] if equal
-    auto node = head;
+    auto node = _head;
     for (size_t lv = _mxlv; lv--;)
     {
-      while (node->f[lv] != nullptr && C()(node->f[lv]->v, value))
+      while (node->skl[lv].f && C()(node->skl[lv].f->v, value))
       {
-        node = node->f[lv];
+        node = node->skl[lv].f;
       }
-      found[lv] = node;
+      front[lv] = node;
     }
-    if (found[0]->f[0] == nullptr || C()(value, found[0]->f[0]->v))
+    if ((front[0]->skl[0].f) && !C()(value, front[0]->skl[0].f->v))
     {
-      // not found, just return
-      return;
+      remove_next(front);
     }
+  }
 
-    node = found[0]->f[0];
-    auto depth = node->d;
-    for (size_t lv = 0; lv < depth; ++lv)
+  void remove_rank(size_t rank)
+  {
+    auto node = _head;
+    for (size_t lv = _mxlv; lv--;)
     {
-      auto prev = found[lv];
-      // adjust width
-      prev->w[lv] += prev->f[lv]->w[lv] - 1L;
-      // adjust link
-      prev->f[lv] = prev->f[lv]->f[lv];
+      while (node->skl[lv].f && rank >= node->skl[lv].s)
+      {
+        rank -= node->skl[lv].s;
+        node = node->skl[lv].f;
+      }
+      front[lv] = node;
     }
-    // adjust width for skipped levels
-    for (size_t lv = depth; lv < _mxlv; ++lv)
-    {
-      found[lv]->w[lv] -= 1;
-    }
-    delete node;
-
-    _size -= 1;
+    remove_next(front);
   }
 
   size_t size() const
@@ -228,50 +338,76 @@ public:
     return _size;
   }
 
-  size_t capacity() const
-  {
-    return _cap;
-  }
-
   bool empty() const
   {
     return _size == 0;
   }
 
-private:
-  struct SkiplistNode
+  size_t target_size() const
   {
-    // value
-    T v;
-    // depth
-    size_t d;
-    // forward pointers
-    std::vector<SkiplistNode *> f;
-    // widths
-    std::vector<size_t> w;
+    return 1UL << _mxlv;
+  }
 
-    SkiplistNode(T value, size_t depth, size_t maxlevel)
-        : v(value),
-          d(depth),
-          f(maxlevel, nullptr),
-          w(maxlevel, 0)
+  // Iterator
+  class Iterator
+  {
+    friend class IndexableSkiplist;
+
+  public:
+    using value_type = T;
+    using pointer = T const *;
+    using reference = const T &;
+    using difference_type = std::ptrdiff_t;
+    using iterator_category = std::input_iterator_tag;
+
+    reference operator*() const
     {
+      return node->v;
     }
+
+    pointer operator->() const
+    {
+      return &(node->v);
+    }
+
+    Iterator &operator++()
+    {
+      node = node->skl[0].f;
+      return *this;
+    }
+
+    Iterator operator++(int)
+    {
+      Iterator it(*this);
+      node = node->skl[0].f;
+      return it;
+    }
+
+    bool operator==(const Iterator &rhs) const
+    {
+      return node == rhs.node;
+    }
+
+    bool operator!=(const Iterator &rhs) const
+    {
+      return node != rhs.node;
+    }
+
+  private:
+    node_type *node;
   };
 
-  size_t _size, _cap, _mxlv;
-  SkiplistNode *head;
-  // reused working vars
-  std::vector<SkiplistNode *> found;
-
-  size_t random_depth() const
+  Iterator begin()
   {
-    size_t depth = 1;
-    // flip coins
-    while (std::rand() % 2 && depth < _mxlv)
-    {
-      ++depth;
-    }
-    return depth;
+    Iterator it;
+    it.node = _head->skl[0].f;
+    return it;
+  }
+
+  Iterator end()
+  {
+    Iterator it;
+    it.node = nullptr;
+    return it;
   }
 };
