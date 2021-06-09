@@ -1,26 +1,42 @@
 #' Set/Get Tushare Pro API token
 #'
 #' @param token a character vector
+#' @param save save set token to token_file
+#' @param token_file path to token_file
 #'
 #' @return token itself, invisibly.
 #' @export
-SetToken <- function(token) {
+SetToken <- function(token, save = FALSE, token_file = "~/tk.csv") {
 
   tus.globals$api_token <- as.character(token)
+  if (save)
+  {
+    csv <- list(token = token)
+    data.table::fwrite(data.table::setDT(csv), token_file)
+  }
 
   invisible(tus.globals$api_token)
 }
 
 #' @rdname SetToken
 #' @export
-GetToken <- function() {
+GetToken <- function(token_file = "~/tk.csv") {
 
   if (is.null(tus.globals$api_token)) {
-    ""
-  } else {
-    tus.globals$api_token
+    if (file.exists(token_file))
+    {
+      token <- data.table::fread(token_file)
+      tus.globals$api_token <- token$token[1]
+    }
+    else
+    {
+      tus.globals$api_token <- ""
+    }
   }
+  tus.globals$api_token
 }
+
+warning_handler <- function(e) warning(e, call. = FALSE, immediate. = TRUE)
 
 #' Simple do.call retry wrapper
 #'
@@ -34,7 +50,7 @@ GetToken <- function() {
 #'
 #' @return The returned value from function call
 do.retry <- function(what, args, quote = FALSE, envir = parent.frame(),
-                     attempt = 3, sleep = 0, handler = warning) {
+                     attempt = 3, sleep = 0, handler = warning_handler) {
 
   flag <- FALSE
 
@@ -55,7 +71,7 @@ do.retry <- function(what, args, quote = FALSE, envir = parent.frame(),
   }
 
   msg <- do.call(paste0, args = as.list(
-    as.character(deparse(substitute(what)))
+    as.character(deparse(substitute(what, envir)))
   ))
   stop(sprintf("Calling %s failed after %d attempts.", msg, attempt), call. = FALSE)
 }
@@ -67,27 +83,23 @@ do.retry <- function(what, args, quote = FALSE, envir = parent.frame(),
 #' @param fields data fields to request
 #' @param token API token.
 #' @param timeout timeout in seconds for httr request.
-#' @param attempt attempts if timeout
 #'
 #' @return data.frame/data.table
-TusRequest <- function(api_name, ..., fields = c(""), token = GetToken(), timeout = 10.0, attempt = 3L) {
+TusRequest <- function(api_name, ..., fields = c(""), token = GetToken(), timeout = 5.0) {
 
   api_url <- "http://api.waditu.com"
 
-  req_args <- list(
+  req_body <- list(
     token    = as.character(token),
     api_name = api_name,
     params   = list(...),
     fields   = fields
   )
 
-  post_args <- list(
-    url    = api_url,
-    config = httr::timeout(timeout),
-    body   = req_args,
-    encode = "json"
-  )
-  req <- do.retry(httr::POST, post_args, attempt = attempt, sleep = 0.5)
+  req <- httr::POST(url = api_url,
+                    config = httr::timeout(timeout),
+                    body = req_body,
+                    encode = "json")
   res <- httr::content(req,
                        as = "parsed",
                        type = "application/json",
@@ -104,7 +116,9 @@ TusRequest <- function(api_name, ..., fields = c(""), token = GetToken(), timeou
       }, error = function(e) {
         #error happens when null ROW is passed by fromJSON()
         null_row <- sapply(res$data$items, is.null)
-        data.table::rbindlist(res$data$items[!null_row])
+        na_row <- sapply(res$data$items, is.na)
+        ignore_row <- null_row | na_row
+        data.table::rbindlist(res$data$items[!ignore_row])
       })
     } else {
       #create an empty data.table
@@ -183,7 +197,7 @@ arg_logi <- c("is_open", "is_new", "is_audit", "is_release", "is_buyback",
 
   force(x)
   force(func)
-  f <- function(..., timeout = 10.0, attempt = 3L) {
+  f <- function(..., timeout = 5.0, attempt = 3L, retry_wait = 0.5) {
 
     arg <- list(...)
 
@@ -206,9 +220,9 @@ arg_logi <- c("is_open", "is_new", "is_audit", "is_release", "is_buyback",
     arg$api_name <- func
     arg$token    <- x
     arg$timeout  <- timeout
-    arg$attempt  <- attempt
 
-    dt <- do.call(TusRequest, arg)
+    dt <- do.retry(TusRequest, arg, attempt = attempt, sleep = retry_wait)
+
     #parse dt
     if (nrow(dt)) {
       parse_date     <- date_parser(x)
