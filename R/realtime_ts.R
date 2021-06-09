@@ -1,13 +1,14 @@
-split_dict_values <- function(rec) {
-
-  #Tushare Sub returns dict_values(['val1', 'val2', ... , 'valn'])
-
-  #dict_values can contain python None value, evaluate None as NA
-  None <- NA
-  expr_text <- paste0("c(", stringr::str_sub(rec, start = 14L, end = -3L), ")")
-
-  eval(expr = parse(text = expr_text))
-}
+# Tushare no longer returns a Python statement, but normal JSON array instead
+#split_dict_values <- function(rec) {
+#
+#  #Tushare Sub returns dict_values(['val1', 'val2', ... , 'valn'])
+#
+#  #dict_values can contain python None value, evaluate None as NA
+#  None <- NA
+#  expr_text <- paste0("c(", stringr::str_sub(rec, start = 14L, end = -3L), ")")
+#
+#  eval(expr = parse(text = expr_text))
+#}
 
 #' Create a Tushare realtime websocket
 #'
@@ -64,7 +65,6 @@ tushare_realtime_websocket <- function(topic, code, callback, api = TushareApi()
     } else {
       #Pass received data to callback function
       callback_data <- data$data
-      callback_data$record <- split_dict_values(callback_data$record)
       do.call(callback, callback_data)
     }
 
@@ -152,11 +152,11 @@ parse_hq_stk_tick <- function(record, today, tz) {
   t_rec <- paste0(today, record[3])
   # Parse as UTC then force_tz to avoid .mklt (SLOW)
   t_rec <- lubridate::force_tz(
-    lubridate::parse_date_time2(t_rec, orders = "YmdHMOS"),
+    lubridate::parse_date_time2(t_rec, orders = "YmdHMS"),
     tzone = tz
   )
 
-  rec_numval <- as.numeric(record[4:31])
+  rec_numval <- as.numeric(record[4:33])
   ans <- list(Code     = record[1],
               Name     = record[2],
               Time     = t_rec,
@@ -171,24 +171,26 @@ parse_hq_stk_tick <- function(record, today, tz) {
               Tnvr     = rec_numval[ 8],
               Ask_P1   = rec_numval[ 9],
               Ask_V1   = rec_numval[10],
-              Ask_P2   = rec_numval[11],
-              Ask_V2   = rec_numval[12],
-              Ask_P3   = rec_numval[13],
-              Ask_V3   = rec_numval[14],
-              Ask_P4   = rec_numval[15],
-              Ask_V4   = rec_numval[16],
-              Ask_P5   = rec_numval[17],
-              Ask_V5   = rec_numval[18],
-              Bid_P1   = rec_numval[19],
-              Bid_V1   = rec_numval[20],
-              Bid_P2   = rec_numval[21],
-              Bid_V2   = rec_numval[22],
-              Bid_P3   = rec_numval[23],
-              Bid_V3   = rec_numval[24],
-              Bid_P4   = rec_numval[25],
-              Bid_V4   = rec_numval[26],
+              Bid_P1   = rec_numval[11],
+              Bid_V1   = rec_numval[12],
+              Ask_P2   = rec_numval[13],
+              Ask_V2   = rec_numval[14],
+              Bid_P2   = rec_numval[15],
+              Bid_V2   = rec_numval[16],
+              Ask_P3   = rec_numval[17],
+              Ask_V3   = rec_numval[18],
+              Bid_P3   = rec_numval[19],
+              Bid_V3   = rec_numval[20],
+              Ask_P4   = rec_numval[21],
+              Ask_V4   = rec_numval[22],
+              Bid_P4   = rec_numval[23],
+              Bid_V4   = rec_numval[24],
+              Ask_P5   = rec_numval[25],
+              Ask_V5   = rec_numval[26],
               Bid_P5   = rec_numval[27],
-              Bid_V5   = rec_numval[28])
+              Bid_V5   = rec_numval[28],
+              OpenInterest = rec_numval[29],
+              Order        = rec_numval[30])
 
   ans
 }
