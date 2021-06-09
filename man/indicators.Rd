@@ -41,5 +41,5 @@ rsi: Relative Strength Index
 
 trix: Trix Momentum Indicator
 
-willr: Williams %R
+willr: Williams R
 }

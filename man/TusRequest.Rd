@@ -4,14 +4,7 @@
 \alias{TusRequest}
 \title{Make raw request to Tushare Pro API}
 \usage{
-TusRequest(
-  api_name,
-  ...,
-  fields = c(""),
-  token = GetToken(),
-  timeout = 10,
-  attempt = 3L
-)
+TusRequest(api_name, ..., fields = c(""), token = GetToken(), timeout = 5)
 }
 \arguments{
 \item{api_name}{name of API function, please refer to online document for more information.}
@@ -23,8 +16,6 @@ TusRequest(
 \item{token}{API token.}
 
 \item{timeout}{timeout in seconds for httr request.}
-
-\item{attempt}{attempts if timeout}
 }
 \value{
 data.frame/data.table

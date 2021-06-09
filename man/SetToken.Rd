@@ -5,12 +5,16 @@
 \alias{GetToken}
 \title{Set/Get Tushare Pro API token}
 \usage{
-SetToken(token)
+SetToken(token, save = FALSE, token_file = "~/tk.csv")
 
-GetToken()
+GetToken(token_file = "~/tk.csv")
 }
 \arguments{
 \item{token}{a character vector}
+
+\item{save}{save set token to token_file}
+
+\item{token_file}{path to token_file}
 }
 \value{
 token itself, invisibly.

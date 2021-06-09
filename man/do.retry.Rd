@@ -11,7 +11,7 @@ do.retry(
   envir = parent.frame(),
   attempt = 3,
   sleep = 0,
-  handler = warning
+  handler = warning_handler
 )
 }
 \arguments{

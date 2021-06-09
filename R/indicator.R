@@ -36,7 +36,7 @@
 #'
 #' trix: Trix Momentum Indicator
 #'
-#' willr: Williams %R
+#' willr: Williams R
 #'
 #'
 #' @name indicators
