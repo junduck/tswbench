@@ -408,7 +408,7 @@ ocls_vidya::ocls_vidya(int period_short, int period_long, double alpha)
     alpha(alpha),
     vidya(0.0) {
   s2s = ms = ds = d0s = dd0s = 0.0;
-  s2l = ml = dl = d0l = dd0l - 0.0;
+  s2l = ml = dl = d0l = dd0l = 0.0;
   nr = alpha * sqrt(double(plong) / double(pshort));
 }
 

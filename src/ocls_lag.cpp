@@ -133,7 +133,7 @@ double ocls_lag_delta_moving_sum::update_one(double x) {
   }
   return s;
 }
-
+// ocls_moving_sum_lag_delta
 NumericVector ocls_lag_delta_moving_sum::update(NumericVector x) {
   auto npt = x.length();
   auto y = NumericVector(npt);
