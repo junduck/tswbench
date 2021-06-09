@@ -4,27 +4,27 @@ using namespace Rcpp;
 
 // ===== ocls_moving_sort =====
 ocls_moving_sort::ocls_moving_sort(int window)
-  : skiplist(window),
+  : sorted(),
     n(0),
     w(window) {
 }
 
 double ocls_moving_sort::get_index(int idx) {
-  return skiplist[idx];
+  return sorted[idx];
 }
 
 NumericVector ocls_moving_sort::to_vector() {
-  NumericVector ans {skiplist.begin(), skiplist.end()};
+  NumericVector ans {sorted.begin(), sorted.end()};
   return ans;
 }
 
 void ocls_moving_sort::update_one(double x) {
   buf.push_front(x);
-  skiplist.insert(x);
+  sorted.insert(x);
   if (n < w) {
     n += 1;
   } else {
-    skiplist.remove(buf.back());
+    sorted.erase(buf.back());
     buf.pop_back();
   }
 }
@@ -42,14 +42,14 @@ NumericVector ocls_moving_sort::value() {
 
 // ===== ocls_moving_median =====
 ocls_moving_median::ocls_moving_median(int window)
-  : skiplist(window),
+  : sorted(),
     w(window){
   n = idx1 = idx2 = 0;
 }
 
 double ocls_moving_median::update_one(double x) {
   buf.push_front(x);
-  skiplist.insert(x);
+  sorted.insert(x);
   if (n < w) {
     // cumulative stage
     n += 1;
@@ -61,7 +61,7 @@ double ocls_moving_median::update_one(double x) {
     }
   } else {
     // windowed stage
-    skiplist.remove(buf.back());
+    sorted.erase(buf.back());
     buf.pop_back();
   }
   return value();
@@ -79,16 +79,16 @@ NumericVector ocls_moving_median::update(NumericVector x) {
 double ocls_moving_median::value() {
   double y;
   if (idx1 == idx2) {
-    y = skiplist[idx1];
+    y = sorted[idx1];
   } else {
-    y = skiplist[idx1] / 2.0 + skiplist[idx2] / 2.0;
+    y = sorted[idx1] / 2.0 + sorted[idx2] / 2.0;
   }
   return y;
 }
 
 // ===== ocls_moving_quantile =====
 ocls_moving_quantile::ocls_moving_quantile(int window, IntegerVector idx)
-  : skiplist(window),
+  : sorted(),
     w(window),
     n(0),
     qidx(idx),
@@ -97,15 +97,15 @@ ocls_moving_quantile::ocls_moving_quantile(int window, IntegerVector idx)
 
 NumericVector ocls_moving_quantile::update_one(double x) {
   buf.push_front(x);
-  skiplist.insert(x);
+  sorted.insert(x);
   auto y = NumericVector(nidx);
   if (n + 1 < w) {
     n += 1;
   } else {
     for (auto i = 0; i < nidx; ++i) {
-      y[i] = skiplist[qidx[i]];
+      y[i] = sorted[qidx[i]];
     }
-    skiplist.remove(buf.back());
+    sorted.erase(buf.back());
     buf.pop_back();
   }
   return y;
@@ -124,7 +124,7 @@ NumericVector ocls_moving_quantile::value() {
   auto y = NumericVector(nidx);
   if (n + 1 >= w) {
     for (auto i = 0; i < nidx; ++i) {
-      y[i] = skiplist[qidx[i]];
+      y[i] = sorted[qidx[i]];
     }
   }
   return y;

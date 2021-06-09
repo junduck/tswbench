@@ -1,7 +1,7 @@
 #pragma once
 
 #include "ocls_common.h"
-#include "skiplist.h"
+#include "sdeque.h"
 #include "psquare.h"
 #include "kll.h"
 
@@ -10,7 +10,7 @@ class ocls_moving_sort {
 
   int n, w;
   deque buf;
-  IndexableSkiplist<double> skiplist;
+  sdeque<double> sorted;
 
 public:
   ocls_moving_sort(int window);
@@ -27,7 +27,7 @@ class ocls_moving_median {
 
   int n, w, idx1, idx2;
   deque buf;
-  IndexableSkiplist<double> skiplist;
+  sdeque<double> sorted;
 
 public:
   ocls_moving_median(int window);
@@ -42,7 +42,7 @@ class ocls_moving_quantile {
 
   int n, w, nidx;
   deque buf;
-  IndexableSkiplist<double> skiplist;
+  sdeque<double> sorted;
   Rcpp::IntegerVector qidx;
 
 public:
